@@ -177,6 +177,7 @@
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="relief">none</property>
+                        <signal name="clicked" handler="prev_button_clicked_cb"/>
                         <child>
                           <object class="GtkImage" id="image1">
                             <property name="visible">True</property>
@@ -196,6 +197,7 @@
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="relief">none</property>
+                        <signal name="clicked" handler="next_button_clicked_cb"/>
                         <child>
                           <object class="GtkImage" id="image2">
                             <property name="visible">True</property>
@@ -212,7 +214,7 @@
                     <child>
                       <object class="GtkLabel" id="main_label">
                         <property name="visible">True</property>
-                        <property name="label" translatable="yes">November 2009</property>
+                        <property name="label" translatable="yes">Month YEAR</property>
                       </object>
                       <packing>
                         <property name="position">2</property>
@@ -225,6 +227,7 @@
                         <property name="receives_default">True</property>
                         <property name="relief">none</property>
                         <property name="focus_on_click">False</property>
+                        <signal name="clicked" handler="zoom_in_button_clicked_cb"/>
                         <child>
                           <object class="GtkImage" id="image3">
                             <property name="visible">True</property>
@@ -244,6 +247,7 @@
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="relief">none</property>
+                        <signal name="clicked" handler="zoom_out_button_clicked_cb"/>
                         <child>
                           <object class="GtkImage" id="image4">
                             <property name="visible">True</property>
@@ -266,8 +270,8 @@
                 </child>
                 <child>
                   <object class="GtkDrawingArea" id="cali_main_drawingarea">
-                    <property name="width_request">250</property>
-                    <property name="height_request">250</property>
+                    <property name="width_request">500</property>
+                    <property name="height_request">300</property>
                     <property name="visible">True</property>
                     <property name="events">GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>
                     <signal name="button_press_event" handler="cali_drawingarea_button_press_event_cb"/>
@@ -373,7 +377,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry" id="entry1">
+                                  <object class="GtkEntry" id="detail_title_entry">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
@@ -407,7 +411,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry" id="entry2">
+                                  <object class="GtkEntry" id="detail_start_entry">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
@@ -441,7 +445,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry" id="entry3">
+                                  <object class="GtkEntry" id="detail_end_entry">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
@@ -475,7 +479,7 @@
                                   </packing>
                                 </child>
                                 <child>
-                                  <object class="GtkComboBox" id="combobox1">
+                                  <object class="GtkComboBox" id="detail_calendar_combobox">
                                     <property name="visible">True</property>
                                     <property name="model">liststore_cal</property>
                                     <child>
@@ -505,7 +509,7 @@
                                 <property name="vscrollbar_policy">automatic</property>
                                 <property name="shadow_type">in</property>
                                 <child>
-                                  <object class="GtkTextView" id="textview1">
+                                  <object class="GtkTextView" id="detail_textview">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                   </object>

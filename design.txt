@@ -1,0 +1,67 @@
+Database <>-->
+  Calendar[]
+  Event[]
+  Occurrence[]
+  sqlite3
+  reload(?calendar)   // re-reads ics file into database
+  find(begin,end): Occurrence*[]
+
+
+View <|--
+  MonthView
+  DayView
+  ...
+
+
+App <>-->
+  main_drawingarea
+  main_label
+  View
+  Occurrence* // Occurrence in detail view (if any)
+  Database
+
+
+CalendarList:
+  liststore_cal
+  append_calendar()
+
+
+Detail:
+
+
+View:
+  begin(): time_t             // start of period covered by this view
+  end(): time_t               // end of period covered by this view
+  Occurrence*[]               // internal list
+  add_occurrence(Occurrence*) // callback from database thread
+  del_occurrence(Occurrence*) // callback from database thread
+  // UI callbacks
+  draw()
+  prev(): View*
+  next(): View*
+  zoom_in(): View*
+  zoom_out(): View*
+  click()
+  dblclick()
+
+
+Main Thread =
+  GUI event loop
+
+File sync thread =
+  wait for trigger:
+    ics file changed:
+      db.reload(ics)
+      db.changed()
+    timeout:
+      for c in calendars:
+        if c.dirty:
+          db.save(c)
+
+Load thread =
+  wait for trigger:
+    db changed:
+    
+      db.find(ics)
+      db.changed()
+    

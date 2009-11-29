@@ -8,7 +8,6 @@ namespace calendari {
 class Calendari;
 
 
-/** Main application data store. */
 struct CalendarList
 {
   GtkListStore* liststore_cal; ///< List of calendars

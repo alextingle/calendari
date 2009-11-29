@@ -8,6 +8,8 @@ namespace calendari {
 class Db;
 class View;
 class CalendarList;
+class DetailView;
+class Occurrence;
 
 
 /** Main application data store. */
@@ -23,12 +25,17 @@ struct Calendari
   // Subordinate components.
   View*          main_view;
   CalendarList*  calendar_list;
+  DetailView*    detail_view;
+  Occurrence*    occurrence;
 
   /** Load database. */
   void load(const char* dbname);
 
   /** Populate members. */
   void build(GtkBuilder* builder);
+
+  /** Set the currently selected occurrence. */
+  void select(Occurrence* occ);
 };
 
 

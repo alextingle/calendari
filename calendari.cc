@@ -1,7 +1,9 @@
 #include "calendari.h"
 
 #include "calendarlist.h"
+#include "detailview.h"
 #include "db.h"
+#include "monthview.h"
 
 #include <gtk/gtk.h>
 #include <gmodule.h>
@@ -23,12 +25,30 @@ Calendari::build(GtkBuilder* builder)
 {
   // Get main window pointer from UI
   window = GTK_WIDGET(gtk_builder_get_object(builder,"cali_window"));
+  main_drawingarea =
+    GTK_WIDGET(gtk_builder_get_object(builder,"cali_main_drawingarea"));
+  main_label =
+    GTK_LABEL(gtk_builder_get_object(builder,"main_label"));
 
   calendar_list = new CalendarList();
   calendar_list->build(this,builder);
 
+  detail_view = new DetailView(*this);
+  detail_view->build(this,builder);
+  
+  main_view = new MonthView(*this);
+  main_view->set(::time(NULL));
+
   // Connect signals
   gtk_builder_connect_signals(builder,this);
+}
+
+
+void
+Calendari::select(Occurrence* occ)
+{
+  occurrence = occ;
+  detail_view->select( occ );
 }
 
 
