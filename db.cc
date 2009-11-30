@@ -74,7 +74,7 @@ Db::find(time_t begin, time_t end)
 
   sqlite3_stmt* select_stmt;
   const char* sql =
-      "select O.UID,DTSTART,DTEND,SUMMARY,CALID "
+      "select O.UID,DTSTART,DTEND,SUMMARY,ALLDAY,CALID "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID "
       "where DTSTART>=? and DTEND<? "
@@ -95,7 +95,8 @@ Db::find(time_t begin, time_t end)
                        ::sqlite3_column_int( select_stmt,1), // dtstart
                        ::sqlite3_column_int( select_stmt,2), // dtend
           (const char*)::sqlite3_column_text(select_stmt,3), // summary
-          (const char*)::sqlite3_column_text(select_stmt,4)  // calid
+                       ::sqlite3_column_int( select_stmt,4), // all_day
+          (const char*)::sqlite3_column_text(select_stmt,5)  // calid
         );
       result.insert(std::make_pair(occ->dtstart,occ));
     }
@@ -120,6 +121,7 @@ Occurrence* Db::make_occurrence(
     time_t       dtstart,
     time_t       dtend,
     const char*  summary,
+    bool         all_day,
     const char*  calid
   )
 {
@@ -131,6 +133,7 @@ Occurrence* Db::make_occurrence(
     event->uid = uid;
     event->summary = summary;
     event->sequence = 0; //??
+    event->all_day = all_day;
   }
   else
   {

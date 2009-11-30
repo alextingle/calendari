@@ -5,6 +5,7 @@
 #include "util.h"
 
 #include <iostream>
+#include <algorithm>
 
 namespace calendari {
 
@@ -76,13 +77,17 @@ MonthView::set(time_t now_time)
   std::multimap<time_t,Occurrence*> all =
       cal.db->find( day[0].start, normalise_local_tm(i) );
 
-  for(int cell=0; cell<MAX_CELLS; ++cell)
+  typedef std::multimap<time_t,Occurrence*>::const_reverse_iterator OIt;
+  OIt o = all.rbegin();
+  for(size_t c=0; c<MAX_CELLS; ++c)
   {
-    typedef std::multimap<time_t,Occurrence*>::const_iterator OIt;
-    OIt lb = all.lower_bound(day[cell].start);
-    OIt ub = all.upper_bound(day[cell].start + 86400 );//??bs
-    for(; lb!=ub; ++lb)
-        day[cell].occurrence.push_back(lb->second);
+    size_t cell = MAX_CELLS-1-c;
+    while(o!=all.rend() && o->first >= day[cell].start)
+    {
+      day[cell].occurrence.push_back(o->second); // ?? backwards
+      ++o;
+    }
+    std::reverse(day[cell].occurrence.begin(),day[cell].occurrence.end());
   }
 }
 
@@ -98,6 +103,8 @@ MonthView::draw(GtkWidget* widget, cairo_t* cr)
   // Clear the surface
   cairo_set_source_rgb(cr, 1,1,1);
   cairo_paint(cr);
+
+  arrange_slots();
 
   draw_cells(cr);
   draw_grid(cr);
@@ -166,6 +173,46 @@ MonthView::init_dimensions(GtkWidget* widget, cairo_t* cr)
     );
   cell_width = width / 7.0;
   cell_height = (height - header_height) / 5.0;
+  slots_per_cell = cell_height / Setting::body_font_size; // rounds down.
+}
+
+
+void
+MonthView::arrange_slots(void)
+{
+  typedef std::vector<Occurrence*> OV;
+  for(size_t cell=0; cell<MAX_CELLS; ++cell)
+  {
+    day[cell].slot.clear();
+    day[cell].slot.resize(slots_per_cell,NULL);
+  }
+  for(size_t cell=0; cell<MAX_CELLS; ++cell)
+  {
+    size_t next_slot = 1;
+    Day& d( day[cell] );
+    for(OV::const_iterator i=d.occurrence.begin(); i!=d.occurrence.end(); ++i)
+    {
+      while(next_slot<slots_per_cell && d.slot[next_slot])
+          next_slot++;
+      if(next_slot>=slots_per_cell)
+      {
+        // ?? Mark cell as full.
+        // ?? Mark any all-day events on future cells.
+        break;
+      }
+      Occurrence& occ( **i );
+      d.slot[next_slot] = &occ;
+      if(occ.event.all_day)
+      {
+        size_t future_cell = cell+1;
+        while(future_cell<MAX_CELLS && occ.dtend>day[future_cell].start)
+        {
+          day[future_cell].slot[next_slot] = &occ;
+          future_cell++;
+        }
+      }
+    }
+  }
 }
 
 
@@ -205,15 +252,11 @@ MonthView::draw_grid(cairo_t* cr)
   pango_layout_set_width(pl,cell_width * PANGO_SCALE);
   pango_layout_set_height(pl,Setting::head_font_size*PANGO_SCALE);
 
-
-//  weekdays.set_total_width(width*0.8);
-//  weekdays.set_font_size(cr);
   for(int i=0; i<7; ++i)
   {
     cairo_move_to(cr, i * cell_width, header_height * 0.25);
     pango_layout_set_text(pl,dayname[i].c_str(),dayname[i].size());
     pango_cairo_show_layout(cr,pl);
-//    weekdays.show(cr, i);
   }
 }
 
@@ -232,7 +275,7 @@ MonthView::draw_cells(cairo_t* cr)
   pango_layout_set_ellipsize(pl,PANGO_ELLIPSIZE_END);
   pango_layout_set_wrap(pl,PANGO_WRAP_WORD_CHAR);
   pango_layout_set_width(pl,cell_width * PANGO_SCALE);
-  double pl_height = std::max(1.0,cell_height-font_extents.height);
+  double pl_height = std::max(1.0,/* ??cell_height-*/font_extents.height);
   pango_layout_set_height(pl,pl_height * PANGO_SCALE);
 
   for(int cell=0; cell<MAX_CELLS; ++cell)
@@ -270,15 +313,37 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
     );
   cairo_show_text(cr,buf);
 
+  for(size_t s=1; s<slots_per_cell; ++s)
+  {
+    if(day[cell].slot[s])
+    {
+      size_t e = s+1;
+      while(e<slots_per_cell && !day[cell].slot[e])
+          ++e;
+      pango_layout_set_height(pl,(e-s)*Setting::body_font_size*PANGO_SCALE);
+      Occurrence& occ = *day[cell].slot[s];
+      std::string pango_text = (occ.event.all_day? "*": "") + occ.event.summary;
+      cairo_move_to(cr, cellx, celly + s * Setting::body_font_size);
+      pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
+      pango_cairo_show_layout(cr,pl);
+    }
+  }
+
+/*
   std::string pango_text = "";
   for(int line=0; line<day[cell].occurrence.size(); ++line)
-      pango_text += day[cell].occurrence[line]->event.summary + "\n";
+  {
+    if(day[cell].occurrence[line]->event.all_day)
+        pango_text += "*";
+    pango_text += day[cell].occurrence[line]->event.summary + "\n";
+  }
 
   // pW / PANGO_SCALE == cW
 
   cairo_move_to(cr, cellx, celly + font_extents.height);
   pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
   pango_cairo_show_layout(cr,pl);
+*/
 }
 
 

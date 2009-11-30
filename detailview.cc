@@ -24,12 +24,14 @@ DetailView::select(Occurrence* occ)
   tm t;
   char buf[256];
 
+  const char* date_format =( occ->event.all_day? "%x": "%X %x" );
+
   localtime_r(&occ->dtstart,&t);
-  strftime(buf,sizeof(buf),"%X %x",&t);
+  strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(start_entry,buf);
 
   localtime_r(&occ->dtend,&t);
-  strftime(buf,sizeof(buf),"%X %x",&t);
+  strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(end_entry,buf);
 }
 

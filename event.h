@@ -28,7 +28,8 @@ public:
   std::string uid;
   std::string summary;
   int         sequence;
-  
+  bool        all_day;
+
   Event(Calendar& c): calendar(c) {}
 };
 

@@ -18,7 +18,8 @@ struct Day
   int    mon;
   int    mday;
   int    wday;
-  std::vector<Occurrence*> occurrence;
+  std::vector<Occurrence*> occurrence; ///< Occurrences that start on this day.
+  std::vector<Occurrence*> slot;       ///< slot# -> occurrence.
 };
 
 
@@ -62,8 +63,11 @@ private:
   PangoFontDescription* head_pfont;
   PangoFontDescription* body_pfont;
   cairo_font_extents_t font_extents;
+  // Slots
+  size_t slots_per_cell;
 
   void init_dimensions(GtkWidget* widget, cairo_t* cr);
+  void arrange_slots(void);
   void draw_grid(cairo_t* cr);
   void draw_cells(cairo_t* cr);
   void draw_cell(cairo_t* cr, PangoLayout* pl, int cell);

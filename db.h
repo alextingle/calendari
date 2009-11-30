@@ -19,6 +19,7 @@ create table EVENT (
   SUMMARY  string,
   CALID    string,
   SEQUENCE integer,
+  ALLDAY   boolean,
   VEVENT   blob,
   primary key(VERSION,UID)
 );
@@ -82,6 +83,7 @@ private:
       time_t       dtstart,
       time_t       dtend,
       const char*  summary,
+      bool         all_day,
       const char*  calid
     );
 
