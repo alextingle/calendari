@@ -14,9 +14,16 @@ public:
   std::string name;
   int         position;
   std::string colour;
+  bool        show;
   
-  Calendar(const char* calid_, const char* name_, int pos_, const char* col_)
-    : calid(calid_), name(name_), position(pos_), colour(col_)
+  Calendar(
+      const char* calid_,
+      const char* name_,
+      int         pos_,
+      const char* col_,
+      int         show_
+    )
+    : calid(calid_), name(name_), position(pos_), colour(col_), show(show_)
     {}
 };
 

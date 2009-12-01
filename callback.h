@@ -37,6 +37,13 @@ extern "C"
   G_MODULE_EXPORT gboolean
   zoom_out_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
+  G_MODULE_EXPORT void
+  calendar_toggle_cb(
+      GtkCellRendererToggle*cell_renderer,
+      gchar*path,
+      calendari::Calendari* cal
+    );
+
 } // end extern "C"
 
 #endif // CALENDARI__CALLBACK_H

@@ -79,3 +79,13 @@ zoom_out_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 {
   cal->main_view = cal->main_view->zoom_out();
 }
+
+G_MODULE_EXPORT void
+calendar_toggle_cb(
+    GtkCellRendererToggle*  cell_renderer,
+    gchar*                  path,
+    calendari::Calendari*   cal
+  )
+{
+  cal->calendar_list->toggle(path,cal);
+}

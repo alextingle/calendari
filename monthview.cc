@@ -208,6 +208,9 @@ MonthView::arrange_slots(void)
     Day& d( day[cell] );
     for(OV::const_iterator i=d.occurrence.begin(); i!=d.occurrence.end(); ++i)
     {
+      Occurrence& occ( **i );
+      if(!occ.event.calendar.show)
+        continue;
       while(next_slot<slots_per_cell && d.slot[next_slot])
           next_slot++;
       if(next_slot>=slots_per_cell)
@@ -216,7 +219,6 @@ MonthView::arrange_slots(void)
         // ?? Mark any all-day events on future cells.
         break;
       }
-      Occurrence& occ( **i );
       d.slot[next_slot] = &occ;
       if(occ.event.all_day)
       {

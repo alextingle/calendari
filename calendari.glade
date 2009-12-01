@@ -10,6 +10,8 @@
       <column type="gchararray"/>
       <!-- column-name colour -->
       <column type="gchararray"/>
+      <!-- column-name obj -->
+      <column type="gpointer"/>
     </columns>
   </object>
   <object class="GtkWindow" id="cali_window">
@@ -314,8 +316,11 @@
                             <property name="min_width">20</property>
                             <property name="alignment">0.5</property>
                             <child>
-                              <object class="GtkCellRendererToggle" id="cellrenderertoggle1"/>
+                              <object class="GtkCellRendererToggle" id="cellrenderertoggle1">
+                                <signal name="toggled" handler="calendar_toggle_cb"/>
+                              </object>
                               <attributes>
+                                <attribute name="cell-background">2</attribute>
                                 <attribute name="active">0</attribute>
                               </attributes>
                             </child>

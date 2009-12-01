@@ -50,7 +50,8 @@ Db::load_calendars(void)
           (const char*)::sqlite3_column_text(select_stmt,1), // name
           position++,
 //                       ::sqlite3_column_int( select_stmt,2), // position
-          (const char*)::sqlite3_column_text(select_stmt,3)  // colour
+          (const char*)::sqlite3_column_text(select_stmt,3), // colour
+          true                                               // show
         );
       _calendar.insert(std::make_pair(cal->calid,cal));
     }

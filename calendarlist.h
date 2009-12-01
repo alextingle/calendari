@@ -15,6 +15,7 @@ struct CalendarList
   /** Populate members. */
   void build(Calendari* cal, GtkBuilder* builder);
   
+  void toggle(gchar* path, calendari::Calendari* cal);
   void add(void);
 };
 
