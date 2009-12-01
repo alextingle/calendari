@@ -39,6 +39,7 @@ Db::load_calendars(void)
   if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) )
       sql::error(_db,__FILE__,__LINE__);
 
+  int position = 0;
   while(true)
   {
     int return_code = ::sqlite3_step(select_stmt);
@@ -47,7 +48,8 @@ Db::load_calendars(void)
       Calendar* cal = new Calendar(
           (const char*)::sqlite3_column_text(select_stmt,0), // calid
           (const char*)::sqlite3_column_text(select_stmt,1), // name
-                       ::sqlite3_column_int( select_stmt,2), // position
+          position++,
+//                       ::sqlite3_column_int( select_stmt,2), // position
           (const char*)::sqlite3_column_text(select_stmt,3)  // colour
         );
       _calendar.insert(std::make_pair(cal->calid,cal));

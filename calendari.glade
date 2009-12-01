@@ -379,9 +379,9 @@
                                 <child>
                                   <object class="GtkEntry" id="detail_title_entry">
                                     <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
-                                    <property name="text" translatable="yes">Summary</property>
                                   </object>
                                   <packing>
                                     <property name="position">1</property>
@@ -413,9 +413,9 @@
                                 <child>
                                   <object class="GtkEntry" id="detail_start_entry">
                                     <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
-                                    <property name="text" translatable="yes">When</property>
                                   </object>
                                   <packing>
                                     <property name="position">1</property>
@@ -447,9 +447,9 @@
                                 <child>
                                   <object class="GtkEntry" id="detail_end_entry">
                                     <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
-                                    <property name="text" translatable="yes">Whenever</property>
                                   </object>
                                   <packing>
                                     <property name="position">1</property>
@@ -481,6 +481,7 @@
                                 <child>
                                   <object class="GtkComboBox" id="detail_calendar_combobox">
                                     <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
                                     <property name="model">liststore_cal</property>
                                     <child>
                                       <object class="GtkCellRendererText" id="cellrenderertext2"/>

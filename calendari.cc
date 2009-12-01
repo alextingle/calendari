@@ -48,6 +48,7 @@ void
 Calendari::select(Occurrence* occ)
 {
   occurrence = occ;
+  main_view->select( occ );
   detail_view->select( occ );
 }
 

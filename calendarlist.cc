@@ -6,6 +6,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 
 namespace calendari {
 
@@ -17,21 +18,23 @@ CalendarList::build(Calendari* cal, GtkBuilder* builder)
 
   typedef std::map<std::string,Calendar*> CalMap;
   const CalMap& cc = cal->db->calendars();
+
+  // Sort by position.
+  std::vector<Calendar*> vec(cc.size(),NULL);
   for(CalMap::const_iterator c=cc.begin(); c!=cc.end() ; ++c)
+      vec[c->second->position] = c->second;
+
+  for(std::vector<Calendar*>::const_iterator v=vec.begin(); v!=vec.end() ; ++v)
   {
     GtkTreeIter* iter =NULL;
     gtk_list_store_insert_with_values(
         this->liststore_cal, iter, 99999,
         0,TRUE,
-        1,c->second->name.c_str(),
-        2,c->second->colour.c_str(),
+        1,(*v)->name.c_str(),
+        2,(*v)->colour.c_str(),
         -1
       );
   }
-
-
-  gint i =gtk_tree_model_get_n_columns(GTK_TREE_MODEL(liststore_cal));
-  printf("liststore_cal columns=%i\n",i);
 }
 
 

@@ -23,6 +23,8 @@ struct DetailView
 
   /** Populate members. */
   void build(Calendari* cal, GtkBuilder* builder);
+
+  void clear(void);
   
   void select(Occurrence* occ);
 };

@@ -25,6 +25,8 @@ MonthView::MonthView(Calendari& c): cal(c)
       Setting::body_font_size*PANGO_SCALE
     );
   pango_font_description_set_family_static(body_pfont,"sans");
+
+  slot_height = Setting::body_font_size * 1.4;
 }
 
 
@@ -84,7 +86,7 @@ MonthView::set(time_t now_time)
     size_t cell = MAX_CELLS-1-c;
     while(o!=all.rend() && o->first >= day[cell].start)
     {
-      day[cell].occurrence.push_back(o->second); // ?? backwards
+      day[cell].occurrence.push_back(o->second);
       ++o;
     }
     std::reverse(day[cell].occurrence.begin(),day[cell].occurrence.end());
@@ -120,20 +122,34 @@ MonthView::click(double x, double y)
       return;
   if(y<header_height || y>=height)
       return;
-  int cell = int((y-header_height)/cell_height) * 7 + int(x/cell_width);
+  
+  int row = int((y-header_height)/cell_height);
+  int cell = row * 7 + int(x/cell_width);
   if(cell<0 || cell>=MAX_CELLS)
       return;
-      
-  if(day[cell].occurrence.empty())
+  size_t slot = int(y - header_height - cell_height*row) / slot_height;
+
+  Occurrence* occ = NULL;
+  if(!day[cell].slot[slot])
   {
     std::cout<<cell<<std::endl;
   }
   else
   {
-    std::cout<<cell<<" "<<day[cell].occurrence[0]->event.summary<<std::endl;
-    cal.select( day[cell].occurrence[0] );
+    occ = day[cell].slot[slot];
+    std::cout<<cell<<" "<<occ->event.summary<<std::endl;
+  }
+  if(occ != cal.occurrence)
+  {
+    cal.select( occ );
+    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
   }
 }
+
+
+void
+MonthView::select(Occurrence* occ)
+{}
 
 
 View*
@@ -173,7 +189,7 @@ MonthView::init_dimensions(GtkWidget* widget, cairo_t* cr)
     );
   cell_width = width / 7.0;
   cell_height = (height - header_height) / 5.0;
-  slots_per_cell = cell_height / Setting::body_font_size; // rounds down.
+  slots_per_cell = cell_height / slot_height; // rounds down.
 }
 
 
@@ -317,33 +333,28 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
   {
     if(day[cell].slot[s])
     {
-      size_t e = s+1;
-      while(e<slots_per_cell && !day[cell].slot[e])
-          ++e;
-      pango_layout_set_height(pl,(e-s)*Setting::body_font_size*PANGO_SCALE);
       Occurrence& occ = *day[cell].slot[s];
+      GdkColor col;
+      gdk_color_parse(occ.event.calendar.colour.c_str(),&col);
+      gdk_cairo_set_source_color(cr,&col);
+
+      if(&occ == cal.occurrence)
+      {
+        // Selected - fill slot.
+        cairo_rectangle(cr,
+            cellx, celly + s * slot_height,
+            cell_width, slot_height
+          );
+        cairo_fill(cr);
+        cairo_set_source_rgb(cr,1,1,1);
+      }
+      pango_layout_set_height(pl,slot_height*PANGO_SCALE);
       std::string pango_text = (occ.event.all_day? "*": "") + occ.event.summary;
-      cairo_move_to(cr, cellx, celly + s * Setting::body_font_size);
+      cairo_move_to(cr, cellx, celly + s * slot_height);
       pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
       pango_cairo_show_layout(cr,pl);
     }
   }
-
-/*
-  std::string pango_text = "";
-  for(int line=0; line<day[cell].occurrence.size(); ++line)
-  {
-    if(day[cell].occurrence[line]->event.all_day)
-        pango_text += "*";
-    pango_text += day[cell].occurrence[line]->event.summary + "\n";
-  }
-
-  // pW / PANGO_SCALE == cW
-
-  cairo_move_to(cr, cellx, celly + font_extents.height);
-  pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
-  pango_cairo_show_layout(cr,pl);
-*/
 }
 
 
