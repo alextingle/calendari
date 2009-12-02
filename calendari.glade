@@ -387,6 +387,7 @@
                                     <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="invisible_char">&#x25CF;</property>
+                                    <signal name="focus_out_event" handler="detail_title_entry_focus_out_event_cb"/>
                                   </object>
                                   <packing>
                                     <property name="position">1</property>

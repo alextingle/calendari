@@ -44,6 +44,13 @@ extern "C"
       calendari::Calendari* cal
     );
 
+  G_MODULE_EXPORT gboolean
+  detail_title_entry_focus_out_event_cb(
+      GtkWidget*             e,
+      GdkEventFocus*         event,
+      calendari::Calendari*  cal
+    );
+
 } // end extern "C"
 
 #endif // CALENDARI__CALLBACK_H

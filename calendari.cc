@@ -64,6 +64,7 @@ main(int argc, char* argv[])
 
   // Init GTK+
   gtk_init( &argc, &argv );
+  gtk_rc_parse("dot.calrc");
 
   // Create new GtkBuilder object
   builder = gtk_builder_new();
