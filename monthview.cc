@@ -37,16 +37,16 @@ MonthView::~MonthView(void)
 
 
 void
-MonthView::set(time_t now_time)
+MonthView::set(time_t self_time)
 {
-  localtime_r(&now_time,&now_local);
+  localtime_r(&self_time,&self_local);
   
-  now_local.tm_hour = 0;
-  now_local.tm_min  = 0;
-  now_local.tm_sec  = 0;
+  self_local.tm_hour = 0;
+  self_local.tm_min  = 0;
+  self_local.tm_sec  = 0;
 
   // Find the start of the month.
-  struct tm i = now_local;
+  struct tm i = self_local;
   i.tm_mday = 1;
   normalise_local_tm(i);
 
@@ -97,6 +97,7 @@ MonthView::set(time_t now_time)
 void
 MonthView::draw(GtkWidget* widget, cairo_t* cr)
 {
+  now = ::time(NULL);
   cairo_save(cr);
 
   // Initialise the widget's dimensions.
@@ -155,8 +156,8 @@ MonthView::select(Occurrence* occ)
 View*
 MonthView::prev(void)
 {
-  --now_local.tm_mon;
-  set( normalise_local_tm(now_local) );
+  --self_local.tm_mon;
+  set( normalise_local_tm(self_local) );
   gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
   return this;
 }
@@ -165,8 +166,8 @@ MonthView::prev(void)
 View*
 MonthView::next(void)
 {
-  ++now_local.tm_mon;
-  set( normalise_local_tm(now_local) );
+  ++self_local.tm_mon;
+  set( normalise_local_tm(self_local) );
   gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
   return this;
 }
@@ -311,13 +312,23 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
   double celly = (cell/7) * cell_height;
 
   cairo_set_source_rgb(cr, 0.95,0.95,0.95);
-  if(now_local.tm_mon != day[cell].mon)
+  if(self_local.tm_mon != day[cell].mon)
   {
     // Colour in this day, because it's not in this month.
     cairo_rectangle (cr, cellx,celly, cell_width,cell_height);
     cairo_fill(cr);
   }
-  
+
+  if(now>=day[cell].start && now<day[cell].start+86400) //??bs
+  {
+    // Mark the current day.
+    cairo_set_source_rgb(cr, 1,0,0);
+    cairo_move_to(cr,cellx,celly);
+    cairo_line_to(cr,cellx+slot_height,celly);
+    cairo_line_to(cr,cellx,celly+slot_height);
+    cairo_fill(cr);
+  }
+
   // Write in the day number.
   cairo_set_source_rgb(cr, 0.2,0.2,0.2);
   cairo_text_extents_t extents;

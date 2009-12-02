@@ -26,7 +26,7 @@ struct Day
 class View
 {
 public:
-  virtual void set(time_t now_time) =0;
+  virtual void set(time_t self_time) =0;
   virtual void draw(GtkWidget* widget, cairo_t* cr) =0;
   virtual void click(double x, double y) =0;
   virtual void select(Occurrence* occ) =0;
@@ -42,7 +42,7 @@ class MonthView: public View
 public:
   MonthView(Calendari& cal);
   ~MonthView(void);
-  virtual void set(time_t now_time);
+  virtual void set(time_t self_time);
   virtual void draw(GtkWidget* widget, cairo_t* cr);
   virtual void click(double x, double y);
   virtual void select(Occurrence* occ);
@@ -51,7 +51,8 @@ public:
 private:
   Calendari& cal;
   // Time
-  struct tm now_local;
+  time_t now;
+  struct tm self_local;
   static const size_t MAX_CELLS = 7 * 5;
   Day day[MAX_CELLS];
   std::string dayname[7]; 
