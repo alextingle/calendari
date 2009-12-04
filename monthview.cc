@@ -4,6 +4,7 @@
 #include "setting.h"
 #include "util.h"
 
+#include <cassert>
 #include <iostream>
 #include <algorithm>
 
@@ -84,13 +85,14 @@ MonthView::set(time_t self_time)
   for(size_t c=0; c<MAX_CELLS; ++c)
   {
     size_t cell = MAX_CELLS-1-c;
-    while(o!=all.rend() && o->first >= day[cell].start)
+    while(o!=all.rend() && (cell==0 || o->first >= day[cell].start) )
     {
       day[cell].occurrence.push_back(o->second);
       ++o;
     }
     std::reverse(day[cell].occurrence.begin(),day[cell].occurrence.end());
   }
+  assert(o==all.rend());
 }
 
 
@@ -131,7 +133,7 @@ MonthView::click(double x, double y)
   size_t slot = int(y - header_height - cell_height*row) / slot_height;
 
   Occurrence* occ = NULL;
-  if(!day[cell].slot[slot])
+  if(slot>=day[cell].slot.size() || !day[cell].slot[slot])
   {
     std::cout<<cell<<std::endl;
   }
@@ -151,6 +153,50 @@ MonthView::click(double x, double y)
 void
 MonthView::select(Occurrence* occ)
 {}
+
+
+void
+MonthView::moved(Occurrence* occ)
+{
+  Occurrence* add = occ;
+  Occurrence* del = occ;
+  typedef std::vector<Occurrence*> OV;
+  for(size_t c=0; c<MAX_CELLS; ++c)
+  {
+    size_t cell = MAX_CELLS-1-c;
+    OV& ov( day[cell].occurrence );
+    for(OV::iterator o=ov.begin(); del && o!=ov.end(); ++o)
+    {
+      if(*o == del)
+      {
+        ov.erase( o );
+        del = NULL;
+      }
+    }
+    if(add && add->dtstart >= day[cell].start)
+    {
+      // insert
+      OV::iterator o=ov.end();
+      while(add && o!=ov.begin())
+      {
+        --o;
+        if(add->dtstart >= (**o).dtstart)
+        {
+          ++o;
+          ov.insert(o,add);
+          add = NULL;
+        }
+      }
+      if(add)
+      {
+        ov.insert(ov.begin(),add);
+        add = NULL;
+      }
+    }
+  }
+  if(!add || !del) // Something was changed
+      gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+}
 
 
 View*

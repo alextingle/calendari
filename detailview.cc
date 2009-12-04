@@ -5,6 +5,12 @@
 #include "err.h"
 #include "event.h"
 
+#include <cassert>
+#include <cstring>
+
+#define FORMAT_DATE "%Y-%m-%d"
+#define FORMAT_TIME " %H:%M"
+
 namespace calendari {
 
 
@@ -42,18 +48,9 @@ DetailView::select(Occurrence* occ)
     return;
   }
   gtk_entry_set_text(title_entry,occ->event.summary.c_str());
-  tm t;
-  char buf[256];
 
-  const char* date_format =( occ->event.all_day? "%x": "%X %x" );
-
-  localtime_r(&occ->dtstart,&t);
-  strftime(buf,sizeof(buf),date_format,&t);
-  gtk_entry_set_text(start_entry,buf);
-
-  localtime_r(&occ->dtend,&t);
-  strftime(buf,sizeof(buf),date_format,&t);
-  gtk_entry_set_text(end_entry,buf);
+  // Fill in times
+  this->moved(occ);
 
   GtkTreeIter iter;
   bool ok = gtk_tree_model_iter_nth_child(
@@ -75,6 +72,83 @@ DetailView::select(Occurrence* occ)
   gtk_widget_set_sensitive(GTK_WIDGET(start_entry),true);
   gtk_widget_set_sensitive(GTK_WIDGET(end_entry),true);
   gtk_widget_set_sensitive(GTK_WIDGET(calendar_combobox),true);
+}
+
+
+void
+DetailView::moved(Occurrence* occ)
+{
+  tm t;
+  char buf[256];
+  const char* date_format =
+      ( occ->event.all_day? FORMAT_DATE: FORMAT_DATE FORMAT_TIME );
+
+  localtime_r(&occ->dtstart,&t);
+  strftime(buf,sizeof(buf),date_format,&t);
+  gtk_entry_set_text(start_entry,buf);
+
+  localtime_r(&occ->dtend,&t);
+  strftime(buf,sizeof(buf),date_format,&t);
+  gtk_entry_set_text(end_entry,buf);
+}
+
+
+void
+DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
+{
+  if(!cal->occurrence)
+      return;
+
+  const char* newval = gtk_entry_get_text(entry);
+  if(entry==title_entry)
+  {
+    if(cal->occurrence->event.summary!=newval)
+    {
+      cal->occurrence->event.summary = newval;
+      gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+    }
+  }
+  // ?? Need much more work on this bit.
+  // ?? It will get much more complicated when we start supporting
+  // ?? recurring events.
+  if(entry==start_entry)
+  {
+    tm new_tm;
+    ::memset(&new_tm,0,sizeof(new_tm));
+    char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
+    if(ret && !cal->occurrence->event.all_day)
+    {
+      if(cal->occurrence->set_start( ::mktime(&new_tm) ))
+          cal->moved(cal->occurrence);
+      return;
+    }
+    ret = ::strptime(newval,FORMAT_DATE,&new_tm);
+    if(ret && cal->occurrence->event.all_day)
+    {
+      if(cal->occurrence->set_start( ::mktime(&new_tm) ))
+          cal->moved(cal->occurrence);
+      return;
+    }
+  }
+  if(entry==end_entry)
+  {
+    tm new_tm;
+    ::memset(&new_tm,0,sizeof(new_tm));
+    char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
+    if(ret && !cal->occurrence->event.all_day)
+    {
+      if(cal->occurrence->set_end( ::mktime(&new_tm) ))
+          cal->moved(cal->occurrence);
+      return;
+    }
+    ret = ::strptime(newval,FORMAT_DATE,&new_tm);
+    if(ret && cal->occurrence->event.all_day)
+    {
+      if(cal->occurrence->set_end( ::mktime(&new_tm) ))
+          cal->moved(cal->occurrence);
+      return;
+    }
+  }
 }
 
 

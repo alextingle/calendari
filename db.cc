@@ -80,7 +80,7 @@ Db::find(time_t begin, time_t end)
       "select O.UID,DTSTART,DTEND,SUMMARY,ALLDAY,CALID "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID "
-      "where DTSTART>=? and DTEND<? "
+      "where DTEND>=? and DTSTART<? "
       "order by DTSTART";
   if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) )
       sql::error(_db,__FILE__,__LINE__);

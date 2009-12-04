@@ -45,11 +45,15 @@ extern "C"
     );
 
   G_MODULE_EXPORT gboolean
-  detail_title_entry_focus_out_event_cb(
+  detail_entry_focus_event_cb(
       GtkWidget*             e,
       GdkEventFocus*         event,
       calendari::Calendari*  cal
     );
+
+  /** ?? NOT CURRENTLY USED */
+  G_MODULE_EXPORT void
+  detail_entry_done_event_cb(GtkCellEditable* e, calendari::Calendari* cal);
 
 } // end extern "C"
 

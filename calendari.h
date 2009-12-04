@@ -36,6 +36,9 @@ struct Calendari
 
   /** Set the currently selected occurrence. */
   void select(Occurrence* occ);
+
+  /** An occurrence moved. */
+  void moved(Occurrence* occ);
 };
 
 

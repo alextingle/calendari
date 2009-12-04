@@ -30,6 +30,7 @@ public:
   virtual void draw(GtkWidget* widget, cairo_t* cr) =0;
   virtual void click(double x, double y) =0;
   virtual void select(Occurrence* occ) =0;
+  virtual void moved(Occurrence* occ) =0;
   virtual View* prev(void)     { return this; }
   virtual View* next(void)     { return this; }
   virtual View* zoom_in(void)  { return this; }
@@ -46,6 +47,7 @@ public:
   virtual void draw(GtkWidget* widget, cairo_t* cr);
   virtual void click(double x, double y);
   virtual void select(Occurrence* occ);
+  virtual void moved(Occurrence* occ);
   virtual View* prev(void);
   virtual View* next(void);
 private:

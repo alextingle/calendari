@@ -2,19 +2,10 @@
 
 #include "calendari.h"
 #include "calendarlist.h"
+#include "detailview.h"
 #include "monthview.h"
 
 #include <cstdio>
-
-/*??
-G_MODULE_EXPORT void
-cali_cb_clicked(
-    GtkButton *button,
-    gpointer   data )
-{
-    printf("Hello world.\n");
-}
-??*/
 
 
 G_MODULE_EXPORT gboolean
@@ -92,17 +83,20 @@ calendar_toggle_cb(
 
 
 G_MODULE_EXPORT gboolean
-detail_title_entry_focus_out_event_cb(
+detail_entry_focus_event_cb(
     GtkWidget*             e,
     GdkEventFocus*         event,
     calendari::Calendari*  cal
   )
 {
-  const char* newval = gtk_entry_get_text(GTK_ENTRY(e));
-  if(cal->occurrence && cal->occurrence->event.summary!=newval)
-  {
-    cal->occurrence->event.summary = newval;
-    gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
-  }
+  cal->detail_view->entry_cb(GTK_ENTRY(e),cal);
   return false;
+}
+
+
+G_MODULE_EXPORT void
+detail_entry_done_event_cb(GtkCellEditable* e, calendari::Calendari* cal)
+{
+  // ?? NOT CURRENTLY USED
+  cal->detail_view->entry_cb(GTK_ENTRY(e),cal);
 }

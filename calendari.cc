@@ -53,6 +53,15 @@ Calendari::select(Occurrence* occ)
 }
 
 
+void
+Calendari::moved(Occurrence* occ)
+{
+  main_view->moved( occ );
+  if(occ==this->occurrence) // selected?
+      detail_view->moved( occ );
+}
+
+
 } // end namespace calendari
 
 

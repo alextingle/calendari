@@ -49,6 +49,12 @@ public:
   time_t      dtend;
   
   Occurrence(Event& e): event(e) {}
+
+  /** Returns TRUE if dtstart was actually changed. */
+  bool set_start(time_t start_);
+
+  /** Returns TRUE if dtend was actually changed. */
+  bool set_end(time_t end_);
 };
 
 

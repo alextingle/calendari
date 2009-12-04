@@ -27,6 +27,9 @@ struct DetailView
   void clear(void);
   
   void select(Occurrence* occ);
+  void moved(Occurrence* occ);
+
+  void entry_cb(GtkEntry* entry, calendari::Calendari* cal);
 };
 
 
