@@ -491,6 +491,7 @@
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
                                     <property name="model">liststore_cal</property>
+                                    <signal name="changed" handler="detail_combobox_changed_cb"/>
                                     <child>
                                       <object class="GtkCellRendererText" id="cellrenderertext2"/>
                                       <attributes>

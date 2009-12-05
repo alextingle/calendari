@@ -256,7 +256,7 @@ MonthView::arrange_slots(void)
     for(OV::const_iterator i=d.occurrence.begin(); i!=d.occurrence.end(); ++i)
     {
       Occurrence& occ( **i );
-      if(!occ.event.calendar.show)
+      if(!occ.event.calendar().show)
         continue;
       while(next_slot<slots_per_cell && d.slot[next_slot])
           next_slot++;
@@ -394,7 +394,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
     {
       Occurrence& occ = *day[cell].slot[s];
       GdkColor col;
-      gdk_color_parse(occ.event.calendar.colour.c_str(),&col);
+      gdk_color_parse(occ.event.calendar().colour.c_str(),&col);
       gdk_cairo_set_source_color(cr,&col);
 
       if(&occ == cal.occurrence)

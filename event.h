@@ -30,14 +30,19 @@ public:
 
 class Event
 {
+  Calendar*   _calendar;
 public:
-  Calendar&   calendar;
+
   std::string uid;
   std::string summary;
   int         sequence;
   bool        all_day;
 
-  Event(Calendar& c): calendar(c) {}
+  Event(Calendar& c): _calendar(&c) {}
+  Calendar& calendar(void) const
+      { return *_calendar; }
+  void calendar(Calendar& c)
+      { _calendar = &c; }
 };
 
 

@@ -55,6 +55,9 @@ extern "C"
   G_MODULE_EXPORT void
   detail_entry_done_event_cb(GtkCellEditable* e, calendari::Calendari* cal);
 
+  G_MODULE_EXPORT void
+  detail_combobox_changed_cb(GtkComboBox* cb, calendari::Calendari* cal);
+
 } // end extern "C"
 
 #endif // CALENDARI__CALLBACK_H

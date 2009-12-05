@@ -100,3 +100,10 @@ detail_entry_done_event_cb(GtkCellEditable* e, calendari::Calendari* cal)
   // ?? NOT CURRENTLY USED
   cal->detail_view->entry_cb(GTK_ENTRY(e),cal);
 }
+
+
+G_MODULE_EXPORT void
+detail_combobox_changed_cb(GtkComboBox* cb, calendari::Calendari* cal)
+{
+  cal->detail_view->combobox_cb(cb,cal);
+}

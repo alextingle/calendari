@@ -57,12 +57,12 @@ DetailView::select(Occurrence* occ)
       GTK_TREE_MODEL(cal.calendar_list->liststore_cal),
       &iter,
       NULL,
-      occ->event.calendar.position
+      occ->event.calendar().position
     );
   if(!ok)
   {
     util::warning(0,
-        "Bad index in calendar list: %d",occ->event.calendar.position);
+        "Bad index in calendar list: %d",occ->event.calendar().position);
     clear();
     return;
   }
@@ -148,6 +148,31 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
           cal->moved(cal->occurrence);
       return;
     }
+  }
+}
+
+
+void
+DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
+{
+  if(!cal->occurrence)
+      return;
+  int cur_pos = cal->occurrence->event.calendar().position;
+  int new_pos = gtk_combo_box_get_active(cb);
+  if(new_pos==cur_pos)
+      return;
+  GtkTreeIter iter;
+  if( gtk_combo_box_get_active_iter(cb,&iter) )
+  {
+    Calendar* calendar;
+    gtk_tree_model_get(
+        GTK_TREE_MODEL( cal->calendar_list->liststore_cal ),
+        &iter,
+        3,&calendar,
+        -1
+      );
+    cal->occurrence->event.calendar( *calendar );
+    gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
   }
 }
 

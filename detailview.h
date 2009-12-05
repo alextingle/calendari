@@ -30,6 +30,7 @@ struct DetailView
   void moved(Occurrence* occ);
 
   void entry_cb(GtkEntry* entry, calendari::Calendari* cal);
+  void combobox_cb(GtkComboBox* cb, calendari::Calendari* cal);
 };
 
 
