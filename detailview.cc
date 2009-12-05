@@ -87,7 +87,8 @@ DetailView::moved(Occurrence* occ)
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(start_entry,buf);
 
-  localtime_r(&occ->dtend,&t);
+  time_t dtend = occ->dtend - (occ->event.all_day? 1: 0);
+  localtime_r(&dtend,&t);
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(end_entry,buf);
 }
@@ -144,6 +145,7 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
     if(ret && cal->occurrence->event.all_day)
     {
+      ++new_tm.tm_mday;
       if(cal->occurrence->set_end( ::mktime(&new_tm) ))
           cal->moved(cal->occurrence);
       return;

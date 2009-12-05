@@ -62,6 +62,28 @@ Calendari::moved(Occurrence* occ)
 }
 
 
+void
+Calendari::create_event(Occurrence* occ, time_t dtstart, time_t dtend)
+{
+  Calendar* calendar = calendar_list->current();
+  if(calendar)
+  {
+    char buf[256];
+    ::snprintf(buf, sizeof(buf),"?? make uid %ld - %ld ??",dtstart,time(NULL));
+    occurrence = db->make_occurrence(
+        buf, //  uid,
+        dtstart,
+        dtend,
+        "New Event", // summary,
+        false, // all_day,
+        calendar->calid.c_str() // calid
+      );
+    moved(occurrence);
+    select(occurrence);
+  }
+}
+
+
 } // end namespace calendari
 
 

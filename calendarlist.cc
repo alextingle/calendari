@@ -1,6 +1,7 @@
 #include "calendarlist.h"
 
 #include "calendari.h"
+#include "event.h"
 #include "db.h"
 #include "event.h"
 
@@ -15,6 +16,7 @@ void
 CalendarList::build(Calendari* cal, GtkBuilder* builder)
 {
   liststore_cal=GTK_LIST_STORE(gtk_builder_get_object(builder,"liststore_cal"));
+  treeview =GTK_TREE_VIEW(gtk_builder_get_object(builder,"cali_cals_treeview"));
 
   typedef std::map<std::string,Calendar*> CalMap;
   const CalMap& cc = cal->db->calendars();
@@ -35,6 +37,26 @@ CalendarList::build(Calendari* cal, GtkBuilder* builder)
         3,*v,
         -1
       );
+  }
+}
+
+
+Calendar*
+CalendarList::current(void) const
+{
+  GtkTreeSelection* s = gtk_tree_view_get_selection(treeview);
+  GtkTreeModel* m = GTK_TREE_MODEL(liststore_cal);
+  GtkTreeIter iter;
+  if(gtk_tree_selection_get_selected(s,NULL,&iter) ||
+     gtk_tree_model_get_iter_first(m,&iter))
+  {
+    Calendar* result;
+    gtk_tree_model_get(m,&iter, 3,&result, -1);
+    return result;
+  }
+  else
+  {
+    return NULL;
   }
 }
 

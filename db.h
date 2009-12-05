@@ -77,7 +77,6 @@ public:
   const std::map<std::string,Calendar*>& calendars(void) const
     { return _calendar; }
 
-private:
   Occurrence* make_occurrence(
       const char*  uid,
       time_t       dtstart,
@@ -87,6 +86,7 @@ private:
       const char*  calid
     );
 
+private:
   sqlite3* _db;
 
   std::map<std::string,Calendar*>                      _calendar;

@@ -39,6 +39,9 @@ struct Calendari
 
   /** An occurrence moved. */
   void moved(Occurrence* occ);
+
+  /** Create a new event - triggered by UI. */
+  void create_event(Occurrence* occ, time_t dtstart, time_t dtend);
 };
 
 

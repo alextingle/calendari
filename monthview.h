@@ -28,7 +28,7 @@ class View
 public:
   virtual void set(time_t self_time) =0;
   virtual void draw(GtkWidget* widget, cairo_t* cr) =0;
-  virtual void click(double x, double y) =0;
+  virtual void click(GdkEventType type, double x, double y) =0;
   virtual void select(Occurrence* occ) =0;
   virtual void moved(Occurrence* occ) =0;
   virtual View* prev(void)     { return this; }
@@ -45,7 +45,7 @@ public:
   ~MonthView(void);
   virtual void set(time_t self_time);
   virtual void draw(GtkWidget* widget, cairo_t* cr);
-  virtual void click(double x, double y);
+  virtual void click(GdkEventType type, double x, double y);
   virtual void select(Occurrence* occ);
   virtual void moved(Occurrence* occ);
   virtual View* prev(void);

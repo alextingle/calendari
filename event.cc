@@ -21,7 +21,11 @@ Occurrence::set_start(time_t start_)
 bool
 Occurrence::set_end(time_t end_)
 {
-  if(dtend==end_ || end_<dtstart)
+  if(dtend==end_)
+      return false;
+  if(event.all_day && end_<=dtstart)
+      return false;
+  if(!event.all_day && end_<dtstart)
       return false;
   // ?? Enforce restrictions from all_day events.
   dtend = end_;

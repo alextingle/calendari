@@ -119,7 +119,7 @@ MonthView::draw(GtkWidget* widget, cairo_t* cr)
 
 
 void
-MonthView::click(double x, double y)
+MonthView::click(GdkEventType type, double x, double y)
 {
   if(x<0.0 || x>=width)
       return;
@@ -142,10 +142,32 @@ MonthView::click(double x, double y)
     occ = day[cell].slot[slot];
     std::cout<<cell<<" "<<occ->event.summary<<std::endl;
   }
-  if(occ != cal.occurrence)
+  switch(type)
   {
-    cal.select( occ );
-    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    case GDK_2BUTTON_PRESS:
+        if(!occ)
+        {
+          tm slot_tm;
+          localtime_r(&day[cell].start,&slot_tm);
+          slot_tm.tm_sec  = 0;
+          slot_tm.tm_min  = 0;
+          now = ::time(NULL);
+          tm now_tm;
+          localtime_r(&now,&now_tm);
+          slot_tm.tm_hour = now_tm.tm_hour;
+          time_t dtstart = ::mktime(&slot_tm);
+          cal.create_event( occ, dtstart, dtstart+3600 );
+        }
+        break;
+    case GDK_BUTTON_PRESS:
+        if(occ != cal.occurrence)
+        {
+          cal.select( occ );
+          gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+        }
+        break;
+    default:
+        break;
   }
 }
 
