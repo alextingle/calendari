@@ -30,18 +30,20 @@ public:
 
 class Event
 {
-  Calendar*   _calendar;
+  Calendar*          _calendar;
 public:
-  std::string uid;
-  std::string summary;
-  int         sequence;
-  bool        all_day;
+  const std::string  uid;
+  std::string        _summary;
+  int                sequence;
+  bool               all_day;
 
-  Event(Calendar& c): _calendar(&c) {}
-  Calendar& calendar(void) const
-      { return *_calendar; }
-  void calendar(Calendar& c)
-      { _calendar = &c; }
+  Event(Calendar& c, const char* u): _calendar(&c), uid(u) {}
+
+  Calendar& calendar(void) const         { return *_calendar; }
+  const std::string& summary(void) const { return _summary; }
+
+  void set_calendar(Calendar& c)         { _calendar = &c; }
+  void set_summary(const std::string& s) { _summary = s; }
 };
 
 
@@ -51,12 +53,18 @@ public:
   typedef std::pair<time_t,std::string> key_type;
 
   Event&      event;
-  time_t      dtstart;
-  time_t      dtend;
+  time_t      _dtstart;
+  time_t      _dtend;
   
   Occurrence(Event& e, time_t t0, time_t t1):
-    event(e), dtstart(t0), dtend(t1), _key(t0,e.uid)
+    event(e), _dtstart(t0), _dtend(t1), _key(t0,e.uid)
     {}
+
+  const time_t& dtstart(void) const
+    { return _dtstart; }
+
+  const time_t& dtend(void) const
+    { return _dtend; }
 
   const key_type& key(void) const
     { return _key; }
@@ -69,7 +77,7 @@ public:
 
   /** Reset the _key, and return the new value. */
   const key_type& rekey(void)
-    { return _key = key_type(dtstart,event.uid); }
+    { return _key = key_type(_dtstart,event.uid); }
 
 private:
   key_type    _key; ///< Location of this object in Db::_occurrence map.

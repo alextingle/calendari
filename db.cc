@@ -101,7 +101,7 @@ Db::find(time_t begin, time_t end)
                        ::sqlite3_column_int( select_stmt,4), // all_day
           (const char*)::sqlite3_column_text(select_stmt,5)  // calid
         );
-      result.insert(std::make_pair(occ->dtstart,occ));
+      result.insert(std::make_pair(occ->dtstart(),occ));
     }
     else if(return_code==SQLITE_DONE)
     {
@@ -132,9 +132,8 @@ Occurrence* Db::make_occurrence(
   std::map<std::string,Event*>::iterator e = _event.find(uid);
   if(e==_event.end())
   {
-    event = _event[uid] = new Event( *_calendar[calid] ); //??
-    event->uid = uid;
-    event->summary = summary;
+    event = _event[uid] = new Event( *_calendar[calid], uid ); //??
+    event->set_summary( summary );
     event->sequence = 0; //??
     event->all_day = all_day;
   }

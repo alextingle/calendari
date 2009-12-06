@@ -47,7 +47,7 @@ DetailView::select(Occurrence* occ)
     clear();
     return;
   }
-  gtk_entry_set_text(title_entry,occ->event.summary.c_str());
+  gtk_entry_set_text(title_entry,occ->event.summary().c_str());
 
   // Fill in times
   this->moved(occ);
@@ -83,11 +83,12 @@ DetailView::moved(Occurrence* occ)
   const char* date_format =
       ( occ->event.all_day? FORMAT_DATE: FORMAT_DATE FORMAT_TIME );
 
-  localtime_r(&occ->dtstart,&t);
+  time_t dtstart = occ->dtstart();
+  localtime_r(&dtstart,&t);
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(start_entry,buf);
 
-  time_t dtend = occ->dtend - (occ->event.all_day? 1: 0);
+  time_t dtend = occ->dtend() - (occ->event.all_day? 1: 0);
   localtime_r(&dtend,&t);
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(end_entry,buf);
@@ -103,9 +104,9 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
   const char* newval = gtk_entry_get_text(entry);
   if(entry==title_entry)
   {
-    if(cal->occurrence->event.summary!=newval && ::strlen(newval))
+    if(cal->occurrence->event.summary()!=newval && ::strlen(newval))
     {
-      cal->occurrence->event.summary = newval;
+      cal->occurrence->event.set_summary( newval );
       gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
     }
   }
@@ -173,7 +174,7 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
         3,&calendar,
         -1
       );
-    cal->occurrence->event.calendar( *calendar );
+    cal->occurrence->event.set_calendar( *calendar );
     gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
   }
 }
