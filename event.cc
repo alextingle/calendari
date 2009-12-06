@@ -5,6 +5,32 @@
 namespace calendari {
 
 
+Calendar::Calendar(
+    const char* calid_,
+    const char* name_,
+    int         pos_,
+    const char* col_,
+    int         show_
+  )
+  : calid(calid_), _name(name_), _position(pos_), _colour(col_), _show(show_)
+{}
+
+
+Event::Event(
+    Calendar&    c,
+    const char*  u,
+    const char*  s,
+    int          q,
+    bool         a
+  )
+  : uid(u),
+    _calendar(&c),
+    _summary(s),
+    _sequence(q),
+    _all_day(a)
+{}
+
+
 bool
 Occurrence::set_start(time_t start_)
 {

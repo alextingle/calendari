@@ -12,20 +12,12 @@ class Calendar
 public:
   const std::string calid;
   
-  Calendar(
-      const char* calid_,
-      const char* name_,
-      int         pos_,
-      const char* col_,
-      int         show_
-    )
-    : calid(calid_), _name(name_), _position(pos_), _colour(col_), _show(show_)
-    {}
+  Calendar(const char* i, const char* n, int p, const char* c, int s);
 
-  const std::string& name(void) const { return _name; }
-  int position(void) const { return _position; }
-  const std::string& colour(void) const { return _colour; }
-  bool show(void) const { return _show; }
+  const std::string& name(void)     const { return _name; }
+  int                position(void) const { return _position; }
+  const std::string& colour(void)   const { return _colour; }
+  bool               show(void)     const { return _show; }
 
   void toggle_show(void) { _show = !_show; }
 
@@ -42,19 +34,7 @@ class Event
 public:
   const std::string  uid;
 
-  Event(
-      Calendar&    c,
-      const char*  u,
-      const char*  s,
-      int          q,
-      bool         a
-    )
-    : uid(u),
-      _calendar(&c),
-      _summary(s),
-      _sequence(q),
-      _all_day(a)
-    {}
+  Event(Calendar& c, const char* u, const char* s, int q, bool a);
 
   Calendar& calendar(void) const         { return *_calendar; }
   const std::string& summary(void) const { return _summary; }
