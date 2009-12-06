@@ -1,17 +1,27 @@
+OBJDIR := obj
+
 CXXFLAGS += -g $(shell pkg-config --cflags gtk+-2.0 gmodule-2.0)
 
 LDFLAGS += $(shell pkg-config --libs gtk+-2.0 gmodule-2.0) -lsqlite3
 
 CC_FILES := $(wildcard *.cc)
-OBJECTS := $(CC_FILES:.cc=.o)
+OBJECTS := $(patsubst %.cc,$(OBJDIR)/%.o,$(CC_FILES))
 
 .PHONEY: calendari
 calendari: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
-$(OBJECTS): %.o: %.cc
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $<
+$(OBJECTS): $(OBJDIR)/%.o: %.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONEY: clean
 clean:
-	rm -f calendari *.o
+	rm -f calendari $(OBJDIR)/*.o
+
+$(OBJDIR)/deps.mk: $(wildcard *.h) $(CC_FILES)
+	g++ -MM $(CXXFLAGS) $(CPPFLAGS) $(CC_FILES) | \
+	  sed 's%^[a-zA-Z].*:%$(OBJDIR)/\0%' > $@
+
+ifneq "$(MAKECMDGOALS)" "clean"
+  include $(OBJDIR)/deps.mk
+endif
