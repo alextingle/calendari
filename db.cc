@@ -132,10 +132,14 @@ Occurrence* Db::make_occurrence(
   std::map<std::string,Event*>::iterator e = _event.find(uid);
   if(e==_event.end())
   {
-    event = _event[uid] = new Event( *_calendar[calid], uid ); //??
-    event->set_summary( summary );
-    event->sequence = 0; //??
-    event->all_day = all_day;
+    event = _event[uid] =
+      new Event(
+          *_calendar[calid],
+          uid,
+          summary,
+          0, // ??? sequence
+          all_day
+        );
   }
   else
   {

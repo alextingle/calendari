@@ -300,7 +300,7 @@ MonthView::arrange_slots(void)
     for(OV::const_iterator i=d.occurrence.begin(); i!=d.occurrence.end(); ++i)
     {
       Occurrence& occ( **i );
-      if(!occ.event.calendar().show)
+      if(!occ.event.calendar().show())
         continue;
       while(next_slot<slots_per_cell && d.slot[next_slot])
           next_slot++;
@@ -311,7 +311,7 @@ MonthView::arrange_slots(void)
         break;
       }
       d.slot[next_slot] = &occ;
-      if(occ.event.all_day)
+      if(occ.event.all_day())
       {
         size_t future_cell = cell+1;
         while(future_cell<MAX_CELLS && occ.dtend()>day[future_cell].start)
@@ -438,7 +438,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
     {
       Occurrence& occ = *day[cell].slot[s];
       GdkColor col;
-      gdk_color_parse(occ.event.calendar().colour.c_str(),&col);
+      gdk_color_parse(occ.event.calendar().colour().c_str(),&col);
       gdk_cairo_set_source_color(cr,&col);
 
       if(&occ == cal.occurrence)
@@ -453,7 +453,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
       }
       pango_layout_set_height(pl,slot_height*PANGO_SCALE);
       std::string pango_text =
-          (occ.event.all_day? "*": "") + occ.event.summary();
+          (occ.event.all_day()? "*": "") + occ.event.summary();
       cairo_move_to(cr, cellx, celly + s * slot_height);
       pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
       pango_cairo_show_layout(cr,pl);

@@ -10,11 +10,7 @@ namespace calendari {
 class Calendar
 {
 public:
-  std::string calid;
-  std::string name;
-  int         position;
-  std::string colour;
-  bool        show;
+  const std::string calid;
   
   Calendar(
       const char* calid_,
@@ -23,27 +19,55 @@ public:
       const char* col_,
       int         show_
     )
-    : calid(calid_), name(name_), position(pos_), colour(col_), show(show_)
+    : calid(calid_), _name(name_), _position(pos_), _colour(col_), _show(show_)
     {}
+
+  const std::string& name(void) const { return _name; }
+  int position(void) const { return _position; }
+  const std::string& colour(void) const { return _colour; }
+  bool show(void) const { return _show; }
+
+  void toggle_show(void) { _show = !_show; }
+
+private:
+  std::string _name;
+  int         _position;
+  std::string _colour;
+  bool        _show;
 };
 
 
 class Event
 {
-  Calendar*          _calendar;
 public:
   const std::string  uid;
-  std::string        _summary;
-  int                sequence;
-  bool               all_day;
 
-  Event(Calendar& c, const char* u): _calendar(&c), uid(u) {}
+  Event(
+      Calendar&    c,
+      const char*  u,
+      const char*  s,
+      int          q,
+      bool         a
+    )
+    : uid(u),
+      _calendar(&c),
+      _summary(s),
+      _sequence(q),
+      _all_day(a)
+    {}
 
   Calendar& calendar(void) const         { return *_calendar; }
   const std::string& summary(void) const { return _summary; }
+  bool all_day(void) const               { return _all_day; }
 
   void set_calendar(Calendar& c)         { _calendar = &c; }
   void set_summary(const std::string& s) { _summary = s; }
+
+private:
+  Calendar*          _calendar;
+  std::string        _summary;
+  int                _sequence;
+  bool               _all_day;
 };
 
 
@@ -53,8 +77,6 @@ public:
   typedef std::pair<time_t,std::string> key_type;
 
   Event&      event;
-  time_t      _dtstart;
-  time_t      _dtend;
   
   Occurrence(Event& e, time_t t0, time_t t1):
     event(e), _dtstart(t0), _dtend(t1), _key(t0,e.uid)
@@ -80,6 +102,8 @@ public:
     { return _key = key_type(_dtstart,event.uid); }
 
 private:
+  time_t      _dtstart;
+  time_t      _dtend;
   key_type    _key; ///< Location of this object in Db::_occurrence map.
 };
 

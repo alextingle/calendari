@@ -57,12 +57,12 @@ DetailView::select(Occurrence* occ)
       GTK_TREE_MODEL(cal.calendar_list->liststore_cal),
       &iter,
       NULL,
-      occ->event.calendar().position
+      occ->event.calendar().position()
     );
   if(!ok)
   {
     util::warning(0,
-        "Bad index in calendar list: %d",occ->event.calendar().position);
+        "Bad index in calendar list: %d",occ->event.calendar().position());
     clear();
     return;
   }
@@ -81,14 +81,14 @@ DetailView::moved(Occurrence* occ)
   tm t;
   char buf[256];
   const char* date_format =
-      ( occ->event.all_day? FORMAT_DATE: FORMAT_DATE FORMAT_TIME );
+      ( occ->event.all_day()? FORMAT_DATE: FORMAT_DATE FORMAT_TIME );
 
   time_t dtstart = occ->dtstart();
   localtime_r(&dtstart,&t);
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(start_entry,buf);
 
-  time_t dtend = occ->dtend() - (occ->event.all_day? 1: 0);
+  time_t dtend = occ->dtend() - (occ->event.all_day()? 1: 0);
   localtime_r(&dtend,&t);
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(end_entry,buf);
@@ -118,14 +118,14 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     tm new_tm;
     ::memset(&new_tm,0,sizeof(new_tm));
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
-    if(ret && !cal->occurrence->event.all_day)
+    if(ret && !cal->occurrence->event.all_day())
     {
       if(cal->occurrence->set_start( ::mktime(&new_tm) ))
           cal->moved(cal->occurrence);
       return;
     }
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
-    if(ret && cal->occurrence->event.all_day)
+    if(ret && cal->occurrence->event.all_day())
     {
       if(cal->occurrence->set_start( ::mktime(&new_tm) ))
           cal->moved(cal->occurrence);
@@ -137,14 +137,14 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     tm new_tm;
     ::memset(&new_tm,0,sizeof(new_tm));
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
-    if(ret && !cal->occurrence->event.all_day)
+    if(ret && !cal->occurrence->event.all_day())
     {
       if(cal->occurrence->set_end( ::mktime(&new_tm) ))
           cal->moved(cal->occurrence);
       return;
     }
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
-    if(ret && cal->occurrence->event.all_day)
+    if(ret && cal->occurrence->event.all_day())
     {
       ++new_tm.tm_mday;
       if(cal->occurrence->set_end( ::mktime(&new_tm) ))
@@ -160,7 +160,7 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
 {
   if(!cal->occurrence)
       return;
-  int cur_pos = cal->occurrence->event.calendar().position;
+  int cur_pos = cal->occurrence->event.calendar().position();
   int new_pos = gtk_combo_box_get_active(cb);
   if(new_pos==cur_pos)
       return;
