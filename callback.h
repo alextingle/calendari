@@ -11,6 +11,16 @@ namespace calendari {
 extern "C"
 {
 
+  // -- menus --
+
+  G_MODULE_EXPORT void
+  cali_menu_delete(
+      GtkMenuItem*           menuitem,
+      calendari::Calendari*  cal
+    );
+
+  // -- cali_main_drawingarea --
+
   G_MODULE_EXPORT gboolean
   cali_drawingarea_button_press_event_cb(
       GtkWidget*             widget,
@@ -22,6 +32,13 @@ extern "C"
   cali_drawingarea_expose_event_cb(
       GtkWidget*             widget,
       GdkEventExpose*        event,
+      calendari::Calendari*  cal
+    );
+
+  G_MODULE_EXPORT gboolean
+  cali_drawingarea_key_press_event_cb(
+      GtkWidget*             widget,
+      GdkEventKey*           event,
       calendari::Calendari*  cal
     );
 

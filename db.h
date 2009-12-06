@@ -86,6 +86,9 @@ public:
       const char*  calid
     );
 
+  void moved(Occurrence* occ);
+  void erase(Occurrence* occ);
+
 private:
   sqlite3* _db;
 

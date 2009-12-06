@@ -6,7 +6,23 @@
 #include "monthview.h"
 
 #include <cstdio>
+#include <gdk/gdkkeysyms.h>
 
+
+// -- menus --
+
+G_MODULE_EXPORT void
+cali_menu_delete(
+    GtkMenuItem*           menuitem,
+    calendari::Calendari*  cal
+  )
+{
+  if(gtk_widget_has_focus(cal->main_drawingarea))
+      cal->erase_selected();
+}
+
+
+// -- cali_main_drawingarea --
 
 G_MODULE_EXPORT gboolean
 cali_drawingarea_button_press_event_cb(
@@ -16,6 +32,7 @@ cali_drawingarea_button_press_event_cb(
   )
 {
   cal->main_view->click(event->type, event->x, event->y);
+  gtk_widget_grab_focus(widget);
   return true;
 }
 
@@ -37,6 +54,43 @@ cali_drawingarea_expose_event_cb(
   cal->main_view->draw(widget,cr);
   cairo_destroy(cr);
   return false;
+}
+
+
+G_MODULE_EXPORT gboolean
+cali_drawingarea_key_press_event_cb(
+    GtkWidget*             widget,
+    GdkEventKey*           event,
+    calendari::Calendari*  cal
+  )
+{
+  if(event->type==GDK_KEY_PRESS)
+  {
+    switch(event->keyval)
+    {
+      case GDK_Left:
+          printf("Left\n");
+          break;
+      case GDK_Up:
+          printf("Up\n");
+          break;
+      case GDK_Right:
+          printf("Right\n");
+          break;
+      case GDK_Down:
+          printf("Down\n");
+          break;
+      case GDK_BackSpace:
+      case GDK_Delete:
+      case GDK_KP_Delete:
+          cal->erase_selected();
+          break;
+      default:
+          printf("Other\n");
+          break;
+    }
+  }
+  return true;
 }
 
 

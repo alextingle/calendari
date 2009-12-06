@@ -161,4 +161,19 @@ Occurrence* Db::make_occurrence(
 }
 
 
+void
+Db::moved(Occurrence* occ)
+{
+}
+
+
+void
+Db::erase(Occurrence* occ)
+{
+  std::pair<time_t,std::string> idx( occ->dtstart, occ->event.uid );
+  _occurrence.erase(idx);
+  delete occ;
+}
+
+
 } // end namespace calendari

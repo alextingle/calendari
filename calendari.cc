@@ -80,6 +80,19 @@ Calendari::create_event(Occurrence* occ, time_t dtstart, time_t dtend)
       );
     moved(occurrence);
     select(occurrence);
+    gtk_window_set_focus(GTK_WINDOW(window),GTK_WIDGET(detail_view->title_entry));
+  }
+}
+
+
+void
+Calendari::erase_selected(void)
+{
+  if(occurrence)
+  {
+    main_view->erase(occurrence);
+    db->erase(occurrence);
+    select(NULL);
   }
 }
 

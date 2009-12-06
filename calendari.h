@@ -42,6 +42,9 @@ struct Calendari
 
   /** Create a new event - triggered by UI. */
   void create_event(Occurrence* occ, time_t dtstart, time_t dtend);
+
+  /** Erase the selected occurrence, if any. */
+  void erase_selected(void);
 };
 
 

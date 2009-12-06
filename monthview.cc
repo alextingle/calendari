@@ -183,7 +183,7 @@ MonthView::moved(Occurrence* occ)
   Occurrence* add = occ;
   Occurrence* del = occ;
   typedef std::vector<Occurrence*> OV;
-  for(size_t c=0; c<MAX_CELLS; ++c)
+  for(size_t c=0; c<MAX_CELLS && (add || del); ++c)
   {
     size_t cell = MAX_CELLS-1-c;
     OV& ov( day[cell].occurrence );
@@ -218,6 +218,28 @@ MonthView::moved(Occurrence* occ)
   }
   if(!add || !del) // Something was changed
       gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+}
+
+
+void
+MonthView::erase(Occurrence* occ)
+{
+  Occurrence* del = occ;
+  typedef std::vector<Occurrence*> OV;
+  for(size_t c=0; c<MAX_CELLS; ++c)
+  {
+    size_t cell = MAX_CELLS-1-c;
+    OV& ov( day[cell].occurrence );
+    for(OV::iterator o=ov.begin(); o!=ov.end(); ++o)
+    {
+      if(*o == del)
+      {
+        ov.erase( o );
+        gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+        return;
+      }
+    }
+  }
 }
 
 

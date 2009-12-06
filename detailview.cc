@@ -103,7 +103,7 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
   const char* newval = gtk_entry_get_text(entry);
   if(entry==title_entry)
   {
-    if(cal->occurrence->event.summary!=newval)
+    if(cal->occurrence->event.summary!=newval && ::strlen(newval))
     {
       cal->occurrence->event.summary = newval;
       gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
