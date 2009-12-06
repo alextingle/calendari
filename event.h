@@ -32,7 +32,6 @@ class Event
 {
   Calendar*   _calendar;
 public:
-
   std::string uid;
   std::string summary;
   int         sequence;
@@ -49,17 +48,31 @@ public:
 class Occurrence
 {
 public:
+  typedef std::pair<time_t,std::string> key_type;
+
   Event&      event;
   time_t      dtstart;
   time_t      dtend;
   
-  Occurrence(Event& e): event(e) {}
+  Occurrence(Event& e, time_t t0, time_t t1):
+    event(e), dtstart(t0), dtend(t1), _key(t0,e.uid)
+    {}
+
+  const key_type& key(void) const
+    { return _key; }
 
   /** Returns TRUE if dtstart was actually changed. */
   bool set_start(time_t start_);
 
   /** Returns TRUE if dtend was actually changed. */
   bool set_end(time_t end_);
+
+  /** Reset the _key, and return the new value. */
+  const key_type& rekey(void)
+    { return _key = key_type(dtstart,event.uid); }
+
+private:
+  key_type    _key; ///< Location of this object in Db::_occurrence map.
 };
 
 

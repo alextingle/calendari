@@ -92,9 +92,9 @@ public:
 private:
   sqlite3* _db;
 
-  std::map<std::string,Calendar*>                      _calendar;
-  std::map<std::string,Event*>                         _event;
-  std::map<std::pair<time_t,std::string>,Occurrence*>  _occurrence;
+  std::map<std::string,Calendar*>             _calendar;
+  std::map<std::string,Event*>                _event;
+  std::map<Occurrence::key_type,Occurrence*>  _occurrence;
 };
 
 

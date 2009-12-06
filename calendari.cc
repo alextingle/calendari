@@ -56,6 +56,7 @@ Calendari::select(Occurrence* occ)
 void
 Calendari::moved(Occurrence* occ)
 {
+  db->moved( occ );
   main_view->moved( occ );
   if(occ==this->occurrence) // selected?
       detail_view->moved( occ );
@@ -92,7 +93,8 @@ Calendari::erase_selected(void)
   {
     main_view->erase(occurrence);
     db->erase(occurrence);
-    select(NULL);
+    occurrence = NULL;
+    detail_view->select( NULL );
   }
 }
 

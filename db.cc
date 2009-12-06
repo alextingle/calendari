@@ -143,35 +143,27 @@ Occurrence* Db::make_occurrence(
     event = e->second;
   }
 
-  Occurrence* result;
-  std::pair<time_t,std::string> idx(dtstart,uid);
-  std::map<std::pair<time_t,std::string>,Occurrence*>::iterator o =
-      _occurrence.find(idx);
-  if(o==_occurrence.end())
-  {
-     result = _occurrence[idx] = new Occurrence(*event);
-     result->dtstart = dtstart;
-     result->dtend = dtend;
-  }
+  Occurrence::key_type key(dtstart,uid);
+  std::map<Occurrence::key_type,Occurrence*>::iterator o =_occurrence.find(key);
+  if(o!=_occurrence.end())
+      return o->second;
   else
-  {
-    result = o->second;
-  }
-  return result;
+      return _occurrence[key] = new Occurrence(*event,dtstart,dtend);
 }
 
 
 void
 Db::moved(Occurrence* occ)
 {
+  _occurrence.erase( occ->key() );
+  _occurrence[ occ->rekey() ] = occ;
 }
 
 
 void
 Db::erase(Occurrence* occ)
 {
-  std::pair<time_t,std::string> idx( occ->dtstart, occ->event.uid );
-  _occurrence.erase(idx);
+  _occurrence.erase( occ->key() );
   delete occ;
 }
 
