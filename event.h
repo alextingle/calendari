@@ -19,7 +19,7 @@ public:
   const std::string& colour(void)   const { return _colour; }
   bool               show(void)     const { return _show; }
 
-  void toggle_show(void) { _show = !_show; }
+  void toggle_show(void);
 
 private:
   std::string _name;
@@ -40,8 +40,8 @@ public:
   const std::string& summary(void) const { return _summary; }
   bool all_day(void) const               { return _all_day; }
 
-  void set_calendar(Calendar& c)         { _calendar = &c; }
-  void set_summary(const std::string& s) { _summary = s; }
+  void set_calendar(Calendar& c);
+  void set_summary(const std::string& s);
 
 private:
   Calendar*          _calendar;
@@ -80,6 +80,9 @@ public:
   /** Reset the _key, and return the new value. */
   const key_type& rekey(void)
     { return _key = key_type(_dtstart,event.uid); }
+
+  /** Notify this occurrence has been removed. */
+  void destroy(void);
 
 private:
   time_t      _dtstart;

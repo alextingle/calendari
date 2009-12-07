@@ -33,7 +33,7 @@ Db::load_calendars(void)
 {
   sqlite3_stmt* select_stmt;
   const char* sql =
-      "select CALID, CALNAME, POSITION, COLOUR "
+      "select CALID,CALNAME,POSITION,COLOUR,SHOW "
       "from CALENDAR "
       "order by POSITION";
   if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) )
@@ -51,7 +51,7 @@ Db::load_calendars(void)
           position++,
 //                       ::sqlite3_column_int( select_stmt,2), // position
           (const char*)::sqlite3_column_text(select_stmt,3), // colour
-          true                                               // show
+                       ::sqlite3_column_int( select_stmt,4)  // show
         );
       _calendar.insert(std::make_pair(cal->calid,cal));
     }
@@ -166,6 +166,7 @@ Db::moved(Occurrence* occ)
 void
 Db::erase(Occurrence* occ)
 {
+  occ->destroy();
   _occurrence.erase( occ->key() );
   delete occ;
 }

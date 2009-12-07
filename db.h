@@ -3,8 +3,9 @@
 
 #include "event.h"
 
-#include <sqlite3.h>
 #include <map>
+#include <sqlite3.h>
+#include <string>
 
 namespace calendari {
 
@@ -38,6 +39,7 @@ create table CALENDAR (
   CALNAME  string,
   POSITION integer, -- ordering within the UI's calendar list.
   COLOUR   string,
+  SHOW     boolean,
   primary key(VERSION,CALID)
 );
 
