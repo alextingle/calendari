@@ -1,6 +1,8 @@
-#include "err.h"
-#include "sql.h"
 #include "db.h"
+
+#include "err.h"
+#include "queue.h"
+#include "sql.h"
 
 namespace calendari {
 
@@ -9,6 +11,7 @@ Db::Db(const char* dbname)
 {
   if( SQLITE_OK != ::sqlite3_open(dbname,&_db) )
       calendari::sql::error(_db,__FILE__,__LINE__);
+  Queue::inst().set_db( this );
 }
 
 
@@ -49,7 +52,7 @@ Db::load_calendars(void)
           (const char*)::sqlite3_column_text(select_stmt,0), // calid
           (const char*)::sqlite3_column_text(select_stmt,1), // name
           position++,
-//                       ::sqlite3_column_int( select_stmt,2), // position
+//??                       ::sqlite3_column_int( select_stmt,2), // position
           (const char*)::sqlite3_column_text(select_stmt,3), // colour
                        ::sqlite3_column_int( select_stmt,4)  // show
         );

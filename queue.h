@@ -13,6 +13,7 @@ class Db;
 class Queue
 {
 public:
+  static bool idle(void*);
   static Queue& inst(void)
     {
       static Queue q;
@@ -22,15 +23,19 @@ public:
   /** Escape single-quote characters for Sqlite strings. */
   std::string quote(const std::string& s) const;
 
+  void set_db(Db* db_);
+
+  bool empty(void) const { return changes.empty(); }
   void push(const std::string& sql);
   void pushf(const char* format, ...);
-  void flush(Db& db);
+  void flush(void);
 
 private:
   Queue(void) {}
   Queue(const Queue&);
   Queue& operator = (const Queue&);
 
+  Db* db;
   std::list<std::string> changes;
 };
 

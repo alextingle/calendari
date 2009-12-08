@@ -1,11 +1,23 @@
 #include "queue.h"
 
+#include "db.h"
 #include "err.h"
 
 #include <cstdarg>
 #include <cstdio>
+#include <gtk/gtk.h>
 
 namespace calendari {
+
+
+bool
+Queue::idle(void*)
+{
+  static Queue& q( Queue::inst() );
+  if(!q.empty())
+      q.flush();
+  return false;
+}
 
 
 std::string
@@ -29,8 +41,18 @@ Queue::quote(const std::string& s) const
 
 
 void
+Queue::set_db(Db* db_)
+{
+  db = db_;
+}
+
+
+void
 Queue::push(const std::string& sql)
 {
+  // Hook-in idle processing.
+  (void)g_idle_add((GSourceFunc)idle,(gpointer)this);
+
   changes.push_back(sql);
   printf("%s\n",sql.c_str());
 }
@@ -50,8 +72,10 @@ Queue::pushf(const char* format, ...)
 }
 
 
-void flush(Db& db)
+void
+Queue::flush(void)
 {
+  printf("flush queue\n");
 }
 
 
