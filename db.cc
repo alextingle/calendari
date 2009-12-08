@@ -3,6 +3,7 @@
 #include "err.h"
 #include "queue.h"
 #include "sql.h"
+#include "util.h"
 
 namespace calendari {
 
@@ -28,6 +29,20 @@ Db::~Db(void)
   typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
   for(OIt o =_occurrence.begin(); o!=_occurrence.end(); ++o)
       delete o->second;
+}
+
+
+void
+Db::exec(const char* sql)
+{
+  char* errmsg;
+  int ret = ::sqlite3_exec(_db,sql,NULL,NULL,&errmsg);
+  if(SQLITE_OK != ret)
+  {
+    util::error(1,0,"sqlite error %i: %s at %s:%i in SQL \"%s\"",
+        ret,errmsg,__FILE__,__LINE__,sql);
+    sqlite3_free(errmsg);
+  }
 }
 
 

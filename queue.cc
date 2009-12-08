@@ -41,9 +41,9 @@ Queue::quote(const std::string& s) const
 
 
 void
-Queue::set_db(Db* db_)
+Queue::set_db(Db* db)
 {
-  db = db_;
+  _db = db;
 }
 
 
@@ -53,7 +53,7 @@ Queue::push(const std::string& sql)
   // Hook-in idle processing.
   (void)g_idle_add((GSourceFunc)idle,(gpointer)this);
 
-  changes.push_back(sql);
+  _changes.push_back(sql);
   printf("%s\n",sql.c_str());
 }
 
@@ -75,7 +75,11 @@ Queue::pushf(const char* format, ...)
 void
 Queue::flush(void)
 {
-  printf("flush queue\n");
+  while(!_changes.empty())
+  {
+    _db->exec( _changes.front().c_str() );
+    _changes.pop_front();
+  }
 }
 
 

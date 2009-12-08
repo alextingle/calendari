@@ -25,7 +25,7 @@ public:
 
   void set_db(Db* db_);
 
-  bool empty(void) const { return changes.empty(); }
+  bool empty(void) const { return _changes.empty(); }
   void push(const std::string& sql);
   void pushf(const char* format, ...);
   void flush(void);
@@ -35,8 +35,8 @@ private:
   Queue(const Queue&);
   Queue& operator = (const Queue&);
 
-  Db* db;
-  std::list<std::string> changes;
+  Db* _db;
+  std::list<std::string> _changes;
 };
 
 

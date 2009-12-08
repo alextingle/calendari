@@ -73,6 +73,9 @@ public:
   explicit Db(const char* dbname);
   ~Db(void);
 
+  /** Execute arbitrary SQL. Discards any resulting columns. */
+  void exec(const char* sql);
+
   void load_calendars(void);  
   std::multimap<time_t,Occurrence*> find(time_t begin, time_t end);
 
