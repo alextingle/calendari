@@ -21,7 +21,7 @@ public:
     }
 
   /** Escape single-quote characters for Sqlite strings. */
-  std::string quote(const std::string& s) const;
+  static std::string quote(const std::string& s);
 
   void set_db(Db* db_);
 

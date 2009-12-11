@@ -12,11 +12,19 @@ namespace calendari {
 Calendar::Calendar(
     const char* calid_,
     const char* name_,
+    const char* path_,
+    int         readonly_,
     int         pos_,
     const char* col_,
     int         show_
   )
-  : calid(calid_), _name(name_), _position(pos_), _colour(col_), _show(show_)
+  : calid(calid_),
+    _name(name_),
+    _path(path_),
+    _readonly(readonly_),
+    _position(pos_),
+    _colour(col_),
+    _show(show_)
 {}
 
 

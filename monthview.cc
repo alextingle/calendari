@@ -56,7 +56,8 @@ MonthView::set(time_t self_time)
   gtk_label_set_text(cal.main_label,buf);
 
   // Wind back to the first day of the week.
-  i.tm_mday -= i.tm_wday;
+  int first_day_of_week = 1; // ?? Monday - should be configurable
+  i.tm_mday -= (i.tm_wday + 7 - first_day_of_week) % 7;
 
   // Loop forward through days.
   for(int cell=0; cell<MAX_CELLS; ++cell)

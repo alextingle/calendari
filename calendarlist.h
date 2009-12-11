@@ -20,6 +20,7 @@ struct CalendarList
   Calendar* current(void) const;
   void toggle(gchar* path, calendari::Calendari* cal);
   void add(void);
+  void refresh(calendari::Calendari* cal);
 };
 
 

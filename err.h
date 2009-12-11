@@ -4,6 +4,7 @@
 #include <error.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <cstdlib>
 
 namespace calendari {
 namespace util {
@@ -16,6 +17,7 @@ inline void error(int,int,const char* format,...)
   vfprintf(stderr,format,va_args);
   va_end(va_args);
   fprintf(stderr,"\n");
+  abort();
 }
 
 

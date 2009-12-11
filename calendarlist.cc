@@ -1,9 +1,10 @@
 #include "calendarlist.h"
 
 #include "calendari.h"
-#include "event.h"
 #include "db.h"
 #include "event.h"
+#include "event.h"
+#include "ics.h"
 
 #include <map>
 #include <string>
@@ -90,6 +91,19 @@ CalendarList::add(void)
       2,"#0000bb",
       -1
     );
+}
+
+
+void
+CalendarList::refresh(calendari::Calendari* cal)
+{
+  Calendar* curr = current();
+  if(curr)
+  {
+    printf("refresh %s at %s\n",curr->name().c_str(),curr->path().c_str());
+    ics::read(curr->path().c_str(), cal->db, 2);
+    cal->db->refresh_cal(curr->calid.c_str(),2);
+  }
 }
 
 

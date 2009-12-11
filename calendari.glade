@@ -67,6 +67,16 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkImageMenuItem" id="cali_refresh_menuitem">
+                        <property name="label">gtk-refresh</property>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
+                        <property name="use_stock">True</property>
+                        <accelerator key="r" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="cali_menu_refresh_cb"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkSeparatorMenuItem" id="separatormenuitem1">
                         <property name="visible">True</property>
                       </object>
@@ -123,7 +133,7 @@
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
                         <property name="use_stock">True</property>
-                        <signal name="activate" handler="cali_menu_delete"/>
+                        <signal name="activate" handler="cali_menu_delete_cb"/>
                       </object>
                     </child>
                   </object>

@@ -21,7 +21,7 @@ Queue::idle(void*)
 
 
 std::string
-Queue::quote(const std::string& s) const
+Queue::quote(const std::string& s)
 {
   std::string result = "";
   std::string::size_type cur = 0;
@@ -75,10 +75,15 @@ Queue::pushf(const char* format, ...)
 void
 Queue::flush(void)
 {
-  while(!_changes.empty())
+  if(!_changes.empty())
   {
-    _db->exec( _changes.front().c_str() );
-    _changes.pop_front();
+    _db->exec("begin");
+    while(!_changes.empty())
+    {
+      _db->exec( _changes.front().c_str() );
+      _changes.pop_front();
+    }
+    _db->exec("commit");
   }
 }
 

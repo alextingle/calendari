@@ -12,9 +12,12 @@ class Calendar
 public:
   const std::string calid;
   
-  Calendar(const char* i, const char* n, int p, const char* c, int s);
+  Calendar(const char* id, const char* nm, const char* pa,
+      int rp, int ps, const char* cl, int sh);
 
   const std::string& name(void)     const { return _name; }
+  const std::string& path(void)     const { return _path; }
+  bool               readonly(void) const { return _readonly; }
   int                position(void) const { return _position; }
   const std::string& colour(void)   const { return _colour; }
   bool               show(void)     const { return _show; }
@@ -23,6 +26,8 @@ public:
 
 private:
   std::string _name;
+  std::string _path;
+  bool        _readonly;
   int         _position;
   std::string _colour;
   bool        _show;
