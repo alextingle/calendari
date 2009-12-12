@@ -28,32 +28,48 @@ namespace ics {
 typedef scoped<icalcomponent,icalcomponent_free> SComponent;
 
 
+const char* colours[] = {
+    "#aa0000",
+    "#0000aa",
+    "#00aa00",
+    "#006699",
+    "#669900",
+    "#990066",
+    "#660099",
+    "#009966",
+    "#996600"
+  };
+
+
 // -- private --
 
 int parse(
     const char*     ical_filename,
     icalcomponent*  ical,
-    sqlite3*        db,
+    Db*             db,
     int             version
   )
 {
+  sqlite3* sdb = db->sqlite_db();
+
   // Prepare the insert statements.
   sqlite3_stmt*  insert_cal;
   const char* sql =
-      "insert into CALENDAR (VERSION,CALID,CALNAME,PATH,POSITION,COLOUR,SHOW) "
-      "values (?,?,?,?,?,?,1)";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_cal,NULL) );
+      "insert into CALENDAR "
+        "(VERSION,CALNUM,CALID,CALNAME,PATH,POSITION,COLOUR,SHOW) "
+        "values (?,?,?,?,?,?,?,1)";
+  CALI_SQLCHK(sdb, ::sqlite3_prepare_v2(sdb,sql,-1,&insert_cal,NULL) );
 
   sqlite3_stmt*  insert_evt;
   sql="insert into EVENT (VERSION,UID,SUMMARY,CALID,SEQUENCE,ALLDAY,VEVENT) "
       "values (?,?,?,?,?,?,?)";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) );
+  CALI_SQLCHK(sdb, ::sqlite3_prepare_v2(sdb,sql,-1,&insert_evt,NULL) );
 
   sqlite3_stmt*  insert_occ;
   sql="insert into OCCURRENCE (VERSION,UID,DTSTART,DTEND) values (?,?,?,?)";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_occ,NULL) );
+  CALI_SQLCHK(sdb, ::sqlite3_prepare_v2(sdb,sql,-1,&insert_occ,NULL) );
 
-  CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
+  CALI_SQLCHK(sdb, ::sqlite3_exec(sdb, "begin", 0, 0, 0) );
 
   icalproperty* iprop;
 
@@ -72,14 +88,20 @@ int parse(
         calid = icalproperty_get_x(iprop);
     iprop = icalcomponent_get_next_property(ical,ICAL_X_PROPERTY);
   }
+  // Get the calnum.
+  int calnum = db->calnum(calid);
+  assert(calnum);
+  // Choose a colour.
+  const char* colour =colours[ calnum % (sizeof(colours)/sizeof(char*)) ];
   // Bind these values to the statements.
-  sql::bind_int( CALI_HERE,db,insert_cal,1,version);
-  sql::bind_text(CALI_HERE,db,insert_cal,2,calid);
-  sql::bind_text(CALI_HERE,db,insert_cal,3,calname);
-  sql::bind_text(CALI_HERE,db,insert_cal,4,ical_filename);
-  sql::bind_int( CALI_HERE,db,insert_cal,5,-1); // position
-  sql::bind_text(CALI_HERE,db,insert_cal,6,"#cceeff");
-  sql::step_reset(CALI_HERE,db,insert_cal);
+  sql::bind_int( CALI_HERE,sdb,insert_cal,1,version);
+  sql::bind_int( CALI_HERE,sdb,insert_cal,2,calnum);
+  sql::bind_text(CALI_HERE,sdb,insert_cal,3,calid);
+  sql::bind_text(CALI_HERE,sdb,insert_cal,4,calname);
+  sql::bind_text(CALI_HERE,sdb,insert_cal,5,ical_filename);
+  sql::bind_int( CALI_HERE,sdb,insert_cal,6,-1); // position
+  sql::bind_text(CALI_HERE,sdb,insert_cal,7,colour);
+  sql::step_reset(CALI_HERE,sdb,insert_cal);
 
   // Iterate through all components (VEVENTs).
   for(icalcompiter e=icalcomponent_begin_component(ical,ICAL_VEVENT_COMPONENT);
@@ -150,29 +172,34 @@ int parse(
     time_t end_time = ::icaltime_as_timet(dtend);
 
     // Bind these values to the statements.
-    sql::bind_int( CALI_HERE,db,insert_evt,1,version);
-    sql::bind_text(CALI_HERE,db,insert_evt,2,uid);
-    sql::bind_text(CALI_HERE,db,insert_evt,3,summary);
-    sql::bind_text(CALI_HERE,db,insert_evt,4,calid);
-    sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
-    sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
-    sql::bind_text(CALI_HERE,db,insert_evt,7,vevent);
-    sql::step_reset(CALI_HERE,db,insert_evt);
+    sql::bind_int( CALI_HERE,sdb,insert_evt,1,version);
+    sql::bind_text(CALI_HERE,sdb,insert_evt,2,uid);
+    sql::bind_text(CALI_HERE,sdb,insert_evt,3,summary);
+    sql::bind_text(CALI_HERE,sdb,insert_evt,4,calid);
+    sql::bind_int( CALI_HERE,sdb,insert_evt,5,sequence);
+    sql::bind_int( CALI_HERE,sdb,insert_evt,6,all_day);
+    sql::bind_text(CALI_HERE,sdb,insert_evt,7,vevent);
+    sql::step_reset(CALI_HERE,sdb,insert_evt);
 
-    sql::bind_int( CALI_HERE,db,insert_occ,1,version);
-    sql::bind_text(CALI_HERE,db,insert_occ,2,uid);
-    sql::bind_int( CALI_HERE,db,insert_occ,3,start_time);
-    sql::bind_int( CALI_HERE,db,insert_occ,4,end_time);
-    sql::step_reset(CALI_HERE,db,insert_occ);
+    sql::bind_int( CALI_HERE,sdb,insert_occ,1,version);
+    sql::bind_text(CALI_HERE,sdb,insert_occ,2,uid);
+    sql::bind_int( CALI_HERE,sdb,insert_occ,3,start_time);
+    sql::bind_int( CALI_HERE,sdb,insert_occ,4,end_time);
+    sql::step_reset(CALI_HERE,sdb,insert_occ);
   }
-  CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
-  CALI_SQLCHK(db, ::sqlite3_finalize(insert_evt) );
-  CALI_SQLCHK(db, ::sqlite3_finalize(insert_occ) );
+  CALI_SQLCHK(sdb, ::sqlite3_exec(sdb, "commit", 0, 0, 0) );
+  CALI_SQLCHK(sdb, ::sqlite3_finalize(insert_evt) );
+  CALI_SQLCHK(sdb, ::sqlite3_finalize(insert_occ) );
 }
 
 
-void read(const char* ical_filename, sqlite3* db, int version)
+// -- public --
+
+void read(const char* ical_filename, Db* db, int version)
 {
+  assert(ical_filename);
+  assert(ical_filename[0]);
+  assert(db);
   // Parse the iCalendar file.
   icalparser* iparser = ::icalparser_new();
   FILE* stream = ::fopen(ical_filename,"r");
@@ -187,17 +214,6 @@ void read(const char* ical_filename, sqlite3* db, int version)
 }
 
 
-// -- public --
-
-void read(const char* ical_filename, Db* db, int version)
-{
-  assert(ical_filename);
-  assert(ical_filename[0]);
-  assert(db);
-  read(ical_filename,db->sqlite_db(),version);
-}
-
-
 } } // end namespace calendari::ical
 
 
@@ -205,16 +221,11 @@ void read(const char* ical_filename, Db* db, int version)
 int main(int argc, char* argv[])
 {
   const char* sqlite_filename = argv[1];
-  sqlite3* db;
-  if( SQLITE_OK != ::sqlite3_open(sqlite_filename,&db) )
-      CALI_ERRO(1,0,"Failed to open database %s",sqlite_filename);
-
+  calendari::Db db(sqlite_filename);
   for(int i=2; i<argc; ++i)
   {
     const char* ics_filename = argv[i];
-    calendari::ics::read(ics_filename,db);
+    calendari::ics::read(ics_filename,&db);
   }
-
-  ::sqlite3_close(db);
 }
 #endif // test

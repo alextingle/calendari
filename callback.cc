@@ -95,6 +95,12 @@ cali_drawingarea_key_press_event_cb(
       case GDK_KP_Delete:
           cal->erase_selected();
           break;
+      case GDK_Page_Up:
+          cal->main_view = cal->main_view->prev();
+          break;
+      case GDK_Page_Down:
+          cal->main_view = cal->main_view->next();
+          break;
       default:
           printf("Other\n");
           break;

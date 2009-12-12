@@ -5,6 +5,7 @@
 #include "sql.h"
 #include "util.h"
 
+#include <cassert>
 #include <cstdarg>
 #include <set>
 
@@ -13,16 +14,17 @@ namespace calendari {
 
 Db::Db(const char* dbname)
 {
-  if( SQLITE_OK != ::sqlite3_open(dbname,&_db) )
+  if( SQLITE_OK != ::sqlite3_open(dbname,&_sdb) )
       CALI_ERRO(1,0,"Failed to open database %s",dbname);
   Queue::inst().set_db( this );
+  create_db(); // ?? Wasteful to do this if not needed?
 }
 
 
 Db::~Db(void)
 {
-  if(_db)
-    ::sqlite3_close(_db);
+  if(_sdb)
+    ::sqlite3_close(_sdb);
   typedef std::map<std::string,Calendar*>::iterator CIt;
   for(CIt c =_calendar.begin(); c!=_calendar.end(); ++c)
       delete c->second;
@@ -41,8 +43,9 @@ Db::create_db(void)
   // VERSION slices the database between the current (VERSION=1) contents and
   // content that is being generated (VERSION>1)
   exec(
-      "create table CALENDAR ("
+      "create table if not exists CALENDAR ("
       "  VERSION  integer,"
+      "  CALNUM   integer,"
       "  CALID    string,"
       "  CALNAME  string,"
       "  PATH     string,"
@@ -54,8 +57,9 @@ Db::create_db(void)
       ")"
     );
   exec(
-      "create table EVENT ("
+      "create table if not exists EVENT ("
       "  VERSION  integer,"
+      "  CALNUM   integer,"
       "  UID      string,"
       "  SUMMARY  string,"
       "  CALID    string,"
@@ -66,16 +70,17 @@ Db::create_db(void)
       ")"
     );
   exec(
-      "create table OCCURRENCE ("
+      "create table if not exists OCCURRENCE ("
       "  VERSION  integer,"
+      "  CALNUM   integer,"
       "  UID      string,"
       "  DTSTART  integer," // time_t (need to allow for 'all-day')
       "  DTEND    integer," // time_t
       "  primary key(VERSION,UID,DTSTART)"
       ")"
     );
-  exec("create index OCC_START_INDEX on OCCURRENCE(DTSTART)");
-  exec("create index OCC_END_INDEX on OCCURRENCE(DTEND)");
+  exec("create index if not exists OCC_START_INDEX on OCCURRENCE(DTSTART)");
+  exec("create index if not exists OCC_END_INDEX on OCCURRENCE(DTEND)");
   /*
   -- Find all occurances between two times.
   select O.UID,DTSTART,DTEND,SUMMARY,COLOUR
@@ -109,8 +114,8 @@ Db::refresh_cal(const char* calid, int version)
     std::set<std::string> uids;
     sqlite3_stmt* select_stmt;
     const char* sql ="select UID from EVENT where VERSION=1 and CALID=?";
-    CALI_SQLCHK(_db, ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) );
-    sql::bind_text(CALI_HERE,_db,select_stmt,1,sql_calid.c_str());
+    CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
+    sql::bind_text(CALI_HERE,_sdb,select_stmt,1,sql_calid.c_str());
     while(true)
     {
       int return_code = ::sqlite3_step(select_stmt);
@@ -124,28 +129,28 @@ Db::refresh_cal(const char* calid, int version)
       }
       else
       {
-        calendari::sql::error(CALI_HERE,_db);
+        calendari::sql::error(CALI_HERE,_sdb);
         break;
       }
     }
-    CALI_SQLCHK(_db,  ::sqlite3_finalize(select_stmt) );
+    CALI_SQLCHK(_sdb,  ::sqlite3_finalize(select_stmt) );
     if(!uids.empty())
     {
       sqlite3_stmt* delete_stmt;
       sql = "delete from OCCURRENCE where VERSION=1 and UID=?";
-      CALI_SQLCHK(_db,  ::sqlite3_prepare_v2(_db,sql,-1,&delete_stmt,NULL) );
+      CALI_SQLCHK(_sdb,  ::sqlite3_prepare_v2(_sdb,sql,-1,&delete_stmt,NULL) );
       for(std::set<std::string>::iterator u=uids.begin(); u!=uids.end(); ++u)
       {
-        sql::bind_text(CALI_HERE,_db,delete_stmt,1,u->c_str());
+        sql::bind_text(CALI_HERE,_sdb,delete_stmt,1,u->c_str());
         int return_code = ::sqlite3_step(delete_stmt);
         if(return_code!=SQLITE_DONE)
         {
-          calendari::sql::error(CALI_HERE,_db);
+          calendari::sql::error(CALI_HERE,_sdb);
           break;
         }
-        CALI_SQLCHK(_db, ::sqlite3_reset(delete_stmt) );
+        CALI_SQLCHK(_sdb, ::sqlite3_reset(delete_stmt) );
       }
-      CALI_SQLCHK(_db, ::sqlite3_finalize(delete_stmt) );
+      CALI_SQLCHK(_sdb, ::sqlite3_finalize(delete_stmt) );
     }
     execf("delete from EVENT where VERSION=1 and CALID='%s'",sql_calid.c_str());
     execf("update OCCURRENCE set VERSION=1 where VERSION=%d",version);
@@ -165,7 +170,7 @@ void
 Db::exec(const char* sql)
 {
   char* errmsg;
-  int ret = ::sqlite3_exec(_db,sql,NULL,NULL,&errmsg);
+  int ret = ::sqlite3_exec(_sdb,sql,NULL,NULL,&errmsg);
   if(SQLITE_OK != ret)
   {
     CALI_ERRO(1,0,"sqlite error %i: %s in SQL \"%s\"",ret,errmsg,sql);
@@ -193,11 +198,11 @@ Db::load_calendars(void)
 {
   sqlite3_stmt* select_stmt;
   const char* sql =
-      "select CALID,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW "
+      "select CALID,CALNUM,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW "
       "from CALENDAR "
       "where VERSION=1 "
       "order by POSITION";
-  CALI_SQLCHK(_db, ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) );
+  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
 
   int position = 0;
   while(true)
@@ -207,13 +212,14 @@ Db::load_calendars(void)
     {
       Calendar* cal = new Calendar(
           safestr(::sqlite3_column_text(select_stmt,0)), // calid
-          safestr(::sqlite3_column_text(select_stmt,1)), // name
-          safestr(::sqlite3_column_text(select_stmt,2)), // path
-                  ::sqlite3_column_int( select_stmt,3),  // readonly
+                  ::sqlite3_column_int( select_stmt,1),  // calnum
+          safestr(::sqlite3_column_text(select_stmt,2)), // name
+          safestr(::sqlite3_column_text(select_stmt,3)), // path
+                  ::sqlite3_column_int( select_stmt,4),  // readonly
           position++,
-//??              ::sqlite3_column_int( select_stmt,4),  // position
-          safestr(::sqlite3_column_text(select_stmt,5)), // colour
-                  ::sqlite3_column_int( select_stmt,6)   // show
+//??              ::sqlite3_column_int( select_stmt,5),  // position
+          safestr(::sqlite3_column_text(select_stmt,6)), // colour
+                  ::sqlite3_column_int( select_stmt,7)   // show
         );
       _calendar.insert(std::make_pair(cal->calid,cal));
     }
@@ -223,11 +229,11 @@ Db::load_calendars(void)
     }
     else
     {
-      calendari::sql::error(CALI_HERE,_db);
+      calendari::sql::error(CALI_HERE,_sdb);
       break;
     }
   }
-  CALI_SQLCHK(_db, ::sqlite3_finalize(select_stmt) );
+  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_stmt) );
 }
 
   
@@ -243,9 +249,9 @@ Db::find(time_t begin, time_t end)
       "left join EVENT E on E.UID=O.UID and E.VERSION=1 "
       "where DTEND>=? and DTSTART<? and O.VERSION=1 "
       "order by DTSTART";
-  CALI_SQLCHK(_db, ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) );
-  sql::bind_int(CALI_HERE,_db,select_stmt,1,begin);
-  sql::bind_int(CALI_HERE,_db,select_stmt,2,end);
+  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
+  sql::bind_int(CALI_HERE,_sdb,select_stmt,1,begin);
+  sql::bind_int(CALI_HERE,_sdb,select_stmt,2,end);
 
   while(true)
   {
@@ -268,12 +274,45 @@ Db::find(time_t begin, time_t end)
     }
     else
     {
-      calendari::sql::error(CALI_HERE,_db);
+      calendari::sql::error(CALI_HERE,_sdb);
       break;
     }
   }
-  CALI_SQLCHK(_db, ::sqlite3_finalize(select_stmt) );
+  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_stmt) );
   return result;
+}
+
+
+int
+Db::calnum(const char* calid)
+{
+  assert(calid);
+  // Look it up in our _calendars.
+  std::map<std::string,Calendar*>::const_iterator pos = _calendar.find(calid);
+  if(pos != _calendar.end())
+      return pos->second->calnum;
+
+  // Look it up in the database, then.
+  int calnum =1;
+  std::string sql_calid = Queue::quote(calid);
+  bool ok =
+    sql::query_val(
+        CALI_HERE,_sdb,
+        calnum,                                  // <== output
+        "select CALNUM from CALENDAR where CALID='%s' order by VERSION",
+        sql_calid.c_str()
+      );
+  if(ok)
+      return calnum;
+
+  // OK, well find the next free number, then.  
+  sql::query_val(
+      CALI_HERE,_sdb,
+      calnum,                                  // <== output
+      "select 1 + coalesce(max(CALNUM),0) from CALENDAR",
+      sql_calid.c_str()
+    );
+  return calnum;
 }
 
 

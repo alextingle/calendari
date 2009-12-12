@@ -11,6 +11,7 @@ namespace calendari {
 
 Calendar::Calendar(
     const char* calid_,
+    int         calnum_,
     const char* name_,
     const char* path_,
     int         readonly_,
@@ -19,6 +20,7 @@ Calendar::Calendar(
     int         show_
   )
   : calid(calid_),
+    calnum(calnum_),
     _name(name_),
     _path(path_),
     _readonly(readonly_),

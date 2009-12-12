@@ -30,6 +30,9 @@ public:
   void load_calendars(void);  
   std::multimap<time_t,Occurrence*> find(time_t begin, time_t end);
 
+  /** Look up the calnum of the given calid, or generate a new unique number. */
+  int calnum(const char* calid);
+
   const std::map<std::string,Calendar*>& calendars(void) const
     { return _calendar; }
 
@@ -46,10 +49,10 @@ public:
   void erase(Occurrence* occ);
 
   sqlite3* sqlite_db(void) const
-    { return _db; }
+    { return _sdb; }
 
 private:
-  sqlite3* _db;
+  sqlite3* _sdb;
 
   std::map<std::string,Calendar*>             _calendar;
   std::map<std::string,Event*>                _event;

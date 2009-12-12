@@ -3,9 +3,9 @@
 
 #include "err.h"
 
+#include <cstdio>
+#include <cstdarg>
 #include <sqlite3.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 namespace calendari {
 namespace sql {
@@ -76,12 +76,53 @@ step_reset(const util::Here& here, sqlite3* db, sqlite3_stmt* stmt)
       util::error(here,0,0,"Executed INSERT, but got rows!");
       break;
     case SQLITE_DONE: // OK
-    case SQLITE_CONSTRAINT: // Probably primary key violation.
+    case SQLITE_CONSTRAINT: // Probably primary key violation. ??
       break;
     default:
       sql::error(here,db);
   } // end switch
   ::sqlite3_reset(stmt);
+}
+
+
+/** Query a single value, returns TRUE if the value was found. */
+inline bool
+query_val(
+    const util::Here&  here,
+    sqlite3*           db,
+    int&               val, // output
+    const char*        format, ...
+  )
+{
+  bool result = false;
+  // Format the SQL.
+  va_list args;
+  va_start(args,format);
+  char sql[256];
+  int ret = vsnprintf(sql,sizeof(sql),format,args);
+  if(ret>=sizeof(sql))
+      util::error(here,1,0,"SQL too large for buffer."); //??
+  va_end(args);
+  // Query
+  sqlite3_stmt* select_stmt;
+  check_error(here,db, ::sqlite3_prepare_v2(db,sql,-1,&select_stmt,NULL) );
+  int return_code = ::sqlite3_step(select_stmt);
+  switch(return_code)
+  {
+    case SQLITE_ROW:
+        result = true;
+        val = ::sqlite3_column_int(select_stmt,0);
+        break;
+    case SQLITE_DONE:
+        // No value.
+        break;
+    default:
+        // Error
+        sql::error(here,db);
+  }
+  // Clean up.
+  check_error(here,db, ::sqlite3_finalize(select_stmt) );
+  return result;
 }
 
 

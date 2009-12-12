@@ -38,6 +38,7 @@ Calendari::build(GtkBuilder* builder)
   
   main_view = new MonthView(*this);
   main_view->set(::time(NULL));
+  gtk_widget_grab_focus(main_drawingarea);
 
   // Connect signals
   gtk_builder_connect_signals(builder,this);
