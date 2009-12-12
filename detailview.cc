@@ -61,8 +61,8 @@ DetailView::select(Occurrence* occ)
     );
   if(!ok)
   {
-    util::warning(0,
-        "Bad index in calendar list: %d",occ->event.calendar().position());
+    CALI_WARN(0,"Bad index in calendar list: %d",
+        occ->event.calendar().position());
     clear();
     return;
   }

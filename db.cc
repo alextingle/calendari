@@ -14,7 +14,7 @@ namespace calendari {
 Db::Db(const char* dbname)
 {
   if( SQLITE_OK != ::sqlite3_open(dbname,&_db) )
-      calendari::sql::error(_db,__FILE__,__LINE__);
+      CALI_ERRO(1,0,"Failed to open database %s",dbname);
   Queue::inst().set_db( this );
 }
 
@@ -109,9 +109,8 @@ Db::refresh_cal(const char* calid, int version)
     std::set<std::string> uids;
     sqlite3_stmt* select_stmt;
     const char* sql ="select UID from EVENT where VERSION=1 and CALID=?";
-    if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) )
-        sql::error(_db,__FILE__,__LINE__);
-    sql::bind_text(_db,select_stmt,1,sql_calid.c_str());
+    CALI_SQLCHK(_db, ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) );
+    sql::bind_text(CALI_HERE,_db,select_stmt,1,sql_calid.c_str());
     while(true)
     {
       int return_code = ::sqlite3_step(select_stmt);
@@ -125,32 +124,28 @@ Db::refresh_cal(const char* calid, int version)
       }
       else
       {
-        calendari::sql::error(_db,__FILE__,__LINE__);
+        calendari::sql::error(CALI_HERE,_db);
         break;
       }
     }
-    if( SQLITE_OK != ::sqlite3_finalize(select_stmt) )
-        calendari::sql::error(_db,__FILE__,__LINE__);
+    CALI_SQLCHK(_db,  ::sqlite3_finalize(select_stmt) );
     if(!uids.empty())
     {
       sqlite3_stmt* delete_stmt;
       sql = "delete from OCCURRENCE where VERSION=1 and UID=?";
-      if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&delete_stmt,NULL) )
-          sql::error(_db,__FILE__,__LINE__);
+      CALI_SQLCHK(_db,  ::sqlite3_prepare_v2(_db,sql,-1,&delete_stmt,NULL) );
       for(std::set<std::string>::iterator u=uids.begin(); u!=uids.end(); ++u)
       {
-        sql::bind_text(_db,delete_stmt,1,u->c_str());
+        sql::bind_text(CALI_HERE,_db,delete_stmt,1,u->c_str());
         int return_code = ::sqlite3_step(delete_stmt);
         if(return_code!=SQLITE_DONE)
         {
-          calendari::sql::error(_db,__FILE__,__LINE__);
+          calendari::sql::error(CALI_HERE,_db);
           break;
         }
-        if( SQLITE_OK != ::sqlite3_reset(delete_stmt) )
-            sql::error(_db,__FILE__,__LINE__);
+        CALI_SQLCHK(_db, ::sqlite3_reset(delete_stmt) );
       }
-      if( SQLITE_OK != ::sqlite3_finalize(delete_stmt) )
-          calendari::sql::error(_db,__FILE__,__LINE__);
+      CALI_SQLCHK(_db, ::sqlite3_finalize(delete_stmt) );
     }
     execf("delete from EVENT where VERSION=1 and CALID='%s'",sql_calid.c_str());
     execf("update OCCURRENCE set VERSION=1 where VERSION=%d",version);
@@ -173,9 +168,8 @@ Db::exec(const char* sql)
   int ret = ::sqlite3_exec(_db,sql,NULL,NULL,&errmsg);
   if(SQLITE_OK != ret)
   {
-    util::error(1,0,"sqlite error %i: %s at %s:%i in SQL \"%s\"",
-        ret,errmsg,__FILE__,__LINE__,sql);
-    sqlite3_free(errmsg);
+    CALI_ERRO(1,0,"sqlite error %i: %s in SQL \"%s\"",ret,errmsg,sql);
+    ::sqlite3_free(errmsg);
   }
 }
 
@@ -188,7 +182,7 @@ Db::execf(const char* format, ...)
   char buf[256];
   int ret = vsnprintf(buf,sizeof(buf),format,args);
   if(ret>=sizeof(buf))
-      util::error(1,0,"SQL too large for buffer."); //??
+      CALI_ERRO(1,0,"SQL too large for buffer."); //??
   exec(buf);
   va_end(args);
 }
@@ -203,8 +197,7 @@ Db::load_calendars(void)
       "from CALENDAR "
       "where VERSION=1 "
       "order by POSITION";
-  if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) )
-      sql::error(_db,__FILE__,__LINE__);
+  CALI_SQLCHK(_db, ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) );
 
   int position = 0;
   while(true)
@@ -230,12 +223,11 @@ Db::load_calendars(void)
     }
     else
     {
-      calendari::sql::error(_db,__FILE__,__LINE__);
+      calendari::sql::error(CALI_HERE,_db);
       break;
     }
   }
-  if( SQLITE_OK != ::sqlite3_finalize(select_stmt) )
-      calendari::sql::error(_db,__FILE__,__LINE__);
+  CALI_SQLCHK(_db, ::sqlite3_finalize(select_stmt) );
 }
 
   
@@ -251,11 +243,9 @@ Db::find(time_t begin, time_t end)
       "left join EVENT E on E.UID=O.UID and E.VERSION=1 "
       "where DTEND>=? and DTSTART<? and O.VERSION=1 "
       "order by DTSTART";
-  if( SQLITE_OK != ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) )
-      sql::error(_db,__FILE__,__LINE__);
-
-  sql::bind_int(_db,select_stmt,1,begin);
-  sql::bind_int(_db,select_stmt,2,end);
+  CALI_SQLCHK(_db, ::sqlite3_prepare_v2(_db,sql,-1,&select_stmt,NULL) );
+  sql::bind_int(CALI_HERE,_db,select_stmt,1,begin);
+  sql::bind_int(CALI_HERE,_db,select_stmt,2,end);
 
   while(true)
   {
@@ -278,12 +268,11 @@ Db::find(time_t begin, time_t end)
     }
     else
     {
-      calendari::sql::error(_db,__FILE__,__LINE__);
+      calendari::sql::error(CALI_HERE,_db);
       break;
     }
   }
-  if( SQLITE_OK != ::sqlite3_finalize(select_stmt) )
-      calendari::sql::error(_db,__FILE__,__LINE__);
+  CALI_SQLCHK(_db, ::sqlite3_finalize(select_stmt) );
   return result;
 }
 

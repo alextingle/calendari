@@ -42,22 +42,18 @@ int parse(
   const char* sql =
       "insert into CALENDAR (VERSION,CALID,CALNAME,PATH,POSITION,COLOUR,SHOW) "
       "values (?,?,?,?,?,?,1)";
-  if( SQLITE_OK != ::sqlite3_prepare_v2(db,sql,-1,&insert_cal,NULL) )
-      sql::error(db,__FILE__,__LINE__);
+  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_cal,NULL) );
 
   sqlite3_stmt*  insert_evt;
   sql="insert into EVENT (VERSION,UID,SUMMARY,CALID,SEQUENCE,ALLDAY,VEVENT) "
       "values (?,?,?,?,?,?,?)";
-  if( SQLITE_OK != ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) )
-      sql::error(db,__FILE__,__LINE__);
+  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) );
 
   sqlite3_stmt*  insert_occ;
   sql="insert into OCCURRENCE (VERSION,UID,DTSTART,DTEND) values (?,?,?,?)";
-  if( SQLITE_OK != ::sqlite3_prepare_v2(db,sql,-1,&insert_occ,NULL) )
-      sql::error(db,__FILE__,__LINE__);
+  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_occ,NULL) );
 
-  if( SQLITE_OK != ::sqlite3_exec(db, "begin", 0, 0, 0) )
-      sql::error(db,__FILE__,__LINE__);
+  CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
 
   icalproperty* iprop;
 
@@ -77,13 +73,13 @@ int parse(
     iprop = icalcomponent_get_next_property(ical,ICAL_X_PROPERTY);
   }
   // Bind these values to the statements.
-  sql::bind_int( db,insert_cal,1,version);
-  sql::bind_text(db,insert_cal,2,calid);
-  sql::bind_text(db,insert_cal,3,calname);
-  sql::bind_text(db,insert_cal,4,ical_filename);
-  sql::bind_int( db,insert_cal,5,-1); // position
-  sql::bind_text(db,insert_cal,6,"#cceeff");
-  sql::step(db,insert_cal);
+  sql::bind_int( CALI_HERE,db,insert_cal,1,version);
+  sql::bind_text(CALI_HERE,db,insert_cal,2,calid);
+  sql::bind_text(CALI_HERE,db,insert_cal,3,calname);
+  sql::bind_text(CALI_HERE,db,insert_cal,4,ical_filename);
+  sql::bind_int( CALI_HERE,db,insert_cal,5,-1); // position
+  sql::bind_text(CALI_HERE,db,insert_cal,6,"#cceeff");
+  sql::step_reset(CALI_HERE,db,insert_cal);
 
   // Iterate through all components (VEVENTs).
   for(icalcompiter e=icalcomponent_begin_component(ical,ICAL_VEVENT_COMPONENT);
@@ -97,13 +93,13 @@ int parse(
     iprop = icalcomponent_get_first_property(ievt,ICAL_UID_PROPERTY);
     if(!iprop)
     {
-      util::warning(0,"missing VEVENT::UID property");
+      CALI_WARN(0,"missing VEVENT::UID property");
       continue;
     }
     const char* uid = icalproperty_get_uid(iprop);
     if(!uid)
     {
-      util::warning(0,"VEVENT::UID property has no value");
+      CALI_WARN(0,"VEVENT::UID property has no value");
       continue;
     }
 
@@ -111,13 +107,13 @@ int parse(
     iprop = icalcomponent_get_first_property(ievt,ICAL_SUMMARY_PROPERTY);
     if(!iprop)
     {
-      util::warning(0,"UID:%s missing VEVENT::SUMMARY property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::SUMMARY property",uid);
       continue;
     }
     const char* summary = icalproperty_get_summary(iprop);
     if(!summary)
     {
-      util::warning(0,"UID:%s VEVENT::SUMMARY property has no value",uid);
+      CALI_WARN(0,"UID:%s VEVENT::SUMMARY property has no value",uid);
       continue;
     }
 
@@ -125,7 +121,7 @@ int parse(
     iprop = icalcomponent_get_first_property(ievt,ICAL_SEQUENCE_PROPERTY);
     if(!iprop)
     {
-      util::warning(0,"UID:%s missing VEVENT::SEQUENCE property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::SEQUENCE property",uid);
       continue;
     }
     int sequence = icalproperty_get_sequence(iprop);
@@ -134,7 +130,7 @@ int parse(
     iprop = ::icalcomponent_get_first_property(ievt,ICAL_DTSTART_PROPERTY);
     if(!iprop)
     {
-      util::warning(0,"UID:%s missing VEVENT::DTSTART property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::DTSTART property",uid);
       continue;
     }
     struct icaltimetype dtstart = ::icalproperty_get_dtstart(iprop);
@@ -147,36 +143,31 @@ int parse(
     iprop = ::icalcomponent_get_first_property(ievt,ICAL_DTEND_PROPERTY);
     if(!iprop)
     {
-      util::warning(0,"UID:%s missing VEVENT::DTEND property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::DTEND property",uid);
       continue;
     }
     struct icaltimetype dtend = ::icalproperty_get_dtend(iprop);
     time_t end_time = ::icaltime_as_timet(dtend);
 
     // Bind these values to the statements.
-    sql::bind_int( db,insert_evt,1,version);
-    sql::bind_text(db,insert_evt,2,uid);
-    sql::bind_text(db,insert_evt,3,summary);
-    sql::bind_text(db,insert_evt,4,calid);
-    sql::bind_int( db,insert_evt,5,sequence);
-    sql::bind_int( db,insert_evt,6,all_day);
-    sql::bind_text(db,insert_evt,7,vevent);
-    sql::step(db,insert_evt);
+    sql::bind_int( CALI_HERE,db,insert_evt,1,version);
+    sql::bind_text(CALI_HERE,db,insert_evt,2,uid);
+    sql::bind_text(CALI_HERE,db,insert_evt,3,summary);
+    sql::bind_text(CALI_HERE,db,insert_evt,4,calid);
+    sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
+    sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
+    sql::bind_text(CALI_HERE,db,insert_evt,7,vevent);
+    sql::step_reset(CALI_HERE,db,insert_evt);
 
-    sql::bind_int( db,insert_occ,1,version);
-    sql::bind_text(db,insert_occ,2,uid);
-    sql::bind_int( db,insert_occ,3,start_time);
-    sql::bind_int( db,insert_occ,4,end_time);
-    sql::step(db,insert_occ);
+    sql::bind_int( CALI_HERE,db,insert_occ,1,version);
+    sql::bind_text(CALI_HERE,db,insert_occ,2,uid);
+    sql::bind_int( CALI_HERE,db,insert_occ,3,start_time);
+    sql::bind_int( CALI_HERE,db,insert_occ,4,end_time);
+    sql::step_reset(CALI_HERE,db,insert_occ);
   }
-
-  if( SQLITE_OK != ::sqlite3_exec(db, "commit", 0, 0, 0) )
-      sql::error(db,__FILE__,__LINE__);
-
-  if( SQLITE_OK != ::sqlite3_finalize(insert_evt) )
-      sql::error(db,__FILE__,__LINE__);
-  if( SQLITE_OK != ::sqlite3_finalize(insert_occ) )
-      sql::error(db,__FILE__,__LINE__);
+  CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
+  CALI_SQLCHK(db, ::sqlite3_finalize(insert_evt) );
+  CALI_SQLCHK(db, ::sqlite3_finalize(insert_occ) );
 }
 
 
@@ -191,7 +182,7 @@ void read(const char* ical_filename, sqlite3* db, int version)
   if(ical)
       parse(ical_filename,ical.get(),db,version);
   else
-      util::error(0,0,"failed to read calendar file %s",ical_filename);
+      CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
   ::icalparser_free(iparser);
 }
 
@@ -216,7 +207,7 @@ int main(int argc, char* argv[])
   const char* sqlite_filename = argv[1];
   sqlite3* db;
   if( SQLITE_OK != ::sqlite3_open(sqlite_filename,&db) )
-      calendari::sql::error(db,__FILE__,__LINE__);
+      CALI_ERRO(1,0,"Failed to open database %s",sqlite_filename);
 
   for(int i=2; i<argc; ++i)
   {

@@ -15,61 +15,71 @@ typedef void(*MemoryStatus)(void*);
 
 
 inline void
-error(sqlite3* db, const char* filename, int line)
+error(const util::Here& here, sqlite3* db)
 {
   int         errcode = ::sqlite3_errcode(db);
   const char* errmsg  = ::sqlite3_errmsg(db);
-  util::error(0,0,"sqlite error %i: %s at %s:%i",errcode,errmsg,filename,line);
+  util::error(here,0,0,"sqlite error %i: %s",errcode,errmsg);
 }
 
 
 inline void
-check_error(sqlite3* db, int return_code, const char* filename, int line)
+check_error(const util::Here& here, sqlite3* db, int return_code)
 {
   if( SQLITE_OK != return_code )
-      sql::error(db,__FILE__,__LINE__);
+      sql::error(here,db);
 }
+#define CALI_SQLCHK(DB,RET) \
+  do{calendari::sql::check_error( \
+    calendari::util::Here(__FILE__,__LINE__),DB,RET); \
+  }while(0)
 
 
 inline void
-bind_int(sqlite3* db, sqlite3_stmt* stmt, int idx, int val)
+bind_int(
+    const util::Here&  here,
+    sqlite3*           db,
+    sqlite3_stmt*      stmt,
+    int                idx,
+    int                val)
 {
   int ret;
   ret= ::sqlite3_bind_int(stmt,idx,val);
-  sql::check_error(db,ret,__FILE__,__LINE__);
+  sql::check_error(here,db,ret);
 }
 
 
 inline void
 bind_text(
-    sqlite3*       db,
-    sqlite3_stmt*  stmt,
-    int            idx,
-    const char*    s,
-    int            n = -1,
-    MemoryStatus   mem = SQLITE_TRANSIENT
+    const util::Here&  here,
+    sqlite3*           db,
+    sqlite3_stmt*      stmt,
+    int                idx,
+    const char*        s,
+    int                n = -1,
+    MemoryStatus       mem = SQLITE_TRANSIENT
   )
 {
   int ret;
   ret= ::sqlite3_bind_text(stmt,idx,s,n,mem);
-  sql::check_error(db,ret,__FILE__,__LINE__);
+  sql::check_error(here,db,ret);
 }
 
 
 inline void
-step(sqlite3* db, sqlite3_stmt* stmt)
+step_reset(const util::Here& here, sqlite3* db, sqlite3_stmt* stmt)
 {
   int return_code = ::sqlite3_step(stmt);
   switch(return_code)
   {
     case SQLITE_ROW:
-      util::error(0,0,"Executed INSERT, but got rows!");
+      util::error(here,0,0,"Executed INSERT, but got rows!");
       break;
     case SQLITE_DONE: // OK
     case SQLITE_CONSTRAINT: // Probably primary key violation.
       break;
     default:
-      sql::error(db,__FILE__,__LINE__);
+      sql::error(here,db);
   } // end switch
   ::sqlite3_reset(stmt);
 }

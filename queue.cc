@@ -66,7 +66,7 @@ Queue::pushf(const char* format, ...)
   char buf[256];
   int ret = vsnprintf(buf,sizeof(buf),format,args);
   if(ret>=sizeof(buf))
-      util::error(1,0,"SQL too large for buffer."); //??
+      CALI_ERRO(1,0,"SQL too large for buffer."); //??
   push(buf);
   va_end(args);
 }
