@@ -5,6 +5,7 @@
 #include "event.h"
 #include "event.h"
 #include "ics.h"
+#include "monthview.h"
 
 #include <map>
 #include <string>
@@ -98,11 +99,13 @@ void
 CalendarList::refresh(calendari::Calendari* cal)
 {
   Calendar* curr = current();
-  if(curr)
+  if(curr && !curr->path().empty())
   {
     printf("refresh %s at %s\n",curr->name().c_str(),curr->path().c_str());
     ics::read(curr->path().c_str(), cal->db, 2);
     cal->db->refresh_cal(curr->calid.c_str(),2);
+    cal->main_view->reload();
+    gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
   }
 }
 

@@ -244,6 +244,13 @@ MonthView::erase(Occurrence* occ)
 }
 
 
+void
+MonthView::reload(void)
+{
+  set( day[7].start );
+}
+
+
 View*
 MonthView::prev(void)
 {

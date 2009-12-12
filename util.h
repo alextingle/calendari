@@ -8,9 +8,27 @@ namespace calendari {
 
 inline time_t normalise_local_tm(struct tm& v)
 {
-    time_t result = mktime(&v);
-    localtime_r(&result,&v);
-    return result;
+  time_t result = mktime(&v);
+  localtime_r(&result,&v);
+  return result;
+}
+
+
+inline const char* safestr(const char* s, const char* dflt="")
+{
+  if(s)
+      return s;
+  else
+      return dflt;
+}
+
+
+inline const char* safestr(const unsigned char* s, const char* dflt="")
+{
+  if(s)
+      return reinterpret_cast<const char*>( s );
+  else
+      return dflt;
 }
 
 

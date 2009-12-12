@@ -32,6 +32,7 @@ public:
   virtual void select(Occurrence* occ) =0;
   virtual void moved(Occurrence* occ) =0;
   virtual void erase(Occurrence* occ) =0;
+  virtual void reload(void) =0;
   virtual View* prev(void)     { return this; }
   virtual View* next(void)     { return this; }
   virtual View* zoom_in(void)  { return this; }
@@ -50,6 +51,7 @@ public:
   virtual void select(Occurrence* occ);
   virtual void moved(Occurrence* occ);
   virtual void erase(Occurrence* occ);
+  virtual void reload(void);
   virtual View* prev(void);
   virtual View* next(void);
 private:

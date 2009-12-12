@@ -200,6 +200,9 @@ void read(const char* ical_filename, sqlite3* db, int version)
 
 void read(const char* ical_filename, Db* db, int version)
 {
+  assert(ical_filename);
+  assert(ical_filename[0]);
+  assert(db);
   read(ical_filename,db->sqlite_db(),version);
 }
 

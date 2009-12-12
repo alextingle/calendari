@@ -117,7 +117,7 @@ Db::refresh_cal(const char* calid, int version)
       int return_code = ::sqlite3_step(select_stmt);
       if(return_code==SQLITE_ROW)
       {
-        uids.insert((const char*)::sqlite3_column_text(select_stmt,0));
+        uids.insert(safestr(::sqlite3_column_text(select_stmt,0)));
       }
       else if(return_code==SQLITE_DONE)
       {
@@ -213,14 +213,14 @@ Db::load_calendars(void)
     if(return_code==SQLITE_ROW)
     {
       Calendar* cal = new Calendar(
-          (const char*)::sqlite3_column_text(select_stmt,0), // calid
-          (const char*)::sqlite3_column_text(select_stmt,1), // name
-          (const char*)::sqlite3_column_text(select_stmt,2), // path
-                       ::sqlite3_column_int( select_stmt,3), // readonly
+          safestr(::sqlite3_column_text(select_stmt,0)), // calid
+          safestr(::sqlite3_column_text(select_stmt,1)), // name
+          safestr(::sqlite3_column_text(select_stmt,2)), // path
+                  ::sqlite3_column_int( select_stmt,3),  // readonly
           position++,
-//??                       ::sqlite3_column_int( select_stmt,4), // position
-          (const char*)::sqlite3_column_text(select_stmt,5), // colour
-                       ::sqlite3_column_int( select_stmt,6)  // show
+//??              ::sqlite3_column_int( select_stmt,4),  // position
+          safestr(::sqlite3_column_text(select_stmt,5)), // colour
+                  ::sqlite3_column_int( select_stmt,6)   // show
         );
       _calendar.insert(std::make_pair(cal->calid,cal));
     }
@@ -263,12 +263,12 @@ Db::find(time_t begin, time_t end)
     if(return_code==SQLITE_ROW)
     {
       Occurrence* occ = make_occurrence(
-          (const char*)::sqlite3_column_text(select_stmt,0), // uid
-                       ::sqlite3_column_int( select_stmt,1), // dtstart
-                       ::sqlite3_column_int( select_stmt,2), // dtend
-          (const char*)::sqlite3_column_text(select_stmt,3), // summary
-                       ::sqlite3_column_int( select_stmt,4), // all_day
-          (const char*)::sqlite3_column_text(select_stmt,5)  // calid
+          safestr(::sqlite3_column_text(select_stmt,0)), // uid
+                  ::sqlite3_column_int( select_stmt,1),  // dtstart
+                  ::sqlite3_column_int( select_stmt,2),  // dtend
+          safestr(::sqlite3_column_text(select_stmt,3)), // summary
+                  ::sqlite3_column_int( select_stmt,4),  // all_day
+          safestr(::sqlite3_column_text(select_stmt,5))  // calid
         );
       result.insert(std::make_pair(occ->dtstart(),occ));
     }
