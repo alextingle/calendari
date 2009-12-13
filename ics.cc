@@ -59,12 +59,14 @@ int parse(
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_cal,NULL) );
 
   sqlite3_stmt*  insert_evt;
-  sql="insert into EVENT (VERSION,UID,SUMMARY,CALID,SEQUENCE,ALLDAY,VEVENT) "
-      "values (?,?,?,?,?,?,?)";
+  sql="insert into EVENT "
+        "(VERSION,CALNUM,UID,SUMMARY,CALID,SEQUENCE,ALLDAY,VEVENT) "
+        "values (?,?,?,?,?,?,?,?)";
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) );
 
   sqlite3_stmt*  insert_occ;
-  sql="insert into OCCURRENCE (VERSION,UID,DTSTART,DTEND) values (?,?,?,?)";
+  sql="insert into OCCURRENCE "
+        "(VERSION,CALNUM,UID,DTSTART,DTEND) values (?,?,?,?,?)";
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_occ,NULL) );
 
   CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
@@ -171,18 +173,20 @@ int parse(
 
     // Bind these values to the statements.
     sql::bind_int( CALI_HERE,db,insert_evt,1,version);
-    sql::bind_text(CALI_HERE,db,insert_evt,2,uid);
-    sql::bind_text(CALI_HERE,db,insert_evt,3,summary);
-    sql::bind_text(CALI_HERE,db,insert_evt,4,calid);
-    sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
-    sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
-    sql::bind_text(CALI_HERE,db,insert_evt,7,vevent);
+    sql::bind_int( CALI_HERE,db,insert_evt,2,calnum);
+    sql::bind_text(CALI_HERE,db,insert_evt,3,uid);
+    sql::bind_text(CALI_HERE,db,insert_evt,4,summary);
+    sql::bind_text(CALI_HERE,db,insert_evt,5,calid);
+    sql::bind_int( CALI_HERE,db,insert_evt,6,sequence);
+    sql::bind_int( CALI_HERE,db,insert_evt,7,all_day);
+    sql::bind_text(CALI_HERE,db,insert_evt,8,vevent);
     sql::step_reset(CALI_HERE,db,insert_evt);
 
     sql::bind_int( CALI_HERE,db,insert_occ,1,version);
-    sql::bind_text(CALI_HERE,db,insert_occ,2,uid);
-    sql::bind_int( CALI_HERE,db,insert_occ,3,start_time);
-    sql::bind_int( CALI_HERE,db,insert_occ,4,end_time);
+    sql::bind_int( CALI_HERE,db,insert_occ,2,calnum);
+    sql::bind_text(CALI_HERE,db,insert_occ,3,uid);
+    sql::bind_int( CALI_HERE,db,insert_occ,4,start_time);
+    sql::bind_int( CALI_HERE,db,insert_occ,5,end_time);
     sql::step_reset(CALI_HERE,db,insert_occ);
   }
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
@@ -222,7 +226,7 @@ int main(int argc, char* argv[])
   for(int i=2; i<argc; ++i)
   {
     const char* ics_filename = argv[i];
-    calendari::ics::read(ics_filename,&db);
+    calendari::ics::read(ics_filename,db);
   }
 }
 #endif // test

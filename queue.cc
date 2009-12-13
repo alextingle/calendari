@@ -21,26 +21,6 @@ Queue::idle(void*)
 }
 
 
-std::string
-Queue::quote(const std::string& s)
-{
-  std::string result = "";
-  std::string::size_type cur = 0;
-  while(true)
-  {
-    std::string::size_type pos = s.find_first_of("'",cur);
-    if(pos==s.npos)
-    {
-      result += s.substr(cur, pos);
-      break;
-    }
-    result += s.substr(cur, pos-cur) + "''";
-    cur = pos+1;
-  }
-  return result;
-}
-
-
 void
 Queue::set_db(Db* db)
 {

@@ -1,6 +1,7 @@
 #include "event.h"
 
 #include "queue.h"
+#include "sql.h"
 
 #include <cassert>
 
@@ -38,7 +39,7 @@ Calendar::toggle_show(void)
   static Queue& q( Queue::inst() );
   q.pushf(
       "update CALENDAR set SHOW=%d where CALID='%s'",
-      _show, q.quote(calid).c_str()
+      _show, sql::quote(calid).c_str()
     );
 }
 
@@ -67,9 +68,15 @@ Event::set_calendar(Calendar& c)
   // --
   static Queue& q( Queue::inst() );
   q.pushf(
-      "update EVENT set CALID='%s' where UID='%s'",
-      q.quote(_calendar->calid).c_str(),
-      q.quote(uid).c_str()
+      "update EVENT set CALID='%s',CALNUM=%d where UID='%s'",
+      sql::quote(_calendar->calid).c_str(),
+      _calendar->calnum,
+      sql::quote(uid).c_str()
+    );
+  q.pushf(
+      "update OCCURRENCE set CALNUM=%d where UID='%s'",
+      _calendar->calnum,
+      sql::quote(uid).c_str()
     );
 }
 
@@ -82,8 +89,8 @@ Event::set_summary(const std::string& s)
   static Queue& q( Queue::inst() );
   q.pushf(
       "update EVENT set SUMMARY='%s' where UID='%s'",
-      q.quote(s).c_str(),
-      q.quote(uid).c_str()
+      sql::quote(s).c_str(),
+      sql::quote(uid).c_str()
     );
 }
 
@@ -108,7 +115,7 @@ Occurrence::set_start(time_t start_)
       "update OCCURRENCE set DTSTART=%d,DTEND=%d "
         "where UID='%s' and DTSTART=%d and DTEND=%d",
       _dtstart,_dtend,
-      q.quote(event.uid).c_str(),
+      sql::quote(event.uid).c_str(),
       old_dtstart,old_dtend
     );
   return true;
@@ -133,7 +140,7 @@ Occurrence::set_end(time_t end_)
       "update OCCURRENCE set DTEND=%d "
         "where UID='%s' and DTSTART=%d and DTEND=%d",
       _dtend,
-      q.quote(event.uid).c_str(),
+      sql::quote(event.uid).c_str(),
       _dtstart,old_dtend
     );
   return true;
@@ -147,7 +154,7 @@ Occurrence::destroy(void)
   q.pushf(
       "delete from OCCURRENCE "
         "where UID='%s' and DTSTART=%d and DTEND=%d",
-      q.quote(event.uid).c_str(),
+      sql::quote(event.uid).c_str(),
       _dtstart,_dtend
     );
 }

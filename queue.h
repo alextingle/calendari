@@ -20,9 +20,6 @@ public:
       return q;
     }
 
-  /** Escape single-quote characters for Sqlite strings. */
-  static std::string quote(const std::string& s);
-
   void set_db(Db* db_);
 
   bool empty(void) const { return _changes.empty(); }

@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include <sqlite3.h>
+#include <string>
 
 namespace calendari {
 namespace sql {
@@ -33,6 +34,27 @@ check_error(const util::Here& here, sqlite3* sdb, int return_code)
   do{calendari::sql::check_error( \
     calendari::util::Here(__FILE__,__LINE__),DB,RET); \
   }while(0)
+
+
+/** Escape single-quote characters for Sqlite strings. */
+inline std::string
+quote(const std::string& s)
+{
+  std::string result = "";
+  std::string::size_type cur = 0;
+  while(true)
+  {
+    std::string::size_type pos = s.find_first_of("'",cur);
+    if(pos==s.npos)
+    {
+      result += s.substr(cur, pos);
+      break;
+    }
+    result += s.substr(cur, pos-cur) + "''";
+    cur = pos+1;
+  }
+  return result;
+}
 
 
 inline void

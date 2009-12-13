@@ -107,61 +107,26 @@ Db::create_db(void)
 
 
 void
-Db::refresh_cal(const char* calid, int version)
+Db::refresh_cal(int calnum, int version)
 {
   sql::exec(CALI_HERE,_sdb,"begin");
   try
   {
-    std::string sql_calid = Queue::quote(calid);
-    std::set<std::string> uids;
-    sqlite3_stmt* select_stmt;
-    const char* sql ="select UID from EVENT where VERSION=1 and CALID=?";
-    CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
-    sql::bind_text(CALI_HERE,_sdb,select_stmt,1,sql_calid.c_str());
-    while(true)
-    {
-      int return_code = ::sqlite3_step(select_stmt);
-      if(return_code==SQLITE_ROW)
-      {
-        uids.insert(safestr(::sqlite3_column_text(select_stmt,0)));
-      }
-      else if(return_code==SQLITE_DONE)
-      {
-        break;
-      }
-      else
-      {
-        calendari::sql::error(CALI_HERE,_sdb);
-        break;
-      }
-    }
-    CALI_SQLCHK(_sdb,  ::sqlite3_finalize(select_stmt) );
-    if(!uids.empty())
-    {
-      sqlite3_stmt* delete_stmt;
-      sql = "delete from OCCURRENCE where VERSION=1 and UID=?";
-      CALI_SQLCHK(_sdb,  ::sqlite3_prepare_v2(_sdb,sql,-1,&delete_stmt,NULL) );
-      for(std::set<std::string>::iterator u=uids.begin(); u!=uids.end(); ++u)
-      {
-        sql::bind_text(CALI_HERE,_sdb,delete_stmt,1,u->c_str());
-        int return_code = ::sqlite3_step(delete_stmt);
-        if(return_code!=SQLITE_DONE)
-        {
-          sql::error(CALI_HERE,_sdb);
-          break;
-        }
-        CALI_SQLCHK(_sdb, ::sqlite3_reset(delete_stmt) );
-      }
-      CALI_SQLCHK(_sdb, ::sqlite3_finalize(delete_stmt) );
-    }
     sql::execf(CALI_HERE,_sdb,
-        "delete from EVENT where VERSION=1 and CALID='%s'",sql_calid.c_str());
+        "delete from OCCURRENCE where VERSION=1 and CALNUM=%d",calnum);
+    sql::execf(CALI_HERE,_sdb,
+        "delete from EVENT where VERSION=1 and CALNUM=%d",calnum);
+    // Ensure that UID is unique
+    // ?? should look at SEQUENCE to decide which event to keep.
+    sql::execf(CALI_HERE,_sdb,
+        "delete from EVENT where VERSION=1 and "
+          "UID in (select UID from EVENT where VERSION=%d)",version);
     sql::execf(CALI_HERE,_sdb,
         "update OCCURRENCE set VERSION=1 where VERSION=%d",version);
     sql::execf(CALI_HERE,_sdb,
         "update EVENT set VERSION=1 where VERSION=%d",version);
     sql::execf(CALI_HERE,_sdb,
-        "delete from  CALENDAR where VERSION=%d",version);
+        "delete from CALENDAR where VERSION=%d",version);
     sql::exec(CALI_HERE,_sdb,"commit");
   }
   catch(...)
@@ -273,7 +238,7 @@ Db::calnum(const char* calid)
 
   // Look it up in the database, then.
   int calnum =1;
-  std::string sql_calid = Queue::quote(calid);
+  std::string sql_calid = sql::quote(calid);
   bool ok =
     sql::query_val(
         CALI_HERE,_sdb,

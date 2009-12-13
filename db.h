@@ -19,7 +19,7 @@ public:
   /** Creates tables and indices in the database. */
   void create_db(void);
 
-  void refresh_cal(const char* calid, int version);
+  void refresh_cal(int calnum, int version);
 
   void load_calendars(void);  
   std::multimap<time_t,Occurrence*> find(time_t begin, time_t end);
