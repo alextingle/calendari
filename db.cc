@@ -42,7 +42,7 @@ Db::create_db(void)
 {
   // VERSION slices the database between the current (VERSION=1) contents and
   // content that is being generated (VERSION>1)
-  exec(
+  sql::exec(CALI_HERE,_sdb,
       "create table if not exists CALENDAR ("
       "  VERSION  integer,"
       "  CALNUM   integer,"
@@ -56,7 +56,7 @@ Db::create_db(void)
       "  primary key(VERSION,CALID)"
       ")"
     );
-  exec(
+  sql::exec(CALI_HERE,_sdb,
       "create table if not exists EVENT ("
       "  VERSION  integer,"
       "  CALNUM   integer,"
@@ -69,7 +69,7 @@ Db::create_db(void)
       "  primary key(VERSION,UID)"
       ")"
     );
-  exec(
+  sql::exec(CALI_HERE,_sdb,
       "create table if not exists OCCURRENCE ("
       "  VERSION  integer,"
       "  CALNUM   integer,"
@@ -79,8 +79,10 @@ Db::create_db(void)
       "  primary key(VERSION,UID,DTSTART)"
       ")"
     );
-  exec("create index if not exists OCC_START_INDEX on OCCURRENCE(DTSTART)");
-  exec("create index if not exists OCC_END_INDEX on OCCURRENCE(DTEND)");
+  sql::exec(CALI_HERE,_sdb,
+      "create index if not exists OCC_START_INDEX on OCCURRENCE(DTSTART)");
+  sql::exec(CALI_HERE,_sdb,
+      "create index if not exists OCC_END_INDEX on OCCURRENCE(DTEND)");
   /*
   -- Find all occurances between two times.
   select O.UID,DTSTART,DTEND,SUMMARY,COLOUR
@@ -107,7 +109,7 @@ Db::create_db(void)
 void
 Db::refresh_cal(const char* calid, int version)
 {
-  exec("begin");
+  sql::exec(CALI_HERE,_sdb,"begin");
   try
   {
     std::string sql_calid = Queue::quote(calid);
@@ -145,51 +147,28 @@ Db::refresh_cal(const char* calid, int version)
         int return_code = ::sqlite3_step(delete_stmt);
         if(return_code!=SQLITE_DONE)
         {
-          calendari::sql::error(CALI_HERE,_sdb);
+          sql::error(CALI_HERE,_sdb);
           break;
         }
         CALI_SQLCHK(_sdb, ::sqlite3_reset(delete_stmt) );
       }
       CALI_SQLCHK(_sdb, ::sqlite3_finalize(delete_stmt) );
     }
-    execf("delete from EVENT where VERSION=1 and CALID='%s'",sql_calid.c_str());
-    execf("update OCCURRENCE set VERSION=1 where VERSION=%d",version);
-    execf("update EVENT set VERSION=1 where VERSION=%d",version);
-    execf("delete from  CALENDAR where VERSION=%d",version);
-    exec("commit");
+    sql::execf(CALI_HERE,_sdb,
+        "delete from EVENT where VERSION=1 and CALID='%s'",sql_calid.c_str());
+    sql::execf(CALI_HERE,_sdb,
+        "update OCCURRENCE set VERSION=1 where VERSION=%d",version);
+    sql::execf(CALI_HERE,_sdb,
+        "update EVENT set VERSION=1 where VERSION=%d",version);
+    sql::execf(CALI_HERE,_sdb,
+        "delete from  CALENDAR where VERSION=%d",version);
+    sql::exec(CALI_HERE,_sdb,"commit");
   }
   catch(...)
   {
-    try{ exec("rollback"); } catch(...) {}
+    try{ sql::exec(CALI_HERE,_sdb,"rollback"); } catch(...) {}
     throw;
   }
-}
-
-
-void
-Db::exec(const char* sql)
-{
-  char* errmsg;
-  int ret = ::sqlite3_exec(_sdb,sql,NULL,NULL,&errmsg);
-  if(SQLITE_OK != ret)
-  {
-    CALI_ERRO(1,0,"sqlite error %i: %s in SQL \"%s\"",ret,errmsg,sql);
-    ::sqlite3_free(errmsg);
-  }
-}
-
-
-void
-Db::execf(const char* format, ...)
-{
-  va_list args;
-  va_start(args,format);
-  char buf[256];
-  int ret = vsnprintf(buf,sizeof(buf),format,args);
-  if(ret>=sizeof(buf))
-      CALI_ERRO(1,0,"SQL too large for buffer."); //??
-  exec(buf);
-  va_end(args);
 }
 
 

@@ -21,12 +21,6 @@ public:
 
   void refresh_cal(const char* calid, int version);
 
-  /** Execute arbitrary SQL. Discards any resulting columns. */
-  void exec(const char* sql);
-
-  /** Execute arbitrary SQL. Discards any resulting columns. */
-  void execf(const char* format, ...);
-
   void load_calendars(void);  
   std::multimap<time_t,Occurrence*> find(time_t begin, time_t end);
 
@@ -48,7 +42,7 @@ public:
   void moved(Occurrence* occ);
   void erase(Occurrence* occ);
 
-  sqlite3* sqlite_db(void) const
+  operator sqlite3* (void) const
     { return _sdb; }
 
 private:

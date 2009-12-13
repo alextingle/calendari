@@ -2,6 +2,7 @@
 
 #include "db.h"
 #include "err.h"
+#include "sql.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -77,13 +78,13 @@ Queue::flush(void)
 {
   if(!_changes.empty())
   {
-    _db->exec("begin");
+    sql::exec(CALI_HERE,*_db,"begin");
     while(!_changes.empty())
     {
-      _db->exec( _changes.front().c_str() );
+      sql::exec(CALI_HERE,*_db, _changes.front().c_str() );
       _changes.pop_front();
     }
-    _db->exec("commit");
+    sql::exec(CALI_HERE,*_db,"commit");
   }
 }
 

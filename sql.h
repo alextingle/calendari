@@ -15,19 +15,19 @@ typedef void(*MemoryStatus)(void*);
 
 
 inline void
-error(const util::Here& here, sqlite3* db)
+error(const util::Here& here, sqlite3* sdb)
 {
-  int         errcode = ::sqlite3_errcode(db);
-  const char* errmsg  = ::sqlite3_errmsg(db);
+  int         errcode = ::sqlite3_errcode(sdb);
+  const char* errmsg  = ::sqlite3_errmsg(sdb);
   util::error(here,0,0,"sqlite error %i: %s",errcode,errmsg);
 }
 
 
 inline void
-check_error(const util::Here& here, sqlite3* db, int return_code)
+check_error(const util::Here& here, sqlite3* sdb, int return_code)
 {
   if( SQLITE_OK != return_code )
-      sql::error(here,db);
+      sql::error(here,sdb);
 }
 #define CALI_SQLCHK(DB,RET) \
   do{calendari::sql::check_error( \
@@ -38,21 +38,21 @@ check_error(const util::Here& here, sqlite3* db, int return_code)
 inline void
 bind_int(
     const util::Here&  here,
-    sqlite3*           db,
+    sqlite3*           sdb,
     sqlite3_stmt*      stmt,
     int                idx,
     int                val)
 {
   int ret;
   ret= ::sqlite3_bind_int(stmt,idx,val);
-  sql::check_error(here,db,ret);
+  sql::check_error(here,sdb,ret);
 }
 
 
 inline void
 bind_text(
     const util::Here&  here,
-    sqlite3*           db,
+    sqlite3*           sdb,
     sqlite3_stmt*      stmt,
     int                idx,
     const char*        s,
@@ -62,12 +62,12 @@ bind_text(
 {
   int ret;
   ret= ::sqlite3_bind_text(stmt,idx,s,n,mem);
-  sql::check_error(here,db,ret);
+  sql::check_error(here,sdb,ret);
 }
 
 
 inline void
-step_reset(const util::Here& here, sqlite3* db, sqlite3_stmt* stmt)
+step_reset(const util::Here& here, sqlite3* sdb, sqlite3_stmt* stmt)
 {
   int return_code = ::sqlite3_step(stmt);
   switch(return_code)
@@ -79,9 +79,38 @@ step_reset(const util::Here& here, sqlite3* db, sqlite3_stmt* stmt)
     case SQLITE_CONSTRAINT: // Probably primary key violation. ??
       break;
     default:
-      sql::error(here,db);
+      sql::error(here,sdb);
   } // end switch
   ::sqlite3_reset(stmt);
+}
+
+
+/** Execute arbitrary SQL. Discards any resulting columns. */
+inline void
+exec(const util::Here& here, sqlite3* sdb, const char* sql)
+{
+  char* errmsg;
+  int ret = ::sqlite3_exec(sdb,sql,NULL,NULL,&errmsg);
+  if(SQLITE_OK != ret)
+  {
+    util::error(here,1,0,"sqlite error %i: %s in SQL \"%s\"",ret,errmsg,sql);
+    ::sqlite3_free(errmsg);
+  }
+}
+
+
+/** Execute arbitrary SQL. Discards any resulting columns. */
+inline void
+execf(const util::Here& here, sqlite3* sdb, const char* format, ...)
+{
+  va_list args;
+  va_start(args,format);
+  char buf[256];
+  int ret = vsnprintf(buf,sizeof(buf),format,args);
+  if(ret>=sizeof(buf))
+      CALI_ERRO(1,0,"SQL too large for buffer."); //??
+  sql::exec(here,sdb,buf);
+  va_end(args);
 }
 
 
@@ -89,7 +118,7 @@ step_reset(const util::Here& here, sqlite3* db, sqlite3_stmt* stmt)
 inline bool
 query_val(
     const util::Here&  here,
-    sqlite3*           db,
+    sqlite3*           sdb,
     int&               val, // output
     const char*        format, ...
   )
@@ -105,7 +134,7 @@ query_val(
   va_end(args);
   // Query
   sqlite3_stmt* select_stmt;
-  check_error(here,db, ::sqlite3_prepare_v2(db,sql,-1,&select_stmt,NULL) );
+  check_error(here,sdb, ::sqlite3_prepare_v2(sdb,sql,-1,&select_stmt,NULL) );
   int return_code = ::sqlite3_step(select_stmt);
   switch(return_code)
   {
@@ -118,10 +147,10 @@ query_val(
         break;
     default:
         // Error
-        sql::error(here,db);
+        sql::error(here,sdb);
   }
   // Clean up.
-  check_error(here,db, ::sqlite3_finalize(select_stmt) );
+  check_error(here,sdb, ::sqlite3_finalize(select_stmt) );
   return result;
 }
 
