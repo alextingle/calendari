@@ -112,15 +112,14 @@ Db::refresh_cal(int calnum, int version)
   sql::exec(CALI_HERE,_sdb,"begin");
   try
   {
-    sql::execf(CALI_HERE,_sdb,
-        "delete from OCCURRENCE where VERSION=1 and CALNUM=%d",calnum);
-    sql::execf(CALI_HERE,_sdb,
-        "delete from EVENT where VERSION=1 and CALNUM=%d",calnum);
     // Ensure that UID is unique
     // ?? should look at SEQUENCE to decide which event to keep.
     sql::execf(CALI_HERE,_sdb,
-        "delete from EVENT where VERSION=1 and "
-          "UID in (select UID from EVENT where VERSION=%d)",version);
+        "delete from OCCURRENCE where VERSION=1 and( CALNUM=%d or "
+          "UID in (select UID from EVENT where VERSION=%d) )",calnum,version);
+    sql::execf(CALI_HERE,_sdb,
+        "delete from EVENT where VERSION=1 and( CALNUM=%d or "
+          "UID in (select UID from EVENT where VERSION=%d) )",calnum,version);
     sql::execf(CALI_HERE,_sdb,
         "update OCCURRENCE set VERSION=1 where VERSION=%d",version);
     sql::execf(CALI_HERE,_sdb,
