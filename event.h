@@ -10,10 +10,11 @@ namespace calendari {
 class Calendar
 {
 public:
+  const int version;
   const std::string calid;
   const int calnum;
   
-  Calendar(const char* id, int cn, const char* nm, const char* pa,
+  Calendar(int v, const char* id, int cn, const char* nm, const char* pa,
       int rp, int ps, const char* cl, int sh);
 
   const std::string& name(void)     const { return _name; }

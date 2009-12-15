@@ -192,6 +192,7 @@ int parse(
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
   CALI_SQLCHK(db, ::sqlite3_finalize(insert_evt) );
   CALI_SQLCHK(db, ::sqlite3_finalize(insert_occ) );
+  CALI_SQLCHK(db, ::sqlite3_finalize(insert_cal) );
 }
 
 
@@ -215,10 +216,52 @@ void read(const char* ical_filename, Db& db, int version)
 }
 
 
+void write(const char* calid, Db& db, const char* ical_filename)
+{
+  assert(calid);
+  assert(calid[0]);
+  SComponent ical(
+      icalcomponent_vanew(
+        ICAL_VCALENDAR_COMPONENT,
+        icalvalue_new_method(ICAL_METHOD_PUBLISH),
+        icalproperty_new_prodid("-//firetree.net//Calendari 0.1//EN"),
+        icalproperty_new_calscale("GREGORIAN"),
+        icalproperty_new_version("2.0"),
+        0
+    ) );
+/*
+  icalproperty* prop = icalproperty_new_x();
+  icalproperty_set_x_name("X-WR-CALNAME");
+  icalvalue* val = icalvalue_new_string("");
+  icalproperty_set_value(prop,val);
+  icalcomponent_add_property(ical,prop);
+"X-WR-RELCALID"
+*/
+
+  // Read in VEVENTS from the database...
+  // ...and populate them with any modifications.
+  // Write out the iCalendar file.
+}
+
+
 } } // end namespace calendari::ical
 
 
 #ifdef CALENDARI__ICAL__READ__TEST
+int main(int argc, char* argv[])
+{
+  const char* sqlite_filename = argv[1];
+  calendari::Db db(sqlite_filename);
+  for(int i=2; i<argc; ++i)
+  {
+    const char* ics_filename = argv[i];
+    calendari::ics::read(ics_filename,db);
+  }
+}
+#endif // test
+
+
+#ifdef CALENDARI__ICAL__WRITE__TEST
 int main(int argc, char* argv[])
 {
   const char* sqlite_filename = argv[1];

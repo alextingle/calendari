@@ -11,6 +11,7 @@ namespace calendari {
 // -- Calendar --
 
 Calendar::Calendar(
+    int         version_,
     const char* calid_,
     int         calnum_,
     const char* name_,
@@ -20,7 +21,8 @@ Calendar::Calendar(
     const char* col_,
     int         show_
   )
-  : calid(calid_),
+  : version(version_),
+    calid(calid_),
     calnum(calnum_),
     _name(name_),
     _path(path_),
@@ -38,8 +40,8 @@ Calendar::toggle_show(void)
   // --
   static Queue& q( Queue::inst() );
   q.pushf(
-      "update CALENDAR set SHOW=%d where CALID='%s'",
-      _show, sql::quote(calid).c_str()
+      "update CALENDAR set SHOW=%d where VERSION=%d and CALID='%s'",
+      _show, version, sql::quote(calid).c_str()
     );
 }
 
@@ -68,14 +70,16 @@ Event::set_calendar(Calendar& c)
   // --
   static Queue& q( Queue::inst() );
   q.pushf(
-      "update EVENT set CALID='%s',CALNUM=%d where UID='%s'",
+      "update EVENT set CALID='%s',CALNUM=%d where VERSION=%d and UID='%s'",
       sql::quote(_calendar->calid).c_str(),
       _calendar->calnum,
+      _calendar->version,
       sql::quote(uid).c_str()
     );
   q.pushf(
-      "update OCCURRENCE set CALNUM=%d where UID='%s'",
+      "update OCCURRENCE set CALNUM=%d where VERSION=%d and UID='%s'",
       _calendar->calnum,
+      _calendar->version,
       sql::quote(uid).c_str()
     );
 }
@@ -88,8 +92,14 @@ Event::set_summary(const std::string& s)
   // --
   static Queue& q( Queue::inst() );
   q.pushf(
-      "update EVENT set SUMMARY='%s' where UID='%s'",
+      "update EVENT set SUMMARY='%s' where VERSION=%d and UID='%s'",
       sql::quote(s).c_str(),
+      _calendar->version,
+      sql::quote(uid).c_str()
+    );
+  q.pushf(
+      "update EVENT set SEQUENCE=SEQUENCE+1 where VERSION=%d and UID='%s'",
+      _calendar->version,
       sql::quote(uid).c_str()
     );
 }
@@ -113,8 +123,9 @@ Occurrence::set_start(time_t start_)
   static Queue& q( Queue::inst() );
   q.pushf(
       "update OCCURRENCE set DTSTART=%d,DTEND=%d "
-        "where UID='%s' and DTSTART=%d and DTEND=%d",
+        "where VERSION=%d and UID='%s' and DTSTART=%d and DTEND=%d",
       _dtstart,_dtend,
+      event.calendar().version,
       sql::quote(event.uid).c_str(),
       old_dtstart,old_dtend
     );
@@ -138,8 +149,9 @@ Occurrence::set_end(time_t end_)
   static Queue& q( Queue::inst() );
   q.pushf(
       "update OCCURRENCE set DTEND=%d "
-        "where UID='%s' and DTSTART=%d and DTEND=%d",
+        "where VERSION=%d and UID='%s' and DTSTART=%d and DTEND=%d",
       _dtend,
+      event.calendar().version,
       sql::quote(event.uid).c_str(),
       _dtstart,old_dtend
     );
@@ -153,7 +165,8 @@ Occurrence::destroy(void)
   static Queue& q( Queue::inst() );
   q.pushf(
       "delete from OCCURRENCE "
-        "where UID='%s' and DTSTART=%d and DTEND=%d",
+        "where VERSION=%d and UID='%s' and DTSTART=%d and DTEND=%d",
+      event.calendar().version,
       sql::quote(event.uid).c_str(),
       _dtstart,_dtend
     );

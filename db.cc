@@ -12,6 +12,21 @@
 namespace calendari {
 
 
+void
+Version::destroy(void)
+{
+  typedef std::map<std::string,Calendar*>::iterator CIt;
+  for(CIt c =_calendar.begin(); c!=_calendar.end(); ++c)
+      delete c->second;
+  typedef std::map<std::string,Event*>::iterator EIt;
+  for(EIt e =_event.begin(); e!=_event.end(); ++e)
+      delete e->second;
+  typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
+  for(OIt o =_occurrence.begin(); o!=_occurrence.end(); ++o)
+      delete o->second;
+}
+
+
 Db::Db(const char* dbname)
 {
   if( SQLITE_OK != ::sqlite3_open(dbname,&_sdb) )
@@ -24,16 +39,9 @@ Db::Db(const char* dbname)
 Db::~Db(void)
 {
   if(_sdb)
-    ::sqlite3_close(_sdb);
-  typedef std::map<std::string,Calendar*>::iterator CIt;
-  for(CIt c =_calendar.begin(); c!=_calendar.end(); ++c)
-      delete c->second;
-  typedef std::map<std::string,Event*>::iterator EIt;
-  for(EIt e =_event.begin(); e!=_event.end(); ++e)
-      delete e->second;
-  typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
-  for(OIt o =_occurrence.begin(); o!=_occurrence.end(); ++o)
-      delete o->second;
+      ::sqlite3_close(_sdb);
+  for(std::map<int,Version>::iterator v=_ver.begin(); v!=_ver.end(); ++v)
+      v->second.destroy();
 }
 
 
@@ -107,7 +115,7 @@ Db::create_db(void)
 
 
 void
-Db::refresh_cal(int calnum, int version)
+Db::refresh_cal(int calnum, int from_version, int to_version)
 {
   sql::exec(CALI_HERE,_sdb,"begin");
   try
@@ -115,17 +123,20 @@ Db::refresh_cal(int calnum, int version)
     // Ensure that UID is unique
     // ?? should look at SEQUENCE to decide which event to keep.
     sql::execf(CALI_HERE,_sdb,
-        "delete from OCCURRENCE where VERSION=1 and( CALNUM=%d or "
-          "UID in (select UID from EVENT where VERSION=%d) )",calnum,version);
+        "delete from OCCURRENCE where VERSION=%d and( CALNUM=%d or "
+          "UID in (select UID from EVENT where VERSION=%d) )",
+        to_version,calnum,from_version);
     sql::execf(CALI_HERE,_sdb,
-        "delete from EVENT where VERSION=1 and( CALNUM=%d or "
-          "UID in (select UID from EVENT where VERSION=%d) )",calnum,version);
+        "delete from EVENT where VERSION=%d and( CALNUM=%d or "
+          "UID in (select UID from EVENT where VERSION=%d) )",
+        to_version,calnum,from_version);
     sql::execf(CALI_HERE,_sdb,
-        "update OCCURRENCE set VERSION=1 where VERSION=%d",version);
+        "update OCCURRENCE set VERSION=%d where VERSION=%d",
+        to_version,from_version);
     sql::execf(CALI_HERE,_sdb,
-        "update EVENT set VERSION=1 where VERSION=%d",version);
+        "update EVENT set VERSION=%d where VERSION=%d",to_version,from_version);
     sql::execf(CALI_HERE,_sdb,
-        "delete from CALENDAR where VERSION=%d",version);
+        "delete from CALENDAR where VERSION=%d",from_version);
     sql::exec(CALI_HERE,_sdb,"commit");
   }
   catch(...)
@@ -137,15 +148,17 @@ Db::refresh_cal(int calnum, int version)
 
 
 void
-Db::load_calendars(void)
+Db::load_calendars(int version)
 {
+  Version& ver = _ver[version];
   sqlite3_stmt* select_stmt;
   const char* sql =
       "select CALID,CALNUM,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW "
       "from CALENDAR "
-      "where VERSION=1 "
+      "where VERSION=? "
       "order by POSITION";
   CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
+  sql::bind_int(CALI_HERE,_sdb,select_stmt,1,version);
 
   int position = 0;
   while(true)
@@ -153,7 +166,7 @@ Db::load_calendars(void)
     int return_code = ::sqlite3_step(select_stmt);
     if(return_code==SQLITE_ROW)
     {
-      Calendar* cal = new Calendar(
+      Calendar* cal = new Calendar(version,
           safestr(::sqlite3_column_text(select_stmt,0)), // calid
                   ::sqlite3_column_int( select_stmt,1),  // calnum
           safestr(::sqlite3_column_text(select_stmt,2)), // name
@@ -164,7 +177,7 @@ Db::load_calendars(void)
           safestr(::sqlite3_column_text(select_stmt,6)), // colour
                   ::sqlite3_column_int( select_stmt,7)   // show
         );
-      _calendar.insert(std::make_pair(cal->calid,cal));
+      ver._calendar.insert(std::make_pair(cal->calid,cal));
     }
     else if(return_code==SQLITE_DONE)
     {
@@ -181,7 +194,7 @@ Db::load_calendars(void)
 
   
 std::multimap<time_t,Occurrence*>
-Db::find(time_t begin, time_t end)
+Db::find(time_t begin, time_t end, int version)
 {
   std::multimap<time_t,Occurrence*> result;
 
@@ -189,12 +202,13 @@ Db::find(time_t begin, time_t end)
   const char* sql =
       "select O.UID,DTSTART,DTEND,SUMMARY,ALLDAY,CALID "
       "from OCCURRENCE O "
-      "left join EVENT E on E.UID=O.UID and E.VERSION=1 "
-      "where DTEND>=? and DTSTART<? and O.VERSION=1 "
+      "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
+      "where DTEND>=? and DTSTART<? and O.VERSION=? "
       "order by DTSTART";
   CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
   sql::bind_int(CALI_HERE,_sdb,select_stmt,1,begin);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,2,end);
+  sql::bind_int(CALI_HERE,_sdb,select_stmt,3,version);
 
   while(true)
   {
@@ -207,7 +221,8 @@ Db::find(time_t begin, time_t end)
                   ::sqlite3_column_int( select_stmt,2),  // dtend
           safestr(::sqlite3_column_text(select_stmt,3)), // summary
                   ::sqlite3_column_int( select_stmt,4),  // all_day
-          safestr(::sqlite3_column_text(select_stmt,5))  // calid
+          safestr(::sqlite3_column_text(select_stmt,5)), // calid
+          version
         );
       result.insert(std::make_pair(occ->dtstart(),occ));
     }
@@ -230,9 +245,10 @@ int
 Db::calnum(const char* calid)
 {
   assert(calid);
-  // Look it up in our _calendars.
-  std::map<std::string,Calendar*>::const_iterator pos = _calendar.find(calid);
-  if(pos != _calendar.end())
+  Version& v1 = _ver[1];
+  // Look it up in version 1 _calendars.
+  std::map<std::string,Calendar*>::const_iterator pos =v1._calendar.find(calid);
+  if(pos != v1._calendar.end())
       return pos->second->calnum;
 
   // Look it up in the database, then.
@@ -265,16 +281,18 @@ Occurrence* Db::make_occurrence(
     time_t       dtend,
     const char*  summary,
     bool         all_day,
-    const char*  calid
+    const char*  calid,
+    int          version
   )
 {
+  Version& ver = _ver[version];
   Event* event;
-  std::map<std::string,Event*>::iterator e = _event.find(uid);
-  if(e==_event.end())
+  std::map<std::string,Event*>::iterator e = ver._event.find(uid);
+  if(e==ver._event.end())
   {
-    event = _event[uid] =
+    event = ver._event[uid] =
       new Event(
-          *_calendar[calid],
+          *ver._calendar[calid],
           uid,
           summary,
           0, // ??? sequence
@@ -287,27 +305,29 @@ Occurrence* Db::make_occurrence(
   }
 
   Occurrence::key_type key(dtstart,uid);
-  std::map<Occurrence::key_type,Occurrence*>::iterator o =_occurrence.find(key);
-  if(o!=_occurrence.end())
+  std::map<Occurrence::key_type,Occurrence*>::iterator o =
+      ver._occurrence.find(key);
+  if(o!=ver._occurrence.end())
       return o->second;
   else
-      return _occurrence[key] = new Occurrence(*event,dtstart,dtend);
+      return ver._occurrence[key] = new Occurrence(*event,dtstart,dtend);
 }
 
 
 void
-Db::moved(Occurrence* occ)
+Db::moved(Occurrence* occ, int version)
 {
-  _occurrence.erase( occ->key() );
-  _occurrence[ occ->rekey() ] = occ;
+  Version& ver = _ver[version];
+  ver._occurrence.erase( occ->key() );
+  ver._occurrence[ occ->rekey() ] = occ;
 }
 
 
 void
-Db::erase(Occurrence* occ)
+Db::erase(Occurrence* occ, int version)
 {
   occ->destroy();
-  _occurrence.erase( occ->key() );
+  _ver[version]._occurrence.erase( occ->key() );
   delete occ;
 }
 
