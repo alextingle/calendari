@@ -101,11 +101,19 @@ CalendarList::refresh(calendari::Calendari* cal)
   Calendar* curr = current();
   if(curr && !curr->path().empty())
   {
-    printf("refresh %s at %s\n",curr->name().c_str(),curr->path().c_str());
-    ics::read(curr->path().c_str(), *cal->db, 2);
-    cal->db->refresh_cal(curr->calnum,2);
-    cal->main_view->reload();
-    gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+    if(curr->readonly())
+    {
+      printf("read %s at %s\n",curr->name().c_str(),curr->path().c_str());
+      ics::read(curr->path().c_str(), *cal->db, 2);
+      cal->db->refresh_cal(curr->calnum,2);
+      cal->main_view->reload();
+      gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+    }
+    else
+    {
+      printf("write %s at %s\n",curr->name().c_str(),curr->path().c_str());
+      ics::write(curr->path().c_str(), *cal->db, curr->calid.c_str());
+    }
   }
 }
 
