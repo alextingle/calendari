@@ -7,6 +7,7 @@
 #include "sql.h"
 
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <libical/ical.h>
 #include <sqlite3.h>
@@ -216,31 +217,172 @@ void read(const char* ical_filename, Db& db, int version)
 }
 
 
-void write(const char* calid, Db& db, const char* ical_filename)
+void write(const char* ical_filename, Db& db, const char* calid, int version)
 {
   assert(calid);
   assert(calid[0]);
+
+  icalproperty* prop;
+  icalparameter* param;
+
+  // Load calendar from database.
+  sqlite3_stmt* select_cal;
+  const char* sql =
+      "select CALNUM,CALNAME,PATH,READONLY "
+      "from CALENDAR "
+      "where VERSION=? and CALID=? ";
+  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&select_cal,NULL) );
+  sql::bind_int( CALI_HERE,db,select_cal,1,version);
+  sql::bind_text(CALI_HERE,db,select_cal,2,calid);
+
+  int return_code = ::sqlite3_step(select_cal);
+  if(return_code==SQLITE_DONE)
+  {
+    util::error(CALI_HERE,0,0,
+        "Can't find calendar id %s in the database.",calid);
+    return;
+  }
+  else if(return_code!=SQLITE_ROW)
+  {
+    calendari::sql::error(CALI_HERE,db);
+    return;
+  }
+
+  int         calnum   =         ::sqlite3_column_int( select_cal,0);
+  const char* calname  = safestr(::sqlite3_column_text(select_cal,1));
+  const char* path     = safestr(::sqlite3_column_text(select_cal,2));
+  bool        readonly =         ::sqlite3_column_int( select_cal,3);
+
+  // Check that we are allowed to write this calendar.
+  // ?? Also check destination file mode.
+  if(readonly && 0==::strcmp(ical_filename,path)) // ?? use proper path compare
+  {
+    util::error(CALI_HERE,0,0,"Calendar is read only: %s",path);
+    return;
+  }
+
   SComponent ical(
       icalcomponent_vanew(
         ICAL_VCALENDAR_COMPONENT,
-        icalvalue_new_method(ICAL_METHOD_PUBLISH),
+        icalproperty_new_method(ICAL_METHOD_PUBLISH),
         icalproperty_new_prodid("-//firetree.net//Calendari 0.1//EN"),
         icalproperty_new_calscale("GREGORIAN"),
         icalproperty_new_version("2.0"),
         0
     ) );
-/*
-  icalproperty* prop = icalproperty_new_x();
-  icalproperty_set_x_name("X-WR-CALNAME");
-  icalvalue* val = icalvalue_new_string("");
-  icalproperty_set_value(prop,val);
-  icalcomponent_add_property(ical,prop);
-"X-WR-RELCALID"
-*/
+  // CALID => X-WR-RELCALID
+  prop = icalproperty_new_x( calid );
+  icalproperty_set_x_name(prop,"X-WR-RELCALID");
+  icalcomponent_add_property(ical.get(),prop);
+  // CALNAME,1 => X-WR-CALNAME
+  prop = icalproperty_new_x( calname );
+  icalproperty_set_x_name(prop,"X-WR-CALNAME");
+  icalcomponent_add_property(ical.get(),prop);
+  // ?? => X-WR-TIMEZONE
+  prop = icalproperty_new_x("Europe/London"); // ??
+  icalproperty_set_x_name(prop,"X-WR-TIMEZONE");
+  icalcomponent_add_property(ical.get(),prop);
+
+  CALI_SQLCHK(db, ::sqlite3_finalize(select_cal) );
+  
+  // ?? VTIMEZONE component
 
   // Read in VEVENTS from the database...
-  // ...and populate them with any modifications.
+  // Load calendar from database.
+  sqlite3_stmt* select_evt;
+  // Eek! a self-join to find the *first* occurrence for each event.
+  sql = "select E.UID,SUMMARY,SEQUENCE,ALLDAY,VEVENT,O.DTSTART,O.DTEND "
+        "from (select UID,min(DTSTART) as S from "
+               "OCCURRENCE where VERSION=? and CALNUM=? group by UID) K "
+        "left join OCCURRENCE O on K.UID=O.UID and K.S=O.DTSTART "
+        "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
+        "where E.VERSION=? and E.CALNUM=? "
+        "order by SUMMARY";
+  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&select_evt,NULL) );
+  sql::bind_int(CALI_HERE,db,select_evt,1,version);
+  sql::bind_int(CALI_HERE,db,select_evt,2,calnum);
+  sql::bind_int(CALI_HERE,db,select_evt,3,version);
+  sql::bind_int(CALI_HERE,db,select_evt,4,calnum);
+
+  while(true)
+  {
+    int return_code = ::sqlite3_step(select_evt);
+    if(return_code==SQLITE_DONE)
+    {
+      break;
+    }
+    else if(return_code!=SQLITE_ROW)
+    {
+      calendari::sql::error(CALI_HERE,db);
+      return;
+    }
+    const char* uid      = safestr(::sqlite3_column_text(select_evt,0));
+    const char* summary  = safestr(::sqlite3_column_text(select_evt,1));
+    int         sequence =         ::sqlite3_column_int( select_evt,2);
+    bool        allday   =         ::sqlite3_column_int( select_evt,3);
+    const char* veventz  = safestr(::sqlite3_column_text(select_evt,4));
+    time_t      dtstart  =         ::sqlite3_column_int( select_evt,5);
+    time_t      dtend    =         ::sqlite3_column_int( select_evt,6);
+
+    // ...and populate them with any modifications.
+
+    icalcomponent* vevent;
+    if(veventz && veventz[0])
+    {
+      vevent = icalparser_parse_string(veventz);
+      // Eliminate parts that we already have.
+      prop = icalcomponent_get_first_property(vevent,ICAL_ANY_PROPERTY);
+      while(prop)
+      {
+        icalproperty* next =
+            icalcomponent_get_next_property(vevent,ICAL_ANY_PROPERTY);
+        const char* name = icalproperty_get_property_name(prop);
+        if( 0==::strcmp(name,"DTSTART") ||
+            0==::strcmp(name,"DTEND") ||
+            0==::strcmp(name,"SUMMARY") ||
+            0==::strcmp(name,"SEQUENCE") )
+        {
+          icalcomponent_remove_property(vevent,prop);
+          icalproperty_free(prop);
+        }
+        prop = next;
+      }
+
+    }
+    else
+    {
+      vevent = icalcomponent_vanew(ICAL_VEVENT_COMPONENT,
+          icalproperty_new_uid(uid),
+          icalproperty_new_created( icaltime_from_timet(::time(NULL),false) ),
+          icalproperty_new_transp(ICAL_TRANSP_OPAQUE), //??
+          0
+        );
+    }
+    icalcomponent_add_property(vevent,
+        icalproperty_new_summary( summary )
+      );
+    icalcomponent_add_property(vevent,
+        icalproperty_new_sequence( sequence )
+      );
+    prop = icalproperty_new_dtstart( icaltime_from_timet(dtstart,allday) );
+    param = icalparameter_new_tzid("Europe/London"); //?? Set this properly
+    icalproperty_add_parameter(prop,param);
+    icalcomponent_add_property(vevent,prop);
+
+    prop = icalproperty_new_dtend( icaltime_from_timet(dtend,allday) );
+    param = icalparameter_new_tzid("Europe/London"); //?? Set this properly
+    icalproperty_add_parameter(prop,param);
+    icalcomponent_add_property(vevent,prop);
+
+    // Add this VEVENT to our calendar
+    icalcomponent_add_component(ical.get(),vevent);
+  }
+  CALI_SQLCHK(db, ::sqlite3_finalize(select_evt) );
+
   // Write out the iCalendar file.
+  std::ofstream ofile(ical_filename);
+  if(ofile)
+      ofile << icalcomponent_as_ical_string( ical.get() );
 }
 
 
@@ -266,10 +408,11 @@ int main(int argc, char* argv[])
 {
   const char* sqlite_filename = argv[1];
   calendari::Db db(sqlite_filename);
-  for(int i=2; i<argc; ++i)
+  for(int i=3; i<argc; i+=2)
   {
+    const char* calid = argv[i-1];
     const char* ics_filename = argv[i];
-    calendari::ics::read(ics_filename,db);
+    calendari::ics::write(ics_filename,db,calid,1);
   }
 }
 #endif // test

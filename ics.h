@@ -13,6 +13,9 @@ namespace ics {
 /** Parse ical_filename and write the result to db. */
 void read(const char* ical_filename, Db& db, int version=1);
 
+/** Write from the db to ical_filename. */
+void write(const char* ical_filename, Db& db, const char* calid, int version=1);
+
 
 } } // end namespace calendari::ics
 

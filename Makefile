@@ -11,9 +11,14 @@ OBJECTS := $(patsubst %.cc,$(OBJDIR)/%.o,$(CC_FILES))
 calendari: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
-.PHONEY: test_ics
-test_ics: TESTFLAGS := -DCALENDARI__ICAL__READ__TEST
-test_ics: obj/ics.o obj/db.o obj/event.o obj/queue.o
+.PHONEY: test_ics_read
+test_ics_read: TESTFLAGS := -DCALENDARI__ICAL__READ__TEST
+test_ics_read: obj/ics.o obj/db.o obj/event.o obj/queue.o
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
+
+.PHONEY: test_ics_write
+test_ics_write: TESTFLAGS := -DCALENDARI__ICAL__WRITE__TEST
+test_ics_write: obj/ics.o obj/db.o obj/event.o obj/queue.o
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^
 
 $(OBJECTS): $(OBJDIR)/%.o: %.cc
