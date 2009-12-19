@@ -339,6 +339,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
         const char* name = icalproperty_get_property_name(prop);
         if( 0==::strcmp(name,"DTSTART") ||
             0==::strcmp(name,"DTEND") ||
+            0==::strcmp(name,"DTSTAMP") ||
             0==::strcmp(name,"SUMMARY") ||
             0==::strcmp(name,"SEQUENCE") )
         {
@@ -364,6 +365,9 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
     icalcomponent_add_property(vevent,
         icalproperty_new_sequence( sequence )
       );
+    prop = icalproperty_new_dtstamp( icaltime_from_timet(::time(NULL),false) );
+    icalcomponent_add_property(vevent,prop);
+
     prop = icalproperty_new_dtstart( icaltime_from_timet(dtstart,allday) );
     param = icalparameter_new_tzid("Europe/London"); //?? Set this properly
     icalproperty_add_parameter(prop,param);
