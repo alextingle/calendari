@@ -8,6 +8,7 @@
 #include <gtk/gtk.h>
 #include <gmodule.h>
 #include <stdio.h>
+#include <unistd.h>
 
 namespace calendari {
 
@@ -72,8 +73,9 @@ Calendari::create_event(time_t dtstart, time_t dtend)
   if(calendar)
   {
     char buf[256];
-    ::snprintf(buf, sizeof(buf),"?? make uid %ld - %ld ??",dtstart,time(NULL));
-    Occurrence* occ = db->make_occurrence(
+    int len =::snprintf(buf,sizeof(buf),"%ld-cali-%d@",::time(NULL),::getpid());
+    ::gethostname(buf+len, sizeof(buf)-len);
+    Occurrence* occ = db->create_event(
         buf, //  uid,
         dtstart,
         dtend,

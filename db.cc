@@ -305,6 +305,52 @@ Db::calnum(const char* calid)
 }
 
 
+Occurrence* Db::create_event(
+    const char*  uid,
+    time_t       dtstart,
+    time_t       dtend,
+    const char*  summary,
+    bool         all_day,
+    const char*  calid,
+    int          version
+  )
+{
+  Occurrence* occ =
+    make_occurrence(
+        uid,
+        dtstart,
+        dtend,
+        summary,
+        all_day,
+        calid,
+        version
+      );
+  occ->event.create(version);
+  occ->create(version);
+  return occ;
+}
+
+
+void
+Db::moved(Occurrence* occ, int version)
+{
+  Version& ver = _ver[version];
+  ver._occurrence.erase( occ->key() );
+  ver._occurrence[ occ->rekey() ] = occ;
+}
+
+
+void
+Db::erase(Occurrence* occ, int version)
+{
+  occ->destroy();
+  _ver[version]._occurrence.erase( occ->key() );
+  delete occ;
+}
+
+
+// -- private: --
+
 Occurrence* Db::make_occurrence(
     const char*  uid,
     time_t       dtstart,
@@ -341,24 +387,6 @@ Occurrence* Db::make_occurrence(
       return o->second;
   else
       return ver._occurrence[key] = new Occurrence(*event,dtstart,dtend);
-}
-
-
-void
-Db::moved(Occurrence* occ, int version)
-{
-  Version& ver = _ver[version];
-  ver._occurrence.erase( occ->key() );
-  ver._occurrence[ occ->rekey() ] = occ;
-}
-
-
-void
-Db::erase(Occurrence* occ, int version)
-{
-  occ->destroy();
-  _ver[version]._occurrence.erase( occ->key() );
-  delete occ;
 }
 
 

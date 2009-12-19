@@ -43,7 +43,7 @@ public:
   const std::map<std::string,Calendar*>& calendars(int version=1)
     { return _ver[version]._calendar; }
 
-  Occurrence* make_occurrence(
+  Occurrence* create_event(
       const char*  uid,
       time_t       dtstart,
       time_t       dtend,
@@ -62,6 +62,16 @@ public:
 private:
   sqlite3*               _sdb;
   std::map<int,Version>  _ver;
+
+  Occurrence* make_occurrence(
+      const char*  uid,
+      time_t       dtstart,
+      time_t       dtend,
+      const char*  summary,
+      bool         all_day,
+      const char*  calid,
+      int          version=1
+    );
 };
 
 

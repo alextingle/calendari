@@ -64,6 +64,41 @@ Event::Event(
 
 
 void
+Event::create(int version)
+{
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "insert into EVENT ("
+          "VERSION,"
+          "CALNUM,"
+          "UID,"
+          "SUMMARY,"
+          "CALID,"
+          "SEQUENCE,"
+          "ALLDAY,"
+          "VEVENT"
+      ") values ("
+          "%d,"   // VERSION
+          "%d,"   // CALNUM
+          "'%s'," // UID
+          "'%s'," // SUMMARY
+          "'%s'," // CALID
+          "%d,"   // SEQUENCE
+          "%d,"   // ALLDAY
+          "''"    // VEVENT
+      ");",
+      version,
+      _calendar->calnum,
+      uid.c_str(),
+      _summary.c_str(),
+      _calendar->calid.c_str(),
+      _sequence,
+      (_all_day? 1: 0)
+    );
+}
+
+
+void
 Event::set_calendar(Calendar& c)
 {
   _calendar = &c;
@@ -106,6 +141,33 @@ Event::set_summary(const std::string& s)
 
 
 // -- Occurrence --
+
+void
+Occurrence::create(int version)
+{
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "insert into OCCURRENCE ("
+          "VERSION,"
+          "CALNUM,"
+          "UID,"
+          "DTSTART,"
+          "DTEND"
+      ") values ("
+          "%d,"   // VERSION
+          "%d,"   // CALNUM
+          "'%s'," // UID
+          "%d,"   // DTSTART
+          "%d"    // DTEND
+      ");",
+      version,
+      event.calendar().calnum,
+      event.uid.c_str(),
+      _dtstart,
+      _dtend
+    );
+}
+
 
 bool
 Occurrence::set_start(time_t start_)

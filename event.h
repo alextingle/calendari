@@ -45,6 +45,8 @@ public:
   const std::string  uid;
 
   Event(Calendar& c, const char* u, const char* s, int q, bool a);
+  /** Write this to a new row in the database. */
+  void create(int version);
 
   Calendar& calendar(void) const         { return *_calendar; }
   const std::string& summary(void) const { return _summary; }
@@ -71,6 +73,8 @@ public:
   Occurrence(Event& e, time_t t0, time_t t1):
     event(e), _dtstart(t0), _dtend(t1), _key(t0,e.uid)
     {}
+  /** Write this to a new row in the database. */
+  void create(int version);
 
   const time_t& dtstart(void) const
     { return _dtstart; }
