@@ -33,7 +33,7 @@ CalendarList::build(Calendari* cal, GtkBuilder* builder)
     GtkTreeIter* iter =NULL;
     gtk_list_store_insert_with_values(
         this->liststore_cal, iter, 99999,
-        0,TRUE,
+        0,(*v)->show(),
         1,(*v)->name().c_str(),
         2,(*v)->colour().c_str(),
         3,*v,
@@ -104,6 +104,8 @@ CalendarList::refresh(calendari::Calendari* cal)
     if(curr->readonly())
     {
       printf("read %s at %s\n",curr->name().c_str(),curr->path().c_str());
+      if(cal->selected() && cal->selected()->event.calendar()==*curr)
+          cal->select(NULL);
       ics::read(curr->path().c_str(), *cal->db, 2);
       cal->db->refresh_cal(curr->calnum,2);
       cal->main_view->reload();

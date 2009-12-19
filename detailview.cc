@@ -99,15 +99,16 @@ DetailView::moved(Occurrence* occ)
 void
 DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
 {
-  if(!cal->occurrence)
+  Occurrence* selected = cal->selected();
+  if(!selected)
       return;
 
   const char* newval = gtk_entry_get_text(entry);
   if(entry==title_entry)
   {
-    if(cal->occurrence->event.summary()!=newval && ::strlen(newval))
+    if(selected->event.summary()!=newval && ::strlen(newval))
     {
-      cal->occurrence->event.set_summary( newval );
+      selected->event.set_summary( newval );
       gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
     }
   }
@@ -119,17 +120,17 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     tm new_tm;
     ::memset(&new_tm,0,sizeof(new_tm));
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
-    if(ret && !cal->occurrence->event.all_day())
+    if(ret && !selected->event.all_day())
     {
-      if(cal->occurrence->set_start( ::mktime(&new_tm) ))
-          cal->moved(cal->occurrence);
+      if(selected->set_start( ::mktime(&new_tm) ))
+          cal->moved(selected);
       return;
     }
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
-    if(ret && cal->occurrence->event.all_day())
+    if(ret && selected->event.all_day())
     {
-      if(cal->occurrence->set_start( ::mktime(&new_tm) ))
-          cal->moved(cal->occurrence);
+      if(selected->set_start( ::mktime(&new_tm) ))
+          cal->moved(selected);
       return;
     }
   }
@@ -138,18 +139,18 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     tm new_tm;
     ::memset(&new_tm,0,sizeof(new_tm));
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
-    if(ret && !cal->occurrence->event.all_day())
+    if(ret && !selected->event.all_day())
     {
-      if(cal->occurrence->set_end( ::mktime(&new_tm) ))
-          cal->moved(cal->occurrence);
+      if(selected->set_end( ::mktime(&new_tm) ))
+          cal->moved(selected);
       return;
     }
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
-    if(ret && cal->occurrence->event.all_day())
+    if(ret && selected->event.all_day())
     {
       ++new_tm.tm_mday;
-      if(cal->occurrence->set_end( ::mktime(&new_tm) ))
-          cal->moved(cal->occurrence);
+      if(selected->set_end( ::mktime(&new_tm) ))
+          cal->moved(selected);
       return;
     }
   }
@@ -159,9 +160,10 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
 void
 DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
 {
-  if(!cal->occurrence)
+  Occurrence* selected = cal->selected();
+  if(!selected)
       return;
-  int cur_pos = cal->occurrence->event.calendar().position();
+  int cur_pos = selected->event.calendar().position();
   int new_pos = gtk_combo_box_get_active(cb);
   if(new_pos==cur_pos)
       return;
@@ -175,7 +177,7 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
         3,&calendar,
         -1
       );
-    cal->occurrence->event.set_calendar( *calendar );
+    selected->event.set_calendar( *calendar );
     gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
   }
 }

@@ -13,6 +13,32 @@ namespace calendari {
 
 
 void
+Version::purge(int calnum)
+{
+  typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
+  for(OIt oi =_occurrence.begin(); oi!=_occurrence.end(); )
+  {
+    OIt o = oi++;
+    if(calnum == o->second->event.calendar().calnum)
+    {
+      delete o->second;
+      _occurrence.erase(o);
+    }
+  }
+  typedef std::map<std::string,Event*>::iterator EIt;
+  for(EIt ei =_event.begin(); ei!=_event.end(); )
+  {
+    EIt e = ei++;
+    if(calnum == e->second->calendar().calnum)
+    {
+      delete e->second;
+      _event.erase(e);
+    }
+  }
+}
+
+
+void
 Version::destroy(void)
 {
   typedef std::map<std::string,Calendar*>::iterator CIt;
@@ -24,6 +50,9 @@ Version::destroy(void)
   typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
   for(OIt o =_occurrence.begin(); o!=_occurrence.end(); ++o)
       delete o->second;
+  _calendar.clear();
+  _event.clear();
+  _occurrence.clear();
 }
 
 
@@ -138,6 +167,7 @@ Db::refresh_cal(int calnum, int from_version, int to_version)
     sql::execf(CALI_HERE,_sdb,
         "delete from CALENDAR where VERSION=%d",from_version);
     sql::exec(CALI_HERE,_sdb,"commit");
+    _ver[to_version].purge(calnum);
   }
   catch(...)
   {

@@ -17,6 +17,7 @@ Calendari::load(const char* dbname)
 {
   db = new Db(dbname);
   db->load_calendars();
+  _occurrence = NULL;
 }
 
 
@@ -48,7 +49,7 @@ Calendari::build(GtkBuilder* builder)
 void
 Calendari::select(Occurrence* occ)
 {
-  occurrence = occ;
+  _occurrence = occ;
   main_view->select( occ );
   detail_view->select( occ );
 }
@@ -59,20 +60,20 @@ Calendari::moved(Occurrence* occ)
 {
   db->moved( occ );
   main_view->moved( occ );
-  if(occ==this->occurrence) // selected?
+  if(occ==this->_occurrence) // selected?
       detail_view->moved( occ );
 }
 
 
 void
-Calendari::create_event(Occurrence* occ, time_t dtstart, time_t dtend)
+Calendari::create_event(time_t dtstart, time_t dtend)
 {
   Calendar* calendar = calendar_list->current();
   if(calendar)
   {
     char buf[256];
     ::snprintf(buf, sizeof(buf),"?? make uid %ld - %ld ??",dtstart,time(NULL));
-    occurrence = db->make_occurrence(
+    Occurrence* occ = db->make_occurrence(
         buf, //  uid,
         dtstart,
         dtend,
@@ -80,8 +81,8 @@ Calendari::create_event(Occurrence* occ, time_t dtstart, time_t dtend)
         false, // all_day,
         calendar->calid.c_str() // calid
       );
-    moved(occurrence);
-    select(occurrence);
+    moved(occ);
+    select(occ);
     gtk_window_set_focus(GTK_WINDOW(window),GTK_WIDGET(detail_view->title_entry));
   }
 }
@@ -90,11 +91,11 @@ Calendari::create_event(Occurrence* occ, time_t dtstart, time_t dtend)
 void
 Calendari::erase_selected(void)
 {
-  if(occurrence)
+  if(_occurrence)
   {
-    main_view->erase(occurrence);
-    db->erase(occurrence);
-    occurrence = NULL;
+    main_view->erase(_occurrence);
+    db->erase(_occurrence);
+    _occurrence = NULL;
     detail_view->select( NULL );
   }
 }

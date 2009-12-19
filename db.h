@@ -16,6 +16,9 @@ struct Version
   std::map<std::string,Event*>                _event;
   std::map<Occurrence::key_type,Occurrence*>  _occurrence;
 
+  /** Clear away all events and occurrences for the given calender. */
+  void purge(int calnum);
+  /** Clear away all calendars, events and occurrences. */
   void destroy(void);
 };
 

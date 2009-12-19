@@ -26,7 +26,6 @@ struct Calendari
   View*          main_view;
   CalendarList*  calendar_list;
   DetailView*    detail_view;
-  Occurrence*    occurrence;
 
   /** Load database. */
   void load(const char* dbname);
@@ -37,14 +36,21 @@ struct Calendari
   /** Set the currently selected occurrence. */
   void select(Occurrence* occ);
 
+  /** Get the selected occurrence, if any. */
+  Occurrence* selected(void) const
+    { return _occurrence; }
+
   /** An occurrence moved. */
   void moved(Occurrence* occ);
 
   /** Create a new event - triggered by UI. */
-  void create_event(Occurrence* occ, time_t dtstart, time_t dtend);
+  void create_event(time_t dtstart, time_t dtend);
 
   /** Erase the selected occurrence, if any. */
   void erase_selected(void);
+
+private:
+  Occurrence*    _occurrence;
 };
 
 

@@ -68,6 +68,7 @@ MonthView::set(time_t self_time)
     day[cell].mday  = i.tm_mday;
     day[cell].wday  = i.tm_wday;
     day[cell].occurrence.clear();
+    day[cell].slot.clear();
     // Set-up weekday names.
     if(cell<7)
     {
@@ -157,11 +158,11 @@ MonthView::click(GdkEventType type, double x, double y)
           localtime_r(&now,&now_tm);
           slot_tm.tm_hour = now_tm.tm_hour;
           time_t dtstart = ::mktime(&slot_tm);
-          cal.create_event( occ, dtstart, dtstart+3600 );
+          cal.create_event( dtstart, dtstart+3600 );
         }
         break;
     case GDK_BUTTON_PRESS:
-        if(occ != cal.occurrence)
+        if(occ != cal.selected())
         {
           cal.select( occ );
           gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
@@ -449,7 +450,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
       gdk_color_parse(occ.event.calendar().colour().c_str(),&col);
       gdk_cairo_set_source_color(cr,&col);
 
-      if(&occ == cal.occurrence)
+      if(&occ == cal.selected())
       {
         // Selected - fill slot.
         cairo_rectangle(cr,
