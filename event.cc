@@ -40,8 +40,8 @@ Calendar::toggle_show(void)
   // --
   static Queue& q( Queue::inst() );
   q.pushf(
-      "update CALENDAR set SHOW=%d where VERSION=%d and CALID='%s'",
-      _show, version, sql::quote(calid).c_str()
+      "update CALENDAR set SHOW=%d where VERSION=%d and CALNUM=%d",
+      _show, version, calnum
     );
 }
 
@@ -73,7 +73,6 @@ Event::create(void)
           "CALNUM,"
           "UID,"
           "SUMMARY,"
-          "CALID,"
           "SEQUENCE,"
           "ALLDAY,"
           "VEVENT"
@@ -82,7 +81,6 @@ Event::create(void)
           "%d,"   // CALNUM
           "'%s'," // UID
           "'%s'," // SUMMARY
-          "'%s'," // CALID
           "%d,"   // SEQUENCE
           "%d,"   // ALLDAY
           "''"    // VEVENT
@@ -91,7 +89,6 @@ Event::create(void)
       _calendar->calnum,
       uid.c_str(),
       _summary.c_str(),
-      _calendar->calid.c_str(),
       _sequence,
       (_all_day? 1: 0)
     );
@@ -105,8 +102,7 @@ Event::set_calendar(Calendar& c)
   // --
   static Queue& q( Queue::inst() );
   q.pushf(
-      "update EVENT set CALID='%s',CALNUM=%d where VERSION=%d and UID='%s'",
-      sql::quote(_calendar->calid).c_str(),
+      "update EVENT set CALNUM=%d where VERSION=%d and UID='%s'",
       _calendar->calnum,
       _calendar->version,
       sql::quote(uid).c_str()

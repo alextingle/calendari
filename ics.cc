@@ -61,8 +61,8 @@ int parse(
 
   sqlite3_stmt*  insert_evt;
   sql="insert into EVENT "
-        "(VERSION,CALNUM,UID,SUMMARY,CALID,SEQUENCE,ALLDAY,VEVENT) "
-        "values (?,?,?,?,?,?,?,?)";
+        "(VERSION,CALNUM,UID,SUMMARY,SEQUENCE,ALLDAY,VEVENT) "
+        "values (?,?,?,?,?,?,?)";
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) );
 
   sqlite3_stmt*  insert_occ;
@@ -177,10 +177,9 @@ int parse(
     sql::bind_int( CALI_HERE,db,insert_evt,2,calnum);
     sql::bind_text(CALI_HERE,db,insert_evt,3,uid);
     sql::bind_text(CALI_HERE,db,insert_evt,4,summary);
-    sql::bind_text(CALI_HERE,db,insert_evt,5,calid);
-    sql::bind_int( CALI_HERE,db,insert_evt,6,sequence);
-    sql::bind_int( CALI_HERE,db,insert_evt,7,all_day);
-    sql::bind_text(CALI_HERE,db,insert_evt,8,vevent);
+    sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
+    sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
+    sql::bind_text(CALI_HERE,db,insert_evt,7,vevent);
     sql::step_reset(CALI_HERE,db,insert_evt);
 
     sql::bind_int( CALI_HERE,db,insert_occ,1,version);
@@ -396,6 +395,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 #ifdef CALENDARI__ICAL__READ__TEST
 int main(int argc, char* argv[])
 {
+  // Syntax: test_ics_read DB [ICS_FNAME ...]
   const char* sqlite_filename = argv[1];
   calendari::Db db(sqlite_filename);
   for(int i=2; i<argc; ++i)
@@ -410,6 +410,7 @@ int main(int argc, char* argv[])
 #ifdef CALENDARI__ICAL__WRITE__TEST
 int main(int argc, char* argv[])
 {
+  // Syntax: test_ics_write DB [CALID ICS_FNAME ...]
   const char* sqlite_filename = argv[1];
   calendari::Db db(sqlite_filename);
   for(int i=3; i<argc; i+=2)

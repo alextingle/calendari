@@ -20,7 +20,7 @@ CalendarList::build(Calendari* cal, GtkBuilder* builder)
   liststore_cal=GTK_LIST_STORE(gtk_builder_get_object(builder,"liststore_cal"));
   treeview =GTK_TREE_VIEW(gtk_builder_get_object(builder,"cali_cals_treeview"));
 
-  typedef std::map<std::string,Calendar*> CalMap;
+  typedef std::map<int,Calendar*> CalMap;
   const CalMap& cc = cal->db->calendars();
 
   // Sort by position.

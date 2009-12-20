@@ -41,7 +41,7 @@ Version::purge(int calnum)
 void
 Version::destroy(void)
 {
-  typedef std::map<std::string,Calendar*>::iterator CIt;
+  typedef std::map<int,Calendar*>::iterator CIt;
   for(CIt c =_calendar.begin(); c!=_calendar.end(); ++c)
       delete c->second;
   typedef std::map<std::string,Event*>::iterator EIt;
@@ -99,7 +99,6 @@ Db::create_db(void)
       "  CALNUM   integer,"
       "  UID      string,"
       "  SUMMARY  string,"
-      "  CALID    string,"
       "  SEQUENCE integer,"
       "  ALLDAY   boolean,"
       "  VEVENT   blob,"
@@ -207,7 +206,7 @@ Db::load_calendars(int version)
           safestr(::sqlite3_column_text(select_stmt,6)), // colour
                   ::sqlite3_column_int( select_stmt,7)   // show
         );
-      ver._calendar.insert(std::make_pair(cal->calid,cal));
+      ver._calendar.insert(std::make_pair(cal->calnum,cal));
     }
     else if(return_code==SQLITE_DONE)
     {
@@ -230,7 +229,7 @@ Db::find(time_t begin, time_t end, int version)
 
   sqlite3_stmt* select_stmt;
   const char* sql =
-      "select O.UID,DTSTART,DTEND,SUMMARY,ALLDAY,CALID "
+      "select O.UID,DTSTART,DTEND,SUMMARY,ALLDAY,O.CALNUM "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
       "where DTEND>=? and DTSTART<? and O.VERSION=? "
@@ -251,7 +250,7 @@ Db::find(time_t begin, time_t end, int version)
                   ::sqlite3_column_int( select_stmt,2),  // dtend
           safestr(::sqlite3_column_text(select_stmt,3)), // summary
                   ::sqlite3_column_int( select_stmt,4),  // all_day
-          safestr(::sqlite3_column_text(select_stmt,5)), // calid
+                  ::sqlite3_column_int( select_stmt,5),  // calnum
           version
         );
       result.insert(std::make_pair(occ->dtstart(),occ));
@@ -277,9 +276,12 @@ Db::calnum(const char* calid)
   assert(calid);
   Version& v1 = _ver[1];
   // Look it up in version 1 _calendars.
-  std::map<std::string,Calendar*>::const_iterator pos =v1._calendar.find(calid);
-  if(pos != v1._calendar.end())
-      return pos->second->calnum;
+  typedef std::map<int,Calendar*>::iterator CIt;
+  for(CIt c =v1._calendar.begin(); c!=v1._calendar.end(); ++c)
+  {
+    if(c->second->calid == calid)
+      return c->second->calnum;
+  }
 
   // Look it up in the database, then.
   int calnum =1;
@@ -311,7 +313,7 @@ Occurrence* Db::create_event(
     time_t       dtend,
     const char*  summary,
     bool         all_day,
-    const char*  calid,
+    int          calnum,
     int          version
   )
 {
@@ -322,7 +324,7 @@ Occurrence* Db::create_event(
         dtend,
         summary,
         all_day,
-        calid,
+        calnum,
         version
       );
   occ->event.create();
@@ -357,7 +359,7 @@ Occurrence* Db::make_occurrence(
     time_t       dtend,
     const char*  summary,
     bool         all_day,
-    const char*  calid,
+    int          calnum,
     int          version
   )
 {
@@ -368,7 +370,7 @@ Occurrence* Db::make_occurrence(
   {
     event = ver._event[uid] =
       new Event(
-          *ver._calendar[calid],
+          *ver._calendar[calnum],
           uid,
           summary,
           0, // ??? sequence

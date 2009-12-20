@@ -81,7 +81,7 @@ Calendari::create_event(time_t dtstart, time_t dtend)
         dtend,
         "New Event", // summary,
         false, // all_day,
-        calendar->calid.c_str() // calid
+        calendar->calnum
       );
     moved(occ);
     select(occ);

@@ -12,7 +12,8 @@ namespace calendari {
 
 struct Version
 {
-  std::map<std::string,Calendar*>             _calendar;
+  /** CALENDAR, indexed by CALNUM. */
+  std::map<int,Calendar*>                     _calendar;
   std::map<std::string,Event*>                _event;
   std::map<Occurrence::key_type,Occurrence*>  _occurrence;
 
@@ -40,7 +41,7 @@ public:
   /** Look up the calnum of the given calid, or generate a new unique number. */
   int calnum(const char* calid);
 
-  const std::map<std::string,Calendar*>& calendars(int version=1)
+  const std::map<int,Calendar*>& calendars(int version=1)
     { return _ver[version]._calendar; }
 
   Occurrence* create_event(
@@ -49,7 +50,7 @@ public:
       time_t       dtend,
       const char*  summary,
       bool         all_day,
-      const char*  calid,
+      int          calnum,
       int          version=1
     );
 
@@ -69,7 +70,7 @@ private:
       time_t       dtend,
       const char*  summary,
       bool         all_day,
-      const char*  calid,
+      int          calnum,
       int          version=1
     );
 };

@@ -27,7 +27,7 @@ public:
   void toggle_show(void);
 
   bool operator == (const Calendar& right) const
-    { return version==right.version && calid==right.calid; }
+    { return version==right.version && calnum==right.calnum; }
 
 private:
   std::string _name;
