@@ -191,6 +191,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Previous month</property>
                         <property name="relief">none</property>
                         <signal name="clicked" handler="prev_button_clicked_cb"/>
                         <child>
@@ -211,6 +212,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Next month</property>
                         <property name="relief">none</property>
                         <signal name="clicked" handler="next_button_clicked_cb"/>
                         <child>
@@ -238,8 +240,10 @@
                     <child>
                       <object class="GtkButton" id="zoom_in_button">
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Not yet supported</property>
                         <property name="relief">none</property>
                         <property name="focus_on_click">False</property>
                         <signal name="clicked" handler="zoom_in_button_clicked_cb"/>
@@ -259,8 +263,10 @@
                     <child>
                       <object class="GtkButton" id="zoom_out_button">
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Not yet supported</property>
                         <property name="relief">none</property>
                         <signal name="clicked" handler="zoom_out_button_clicked_cb"/>
                         <child>
