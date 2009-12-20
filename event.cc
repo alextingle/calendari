@@ -87,8 +87,8 @@ Event::create(void)
       ");",
       _calendar->version,
       _calendar->calnum,
-      uid.c_str(),
-      _summary.c_str(),
+      sql::quote(uid).c_str(),
+      sql::quote(_summary).c_str(),
       _sequence,
       (_all_day? 1: 0)
     );
@@ -172,7 +172,7 @@ Occurrence::create(void)
       ");",
       event.calendar().version,
       event.calendar().calnum,
-      event.uid.c_str(),
+      sql::quote(event.uid).c_str(),
       _dtstart,
       _dtend
     );

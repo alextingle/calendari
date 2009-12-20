@@ -300,8 +300,7 @@ Db::calnum(const char* calid)
   sql::query_val(
       CALI_HERE,_sdb,
       calnum,                                  // <== output
-      "select 1 + coalesce(max(CALNUM),0) from CALENDAR",
-      sql_calid.c_str()
+      "select 1 + coalesce(max(CALNUM),0) from CALENDAR"
     );
   return calnum;
 }
