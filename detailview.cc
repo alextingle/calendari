@@ -178,6 +178,7 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
         -1
       );
     selected->event.set_calendar( *calendar );
+    cal->calendar_list->select(selected);
     gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
   }
 }

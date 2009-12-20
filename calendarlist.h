@@ -7,6 +7,7 @@ namespace calendari {
 
 class Calendar;
 class Calendari;
+class Occurrence;
 
 
 struct CalendarList
@@ -21,6 +22,7 @@ struct CalendarList
   void toggle(gchar* path, calendari::Calendari* cal);
   void add(void);
   void refresh(calendari::Calendari* cal);
+  void select(Occurrence* occ);
 };
 
 

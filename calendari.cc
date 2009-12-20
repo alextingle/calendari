@@ -53,6 +53,7 @@ Calendari::select(Occurrence* occ)
   _occurrence = occ;
   main_view->select( occ );
   detail_view->select( occ );
+  calendar_list->select( occ );
 }
 
 

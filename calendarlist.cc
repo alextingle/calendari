@@ -124,4 +124,21 @@ CalendarList::refresh(calendari::Calendari* cal)
 }
 
 
+void
+CalendarList::select(Occurrence* occ)
+{
+  if(!occ)
+      return;
+  int pos = occ->event.calendar().position();
+  GtkTreePath* path = gtk_tree_path_new_from_indices(pos,-1);
+  gtk_tree_view_set_cursor(
+      treeview,
+      path,
+      NULL, // focus_column,
+      false // start_editing
+    );
+  gtk_tree_path_free(path);
+}
+
+
 } // end namespace calendari
