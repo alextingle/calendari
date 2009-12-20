@@ -4,14 +4,16 @@
   <!-- interface-naming-policy project-wide -->
   <object class="GtkListStore" id="liststore_cal">
     <columns>
+      <!-- column-name obj -->
+      <column type="gpointer"/>
       <!-- column-name show -->
       <column type="gboolean"/>
       <!-- column-name calendars -->
       <column type="gchararray"/>
       <!-- column-name colour -->
       <column type="gchararray"/>
-      <!-- column-name obj -->
-      <column type="gpointer"/>
+      <!-- column-name writeable -->
+      <column type="gboolean"/>
     </columns>
   </object>
   <object class="GtkWindow" id="cali_window">
@@ -334,8 +336,8 @@
                                 <signal name="toggled" handler="calendar_toggle_cb"/>
                               </object>
                               <attributes>
-                                <attribute name="cell-background">2</attribute>
-                                <attribute name="active">0</attribute>
+                                <attribute name="cell-background">3</attribute>
+                                <attribute name="active">1</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -348,7 +350,7 @@
                             <child>
                               <object class="GtkCellRendererText" id="cellrenderertext1"/>
                               <attributes>
-                                <attribute name="text">1</attribute>
+                                <attribute name="text">2</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -509,8 +511,9 @@
                                     <child>
                                       <object class="GtkCellRendererText" id="cellrenderertext2"/>
                                       <attributes>
-                                        <attribute name="background">2</attribute>
-                                        <attribute name="text">1</attribute>
+                                        <attribute name="sensitive">4</attribute>
+                                        <attribute name="background">3</attribute>
+                                        <attribute name="text">2</attribute>
                                       </attributes>
                                     </child>
                                   </object>

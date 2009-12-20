@@ -33,10 +33,11 @@ CalendarList::build(Calendari* cal, GtkBuilder* builder)
     GtkTreeIter* iter =NULL;
     gtk_list_store_insert_with_values(
         this->liststore_cal, iter, 99999,
-        0,(*v)->show(),
-        1,(*v)->name().c_str(),
-        2,(*v)->colour().c_str(),
-        3,*v,
+        0,*v,
+        1,(*v)->show(),
+        2,(*v)->name().c_str(),
+        3,(*v)->colour().c_str(),
+        4,!(*v)->readonly(),
         -1
       );
   }
@@ -53,7 +54,7 @@ CalendarList::current(void) const
      gtk_tree_model_get_iter_first(m,&iter))
   {
     Calendar* result;
-    gtk_tree_model_get(m,&iter, 3,&result, -1);
+    gtk_tree_model_get(m,&iter, 0,&result, -1);
     return result;
   }
   else
@@ -72,9 +73,9 @@ CalendarList::toggle(gchar* path, calendari::Calendari* cal)
   if(ret)
   {
     Calendar* calendar;
-    gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal),&iter,3,&calendar,-1);
+    gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal),&iter,0,&calendar,-1);
     calendar->toggle_show();
-    gtk_list_store_set(liststore_cal,&iter,0,calendar->show(),-1);
+    gtk_list_store_set(liststore_cal,&iter,1,calendar->show(),-1);
     gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
   }
   gtk_tree_path_free(tp);
@@ -84,12 +85,15 @@ CalendarList::toggle(gchar* path, calendari::Calendari* cal)
 void
 CalendarList::add(void)
 {
+  // ?? Unused method?
   GtkTreeIter* iter =NULL;
   gtk_list_store_insert_with_values(
       this->liststore_cal, iter, 99999,
-      0,TRUE,
-      1,"Foobar",
-      2,"#0000bb",
+      0,NULL,
+      1,TRUE, // show
+      2,"Foobar",
+      3,"#0000bb",
+      4,TRUE, // writeable
       -1
     );
 }

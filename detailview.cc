@@ -174,7 +174,7 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
     gtk_tree_model_get(
         GTK_TREE_MODEL( cal->calendar_list->liststore_cal ),
         &iter,
-        3,&calendar,
+        0,&calendar,
         -1
       );
     selected->event.set_calendar( *calendar );

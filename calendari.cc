@@ -70,7 +70,7 @@ void
 Calendari::create_event(time_t dtstart, time_t dtend)
 {
   Calendar* calendar = calendar_list->current();
-  if(calendar)
+  if(calendar && !calendar->readonly())
   {
     char buf[256];
     int len =::snprintf(buf,sizeof(buf),"%ld-cali-%d@",::time(NULL),::getpid());
