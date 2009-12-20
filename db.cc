@@ -229,7 +229,7 @@ Db::find(time_t begin, time_t end, int version)
 
   sqlite3_stmt* select_stmt;
   const char* sql =
-      "select O.UID,DTSTART,DTEND,SUMMARY,ALLDAY,O.CALNUM "
+      "select O.CALNUM,O.UID,SUMMARY,SEQUENCE,ALLDAY,DTSTART,DTEND "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
       "where DTEND>=? and DTSTART<? and O.VERSION=? "
@@ -245,12 +245,13 @@ Db::find(time_t begin, time_t end, int version)
     if(return_code==SQLITE_ROW)
     {
       Occurrence* occ = make_occurrence(
-          safestr(::sqlite3_column_text(select_stmt,0)), // uid
-                  ::sqlite3_column_int( select_stmt,1),  // dtstart
-                  ::sqlite3_column_int( select_stmt,2),  // dtend
-          safestr(::sqlite3_column_text(select_stmt,3)), // summary
+                  ::sqlite3_column_int( select_stmt,0),  // calnum
+          safestr(::sqlite3_column_text(select_stmt,1)), // uid
+          safestr(::sqlite3_column_text(select_stmt,2)), // summary
+                  ::sqlite3_column_int( select_stmt,3),  // sequence
                   ::sqlite3_column_int( select_stmt,4),  // all_day
-                  ::sqlite3_column_int( select_stmt,5),  // calnum
+                  ::sqlite3_column_int( select_stmt,5),  // dtstart
+                  ::sqlite3_column_int( select_stmt,6),  // dtend
           version
         );
       result.insert(std::make_pair(occ->dtstart(),occ));
@@ -318,12 +319,13 @@ Occurrence* Db::create_event(
 {
   Occurrence* occ =
     make_occurrence(
+        calnum,
         uid,
+        summary,
+        1, // sequence
+        all_day,
         dtstart,
         dtend,
-        summary,
-        all_day,
-        calnum,
         version
       );
   occ->event.create();
@@ -353,12 +355,13 @@ Db::erase(Occurrence* occ, int version)
 // -- private: --
 
 Occurrence* Db::make_occurrence(
+    int          calnum,
     const char*  uid,
+    const char*  summary,
+    int          sequence,
+    bool         all_day,
     time_t       dtstart,
     time_t       dtend,
-    const char*  summary,
-    bool         all_day,
-    int          calnum,
     int          version
   )
 {
@@ -372,7 +375,7 @@ Occurrence* Db::make_occurrence(
           *ver._calendar[calnum],
           uid,
           summary,
-          0, // ??? sequence
+          sequence,
           all_day
         );
   }

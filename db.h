@@ -65,13 +65,14 @@ private:
   std::map<int,Version>  _ver;
 
   Occurrence* make_occurrence(
+      int          calnum,
       const char*  uid,
+      const char*  summary,
+      int          sequence,
+      bool         all_day,
       time_t       dtstart,
       time_t       dtend,
-      const char*  summary,
-      bool         all_day,
-      int          calnum,
-      int          version=1
+      int          version
     );
 };
 
