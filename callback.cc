@@ -41,8 +41,8 @@ cali_drawingarea_button_press_event_cb(
     calendari::Calendari*  cal
   )
 {
-  cal->main_view->click(event->type, event->x, event->y);
   gtk_widget_grab_focus(widget);
+  cal->main_view->click(event->type, event->x, event->y);
   return true;
 }
 
@@ -138,6 +138,8 @@ zoom_out_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 }
 
 
+// -- calendar list --
+
 G_MODULE_EXPORT void
 calendar_toggle_cb(
     GtkCellRendererToggle*  cell_renderer,
@@ -148,6 +150,8 @@ calendar_toggle_cb(
   cal->calendar_list->toggle(path,cal);
 }
 
+
+// -- detail view --
 
 G_MODULE_EXPORT gboolean
 detail_entry_focus_event_cb(
