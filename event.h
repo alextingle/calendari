@@ -46,7 +46,7 @@ public:
 
   Event(Calendar& c, const char* u, const char* s, int q, bool a);
   /** Write this to a new row in the database. */
-  void create(int version);
+  void create(void);
 
   Calendar& calendar(void) const         { return *_calendar; }
   const std::string& summary(void) const { return _summary; }
@@ -54,6 +54,7 @@ public:
 
   void set_calendar(Calendar& c);
   void set_summary(const std::string& s);
+  void increment_sequence(void);
 
 private:
   Calendar*          _calendar;
@@ -74,7 +75,7 @@ public:
     event(e), _dtstart(t0), _dtend(t1), _key(t0,e.uid)
     {}
   /** Write this to a new row in the database. */
-  void create(int version);
+  void create(void);
 
   const time_t& dtstart(void) const
     { return _dtstart; }

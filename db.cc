@@ -325,8 +325,8 @@ Occurrence* Db::create_event(
         calid,
         version
       );
-  occ->event.create(version);
-  occ->create(version);
+  occ->event.create();
+  occ->create();
   return occ;
 }
 

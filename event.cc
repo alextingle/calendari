@@ -64,7 +64,7 @@ Event::Event(
 
 
 void
-Event::create(int version)
+Event::create(void)
 {
   static Queue& q( Queue::inst() );
   q.pushf(
@@ -87,7 +87,7 @@ Event::create(int version)
           "%d,"   // ALLDAY
           "''"    // VEVENT
       ");",
-      version,
+      _calendar->version,
       _calendar->calnum,
       uid.c_str(),
       _summary.c_str(),
@@ -117,6 +117,7 @@ Event::set_calendar(Calendar& c)
       _calendar->version,
       sql::quote(uid).c_str()
     );
+  increment_sequence();
 }
 
 
@@ -132,8 +133,20 @@ Event::set_summary(const std::string& s)
       _calendar->version,
       sql::quote(uid).c_str()
     );
+  increment_sequence();
+}
+
+
+void
+Event::increment_sequence(void)
+{
+  assert(!_calendar->readonly());
+  ++_sequence;
+  // --
+  static Queue& q( Queue::inst() );
   q.pushf(
-      "update EVENT set SEQUENCE=SEQUENCE+1 where VERSION=%d and UID='%s'",
+      "update EVENT set SEQUENCE=%d where VERSION=%d and UID='%s'",
+      _sequence,
       _calendar->version,
       sql::quote(uid).c_str()
     );
@@ -143,8 +156,9 @@ Event::set_summary(const std::string& s)
 // -- Occurrence --
 
 void
-Occurrence::create(int version)
+Occurrence::create(void)
 {
+  assert(!event.calendar().readonly());
   static Queue& q( Queue::inst() );
   q.pushf(
       "insert into OCCURRENCE ("
@@ -160,7 +174,7 @@ Occurrence::create(int version)
           "%d,"   // DTSTART
           "%d"    // DTEND
       ");",
-      version,
+      event.calendar().version,
       event.calendar().calnum,
       event.uid.c_str(),
       _dtstart,
@@ -191,6 +205,7 @@ Occurrence::set_start(time_t start_)
       sql::quote(event.uid).c_str(),
       old_dtstart,old_dtend
     );
+  event.increment_sequence();
   return true;
 }
 
@@ -217,6 +232,7 @@ Occurrence::set_end(time_t end_)
       sql::quote(event.uid).c_str(),
       _dtstart,old_dtend
     );
+  event.increment_sequence();
   return true;
 }
 
