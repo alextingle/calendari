@@ -54,16 +54,16 @@ extern "C"
       calendari::Calendari*  cal
     );
 
-  G_MODULE_EXPORT gboolean
+  G_MODULE_EXPORT void
   prev_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
-  G_MODULE_EXPORT gboolean
+  G_MODULE_EXPORT void
   next_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
-  G_MODULE_EXPORT gboolean
+  G_MODULE_EXPORT void
   zoom_in_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
-  G_MODULE_EXPORT gboolean
+  G_MODULE_EXPORT void
   zoom_out_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
   G_MODULE_EXPORT void

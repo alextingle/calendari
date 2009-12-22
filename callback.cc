@@ -13,7 +13,7 @@
 
 G_MODULE_EXPORT void
 cali_menu_refresh_cb(
-    GtkMenuItem*           menuitem,
+    GtkMenuItem*,
     calendari::Calendari*  cal
   )
 {
@@ -23,7 +23,7 @@ cali_menu_refresh_cb(
 
 G_MODULE_EXPORT void
 cali_menu_delete_cb(
-    GtkMenuItem*           menuitem,
+    GtkMenuItem*,
     calendari::Calendari*  cal
   )
 {
@@ -34,7 +34,7 @@ cali_menu_delete_cb(
 
 G_MODULE_EXPORT void
 cali_menu_about_cb(
-    GtkMenuItem*           menuitem,
+    GtkMenuItem*,
     calendari::Calendari*  cal
   )
 {
@@ -88,7 +88,7 @@ cali_drawingarea_expose_event_cb(
 
 G_MODULE_EXPORT gboolean
 cali_drawingarea_key_press_event_cb(
-    GtkWidget*             widget,
+    GtkWidget*,
     GdkEventKey*           event,
     calendari::Calendari*  cal
   )
@@ -129,28 +129,28 @@ cali_drawingarea_key_press_event_cb(
 }
 
 
-G_MODULE_EXPORT gboolean
+G_MODULE_EXPORT void
 prev_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 {
   cal->main_view = cal->main_view->prev();
 }
 
 
-G_MODULE_EXPORT gboolean
+G_MODULE_EXPORT void
 next_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 {
   cal->main_view = cal->main_view->next();
 }
 
 
-G_MODULE_EXPORT gboolean
+G_MODULE_EXPORT void
 zoom_in_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 {
   cal->main_view = cal->main_view->zoom_in();
 }
 
 
-G_MODULE_EXPORT gboolean
+G_MODULE_EXPORT void
 zoom_out_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 {
   cal->main_view = cal->main_view->zoom_out();
@@ -161,7 +161,7 @@ zoom_out_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 
 G_MODULE_EXPORT void
 calendar_toggle_cb(
-    GtkCellRendererToggle*  cell_renderer,
+    GtkCellRendererToggle*,
     gchar*                  path,
     calendari::Calendari*   cal
   )
@@ -175,7 +175,7 @@ calendar_toggle_cb(
 G_MODULE_EXPORT gboolean
 detail_entry_focus_event_cb(
     GtkWidget*             e,
-    GdkEventFocus*         event,
+    GdkEventFocus*,
     calendari::Calendari*  cal
   )
 {

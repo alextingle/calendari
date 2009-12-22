@@ -60,7 +60,7 @@ MonthView::set(time_t self_time)
   i.tm_mday -= (i.tm_wday + 7 - first_day_of_week) % 7;
 
   // Loop forward through days.
-  for(int cell=0; cell<MAX_CELLS; ++cell)
+  for(size_t cell=0; cell<MAX_CELLS; ++cell)
   {
     time_t itime = normalise_local_tm(i);
     day[cell].start = itime;
@@ -137,28 +137,25 @@ MonthView::click(GdkEventType type, double x, double y)
       return;
   if(y<header_height || y>=height)
       return;
-  
-  int row = int((y-header_height)/cell_height);
-  int cell = row * 7 + int(x/cell_width);
-  if(cell<0 || cell>=MAX_CELLS)
+
+  // Find the cell, slot and (possibly) occurrence that we've clicked on.
+  size_t row = int((y-header_height)/cell_height);
+  size_t cell = row * 7 + int(x/cell_width);
+  if(cell>=MAX_CELLS)
       return;
   size_t slot = int(y - header_height - cell_height*row) / slot_height;
 
   Occurrence* occ = NULL;
-  if(slot>=day[cell].slot.size() || !day[cell].slot[slot])
-  {
-    std::cout<<cell<<std::endl;
-  }
-  else
-  {
-    occ = day[cell].slot[slot];
-    std::cout<<cell<<" "<<occ->event.summary()<<std::endl;
-  }
+  if(slot < day[cell].slot.size())
+      occ = day[cell].slot[slot];
+
+  // Take action...
   switch(type)
   {
     case GDK_2BUTTON_PRESS:
         if(!occ)
         {
+          // Create a new event.
           tm slot_tm;
           localtime_r(&day[cell].start,&slot_tm);
           slot_tm.tm_sec  = 0;
@@ -174,6 +171,7 @@ MonthView::click(GdkEventType type, double x, double y)
     case GDK_BUTTON_PRESS:
         if(occ != cal.selected())
         {
+          // Select an occurrence.
           cal.select( occ );
           gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
         }
@@ -185,7 +183,7 @@ MonthView::click(GdkEventType type, double x, double y)
 
 
 void
-MonthView::select(Occurrence* occ)
+MonthView::select(Occurrence*)
 {}
 
 
@@ -406,7 +404,7 @@ MonthView::draw_cells(cairo_t* cr)
   double pl_height = std::max(1.0,/* ??cell_height-*/font_extents.height);
   pango_layout_set_height(pl,pl_height * PANGO_SCALE);
 
-  for(int cell=0; cell<MAX_CELLS; ++cell)
+  for(size_t cell=0; cell<MAX_CELLS; ++cell)
       draw_cell(cr,pl,cell);
 
   g_object_unref(pl);

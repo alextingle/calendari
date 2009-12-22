@@ -15,7 +15,7 @@ namespace calendari {
 
 
 void
-DetailView::build(Calendari* cal, GtkBuilder* builder)
+DetailView::build(Calendari*, GtkBuilder* builder)
 {
   title_entry = GTK_ENTRY(gtk_builder_get_object(builder,"detail_title_entry"));
   start_entry = GTK_ENTRY(gtk_builder_get_object(builder,"detail_start_entry"));
