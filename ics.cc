@@ -12,6 +12,7 @@
 #include <libical/ical.h>
 #include <sqlite3.h>
 #include <string>
+#include <unistd.h>
 
 namespace
 {
@@ -26,6 +27,7 @@ namespace
 namespace calendari {
 namespace ics {
 
+typedef scoped<icalparser,icalparser_free> SParser;
 typedef scoped<icalcomponent,icalcomponent_free> SComponent;
 
 
@@ -121,20 +123,30 @@ timet2ical(time_t t, bool is_date)
 }
 
 
-void
-parse(
-    const char*     ical_filename,
-    icalcomponent*  ical,
-    Db&             db,
-    int             version
-  )
+// -- public --
+
+void read(const char* ical_filename, Db& db, int version)
 {
+  assert(ical_filename);
+  assert(ical_filename[0]);
+  // Parse the iCalendar file.
+  SParser iparser( ::icalparser_new() );
+  FILE* stream = ::fopen(ical_filename,"r");
+  ::icalparser_set_gen_data(iparser.get(),stream);
+  SComponent ical( ::icalparser_parse(iparser.get(),read_stream) );
+  ::fclose(stream);
+  if(!ical)
+  {
+    CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
+    return;
+  }
+
   // Prepare the insert statements.
   sqlite3_stmt*  insert_cal;
   const char* sql =
       "insert into CALENDAR "
-        "(VERSION,CALNUM,CALID,CALNAME,PATH,POSITION,COLOUR,SHOW) "
-        "values (?,?,?,?,?,?,?,1)";
+        "(VERSION,CALNUM,CALID,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW) "
+        "values (?,?,?,?,?,?,?,?,1)";
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_cal,NULL) );
 
   sqlite3_stmt*  insert_evt;
@@ -158,7 +170,7 @@ parse(
   // -- calid --
   const char* calid ="??dummy_id??";
   const char* calname ="??dummy_name??";
-  iprop = icalcomponent_get_first_property(ical,ICAL_X_PROPERTY);
+  iprop = icalcomponent_get_first_property(ical.get(),ICAL_X_PROPERTY);
   while(iprop)
   {
     const char* x_name = icalproperty_get_x_name(iprop);
@@ -166,11 +178,13 @@ parse(
         calname = icalproperty_get_x(iprop);
     else if(0==::strcmp("X-WR-RELCALID",x_name))
         calid = icalproperty_get_x(iprop);
-    iprop = icalcomponent_get_next_property(ical,ICAL_X_PROPERTY);
+    iprop = icalcomponent_get_next_property(ical.get(),ICAL_X_PROPERTY);
   }
   // Get the calnum.
   int calnum = db.calnum(calid);
   assert(calnum);
+  // Is it readonly?
+  bool readonly =( 0 != ::access(ical_filename,W_OK) );
   // Choose a colour.
   const char* colour =colours[ calnum % (sizeof(colours)/sizeof(char*)) ];
   // Bind these values to the statements.
@@ -179,12 +193,13 @@ parse(
   sql::bind_text(CALI_HERE,db,insert_cal,3,calid);
   sql::bind_text(CALI_HERE,db,insert_cal,4,calname);
   sql::bind_text(CALI_HERE,db,insert_cal,5,ical_filename);
-  sql::bind_int( CALI_HERE,db,insert_cal,6,-1); // position
-  sql::bind_text(CALI_HERE,db,insert_cal,7,colour);
+  sql::bind_int( CALI_HERE,db,insert_cal,6,readonly);
+  sql::bind_int( CALI_HERE,db,insert_cal,7,-1); // position
+  sql::bind_text(CALI_HERE,db,insert_cal,8,colour);
   sql::step_reset(CALI_HERE,db,insert_cal);
 
   // Iterate through all components (VEVENTs).
-  for(icalcompiter e=icalcomponent_begin_component(ical,ICAL_VEVENT_COMPONENT);
+  for(icalcompiter e=icalcomponent_begin_component(ical.get(),ICAL_VEVENT_COMPONENT);
       icalcompiter_deref(&e)!=NULL;
       icalcompiter_next(&e))
   {
@@ -279,33 +294,12 @@ parse(
 }
 
 
-// -- public --
-
-void read(const char* ical_filename, Db& db, int version)
-{
-  assert(ical_filename);
-  assert(ical_filename[0]);
-  // Parse the iCalendar file.
-  icalparser* iparser = ::icalparser_new();
-  FILE* stream = ::fopen(ical_filename,"r");
-  ::icalparser_set_gen_data(iparser,stream);
-  SComponent ical( ::icalparser_parse(iparser,read_stream) );
-  ::fclose(stream);
-  if(ical)
-      parse(ical_filename,ical.get(),db,version);
-  else
-      CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
-  ::icalparser_free(iparser);
-}
-
-
 void write(const char* ical_filename, Db& db, const char* calid, int version)
 {
   assert(calid);
   assert(calid[0]);
 
   icalproperty* prop;
-  icalparameter* param;
 
   // Load calendar from database.
   sqlite3_stmt* select_cal;
