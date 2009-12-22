@@ -21,6 +21,7 @@ struct Calendari
   GtkWidget*  window;            ///< Application window
   GtkWidget*  main_drawingarea;  ///< Canvas for the main view.
   GtkLabel*   main_label;        ///< Label for the main view.
+  GtkDialog*  about;             ///< About box.
 
   // Subordinate components.
   View*          main_view;

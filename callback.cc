@@ -32,6 +32,25 @@ cali_menu_delete_cb(
 }
 
 
+G_MODULE_EXPORT void
+cali_menu_about_cb(
+    GtkMenuItem*           menuitem,
+    calendari::Calendari*  cal
+  )
+{
+  int response = gtk_dialog_run( cal->about );
+  switch(response)
+  {
+    case GTK_RESPONSE_DELETE_EVENT:
+    case GTK_RESPONSE_CANCEL:
+      gtk_widget_hide(GTK_WIDGET(cal->about));
+      break;
+    default:
+      break;
+  }
+}
+
+
 // -- cali_main_drawingarea --
 
 G_MODULE_EXPORT gboolean

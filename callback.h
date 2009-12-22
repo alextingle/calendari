@@ -25,6 +25,12 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT void
+  cali_menu_about_cb(
+      GtkMenuItem*           menuitem,
+      calendari::Calendari*  cal
+    );
+
   // -- cali_main_drawingarea --
 
   G_MODULE_EXPORT gboolean

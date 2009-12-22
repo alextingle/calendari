@@ -31,6 +31,7 @@ Calendari::build(GtkBuilder* builder)
     GTK_WIDGET(gtk_builder_get_object(builder,"cali_main_drawingarea"));
   main_label =
     GTK_LABEL(gtk_builder_get_object(builder,"main_label"));
+  about = GTK_DIALOG(gtk_builder_get_object(builder,"cali_aboutdialog"));
 
   calendar_list = new CalendarList();
   calendar_list->build(this,builder);
