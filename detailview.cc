@@ -89,7 +89,7 @@ DetailView::moved(Occurrence* occ)
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(start_entry,buf);
 
-  time_t dtend = occ->dtend() - (occ->event.all_day()? 1: 0);
+  time_t dtend = occ->dtend();
   localtime_r(&dtend,&t);
   strftime(buf,sizeof(buf),date_format,&t);
   gtk_entry_set_text(end_entry,buf);
@@ -122,6 +122,7 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
     if(ret && !selected->event.all_day())
     {
+      new_tm.tm_isdst = -1;
       if(selected->set_start( ::mktime(&new_tm) ))
           cal->moved(selected);
       return;
@@ -129,6 +130,8 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
     if(ret && selected->event.all_day())
     {
+      new_tm.tm_isdst = -1;
+      new_tm.tm_hour = 12;
       if(selected->set_start( ::mktime(&new_tm) ))
           cal->moved(selected);
       return;
@@ -141,6 +144,7 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
     if(ret && !selected->event.all_day())
     {
+      new_tm.tm_isdst = -1;
       if(selected->set_end( ::mktime(&new_tm) ))
           cal->moved(selected);
       return;
@@ -148,7 +152,8 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
     if(ret && selected->event.all_day())
     {
-      ++new_tm.tm_mday;
+      new_tm.tm_isdst = -1;
+      new_tm.tm_hour = 12;
       if(selected->set_end( ::mktime(&new_tm) ))
           cal->moved(selected);
       return;

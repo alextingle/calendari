@@ -129,7 +129,7 @@ execf(const util::Here& here, sqlite3* sdb, const char* format, ...)
   va_start(args,format);
   char buf[256];
   int ret = vsnprintf(buf,sizeof(buf),format,args);
-  if(ret>=sizeof(buf))
+  if(ret >= static_cast<int>(sizeof(buf)))
       CALI_ERRO(1,0,"SQL too large for buffer."); //??
   sql::exec(here,sdb,buf);
   va_end(args);
@@ -151,7 +151,7 @@ query_val(
   va_start(args,format);
   char sql[256];
   int ret = vsnprintf(sql,sizeof(sql),format,args);
-  if(ret>=sizeof(sql))
+  if(ret >= static_cast<int>(sizeof(sql)))
       util::error(here,1,0,"SQL too large for buffer."); //??
   va_end(args);
   // Query

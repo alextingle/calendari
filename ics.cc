@@ -44,7 +44,85 @@ const char* colours[] = {
 
 // -- private --
 
-int parse(
+time_t
+ical2timet(icaltimetype& it, const char* tzid = NULL)
+{
+  if(it.is_utc)
+      return ::icaltime_as_timet(it);
+
+  tm result_tm;
+  ::memset(&result_tm,0,sizeof(result_tm));
+  result_tm.tm_year = it.year - 1900;
+  result_tm.tm_mon  = it.month - 1;
+  result_tm.tm_mday = it.day;
+
+  if(it.is_date)
+  {
+    // For date only, set time_t to be mid-day, UTC.
+    // This moment should get the day right, whatever the timezone.
+    result_tm.tm_hour = 12;
+    return ::timegm(&result_tm);
+  }
+
+  result_tm.tm_hour = it.hour;
+  result_tm.tm_min  = it.minute;
+  result_tm.tm_sec  = it.second;
+  result_tm.tm_isdst= -1; // work it out yourself
+
+  time_t result;
+
+  if(tzid)
+  {
+    char* tz;
+    tz = ::getenv("TZ");
+    ::setenv("TZ", tzid, 1);
+    ::tzset();
+
+    result = ::mktime(&result_tm);
+
+    if(tz)
+      ::setenv("TZ", tz, 1);
+    else
+      ::unsetenv("TZ");
+    ::tzset();
+  }
+  else
+  {
+    result = ::mktime(&result_tm);
+  }
+  return result;
+}
+
+
+icaltimetype
+timet2ical(time_t t, bool is_date)
+{
+  tm utc_tm;
+  ::memset(&utc_tm,0,sizeof(utc_tm));
+  ::gmtime_r(&t, &utc_tm);
+
+  icaltimetype it;
+  ::memset(&it,0,sizeof(it));
+  it.year   = utc_tm.tm_year + 1900;
+  it.month  = utc_tm.tm_mon + 1;
+  it.day    = utc_tm.tm_mday;
+  if(is_date)
+  {
+    it.is_date = 1;
+  }
+  else
+  {
+    it.hour   = utc_tm.tm_hour;
+    it.minute = utc_tm.tm_min;
+    it.second = utc_tm.tm_sec;
+  }
+  it.is_utc = 1;
+  return it;
+}
+
+
+void
+parse(
     const char*     ical_filename,
     icalcomponent*  ical,
     Db&             db,
@@ -73,6 +151,7 @@ int parse(
   CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
 
   icalproperty* iprop;
+  const char* tzid;
 
   // Calendar properties
   
@@ -157,7 +236,8 @@ int parse(
       continue;
     }
     struct icaltimetype dtstart = ::icalproperty_get_dtstart(iprop);
-    time_t start_time = ::icaltime_as_timet(dtstart);
+    tzid = icalproperty_get_parameter_as_string(iprop,"TZID");
+    time_t start_time = ical2timet(dtstart,tzid);
 
     // all_day
     int all_day = dtstart.is_date;
@@ -170,7 +250,10 @@ int parse(
       continue;
     }
     struct icaltimetype dtend = ::icalproperty_get_dtend(iprop);
-    time_t end_time = ::icaltime_as_timet(dtend);
+    if(dtend.is_date)
+      --dtend.day; // iCal allday events end the day after.
+    tzid = icalproperty_get_parameter_as_string(iprop,"TZID");
+    time_t end_time = ical2timet(dtend,tzid);
 
     // Bind these values to the statements.
     sql::bind_int( CALI_HERE,db,insert_evt,1,version);
@@ -353,7 +436,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
     {
       vevent = icalcomponent_vanew(ICAL_VEVENT_COMPONENT,
           icalproperty_new_uid(uid),
-          icalproperty_new_created( icaltime_from_timet(::time(NULL),false) ),
+          icalproperty_new_created( timet2ical(::time(NULL),false) ),
           icalproperty_new_transp(ICAL_TRANSP_OPAQUE), //??
           0
         );
@@ -364,17 +447,15 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
     icalcomponent_add_property(vevent,
         icalproperty_new_sequence( sequence )
       );
-    prop = icalproperty_new_dtstamp( icaltime_from_timet(::time(NULL),false) );
+    prop = icalproperty_new_dtstamp( timet2ical(::time(NULL),false) );
     icalcomponent_add_property(vevent,prop);
 
-    prop = icalproperty_new_dtstart( icaltime_from_timet(dtstart,allday) );
-    param = icalparameter_new_tzid("Europe/London"); //?? Set this properly
-    icalproperty_add_parameter(prop,param);
+    prop = icalproperty_new_dtstart( timet2ical(dtstart,allday) );
     icalcomponent_add_property(vevent,prop);
 
-    prop = icalproperty_new_dtend( icaltime_from_timet(dtend,allday) );
-    param = icalparameter_new_tzid("Europe/London"); //?? Set this properly
-    icalproperty_add_parameter(prop,param);
+    if(allday)
+        dtend += 86400; // iCal allday events end the day after.
+    prop = icalproperty_new_dtend( timet2ical(dtend,allday) );
     icalcomponent_add_property(vevent,prop);
 
     // Add this VEVENT to our calendar

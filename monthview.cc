@@ -86,12 +86,22 @@ MonthView::set(time_t self_time)
   OIt o = all.rbegin();
   for(size_t c=0; c<MAX_CELLS; ++c)
   {
+    std::vector<Occurrence*> tmp_allday;
     size_t cell = MAX_CELLS-1-c;
     while(o!=all.rend() && (cell==0 || o->first >= day[cell].start) )
     {
-      day[cell].occurrence.push_back(o->second);
+      // All day events should appear first. Save them up here so that we can
+      // put them in all at once.
+      if(o->second->event.all_day())
+          tmp_allday.push_back(o->second);
+      else
+          day[cell].occurrence.push_back(o->second);
       ++o;
     }
+    std::copy(
+        tmp_allday.begin(), tmp_allday.end(),
+        std::inserter(day[cell].occurrence,day[cell].occurrence.end())
+      );
     std::reverse(day[cell].occurrence.begin(),day[cell].occurrence.end());
   }
   assert(o==all.rend());
