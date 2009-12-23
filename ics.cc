@@ -47,6 +47,9 @@ const char* colours[] = {
 
 // -- private --
 
+/** Convert icaltime 'it' into time_t. 'it' is in timezone 'tzid'.
+*   This function actually works, unlike the libical version which just assumes
+*   that icaltime is always in UTC. */
 time_t
 ical2timet(icaltimetype& it, const char* tzid = NULL)
 {
@@ -97,29 +100,48 @@ ical2timet(icaltimetype& it, const char* tzid = NULL)
 }
 
 
+/** Convert time_t 't' into icaltime. */
 icaltimetype
-timet2ical(time_t t, bool is_date)
+timet2ical(time_t t, bool is_date, const char* tzid = NULL)
 {
-  tm utc_tm;
-  ::memset(&utc_tm,0,sizeof(utc_tm));
-  ::gmtime_r(&t, &utc_tm);
+  tm local_tm;
+  ::memset(&local_tm,0,sizeof(local_tm));
+  if(tzid)
+  {
+    char* tz;
+    tz = ::getenv("TZ");
+    ::setenv("TZ", tzid, 1);
+    ::tzset();
+
+    ::localtime_r(&t, &local_tm);
+
+    if(tz)
+      ::setenv("TZ", tz, 1);
+    else
+      ::unsetenv("TZ");
+    ::tzset();
+  }
+  else
+  {
+    ::gmtime_r(&t, &local_tm);
+  }
 
   icaltimetype it;
   ::memset(&it,0,sizeof(it));
-  it.year   = utc_tm.tm_year + 1900;
-  it.month  = utc_tm.tm_mon + 1;
-  it.day    = utc_tm.tm_mday;
+  it.year   = local_tm.tm_year + 1900;
+  it.month  = local_tm.tm_mon + 1;
+  it.day    = local_tm.tm_mday;
   if(is_date)
   {
     it.is_date = 1;
   }
   else
   {
-    it.hour   = utc_tm.tm_hour;
-    it.minute = utc_tm.tm_min;
-    it.second = utc_tm.tm_sec;
+    it.hour   = local_tm.tm_hour;
+    it.minute = local_tm.tm_min;
+    it.second = local_tm.tm_sec;
   }
-  it.is_utc = 1;
+  it.is_utc = (tzid? 0: 1);
   return it;
 }
 
@@ -306,6 +328,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   assert(calid[0]);
 
   icalproperty* prop;
+  icalparameter* param;
 
   // Load calendar from database.
   sqlite3_stmt* select_cal;
@@ -334,6 +357,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   const char* calname  = safestr(::sqlite3_column_text(select_cal,1));
   const char* path     = safestr(::sqlite3_column_text(select_cal,2));
   bool        readonly =         ::sqlite3_column_int( select_cal,3);
+  const char* tzid     = "Europe/London"; // ??
 
   // Check that we are allowed to write this calendar.
   // ?? Also check destination file mode.
@@ -450,12 +474,16 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
     prop = icalproperty_new_dtstamp( timet2ical(::time(NULL),false) );
     icalcomponent_add_property(vevent,prop);
 
-    prop = icalproperty_new_dtstart( timet2ical(dtstart,allday) );
+    prop = icalproperty_new_dtstart( timet2ical(dtstart,allday,tzid) );
+    param = icalparameter_new_tzid(tzid);
+    icalproperty_add_parameter(prop,param);
     icalcomponent_add_property(vevent,prop);
 
     if(allday)
         dtend += 86400; // iCal allday events end the day after.
-    prop = icalproperty_new_dtend( timet2ical(dtend,allday) );
+    prop = icalproperty_new_dtend( timet2ical(dtend,allday,tzid) );
+    param = icalparameter_new_tzid(tzid);
+    icalproperty_add_parameter(prop,param);
     icalcomponent_add_property(vevent,prop);
 
     // Add this VEVENT to our calendar

@@ -134,6 +134,24 @@ Event::set_summary(const std::string& s)
 
 
 void
+Event::set_all_day(bool v)
+{
+  if(_all_day==v)
+      return;
+  _all_day = v;
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update EVENT set ALLDAY=%d where VERSION=%d and UID='%s'",
+      (_all_day? 1: 0),
+      _calendar->version,
+      sql::quote(uid).c_str()
+    );
+  increment_sequence();
+}
+
+
+void
 Event::increment_sequence(void)
 {
   assert(!_calendar->readonly());

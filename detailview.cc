@@ -120,16 +120,18 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     tm new_tm;
     ::memset(&new_tm,0,sizeof(new_tm));
     char* ret = ::strptime(newval,FORMAT_DATE FORMAT_TIME,&new_tm);
-    if(ret && !selected->event.all_day())
+    if(ret)
     {
+      selected->event.set_all_day(false);
       new_tm.tm_isdst = -1;
       if(selected->set_start( ::mktime(&new_tm) ))
           cal->moved(selected);
       return;
     }
     ret = ::strptime(newval,FORMAT_DATE,&new_tm);
-    if(ret && selected->event.all_day())
+    if(ret)
     {
+      selected->event.set_all_day(true);
       new_tm.tm_isdst = -1;
       new_tm.tm_hour = 12;
       if(selected->set_start( ::mktime(&new_tm) ))

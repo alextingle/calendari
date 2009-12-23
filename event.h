@@ -54,6 +54,7 @@ public:
 
   void set_calendar(Calendar& c);
   void set_summary(const std::string& s);
+  void set_all_day(bool v);
   void increment_sequence(void);
 
 private:
