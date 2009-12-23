@@ -7,6 +7,7 @@
 #include "sql.h"
 
 #include <cstring>
+#include <errno.h>
 #include <fstream>
 #include <iostream>
 #include <libical/ical.h>
@@ -132,6 +133,11 @@ void read(const char* ical_filename, Db& db, int version)
   // Parse the iCalendar file.
   SParser iparser( ::icalparser_new() );
   FILE* stream = ::fopen(ical_filename,"r");
+  if(!stream)
+  {
+    CALI_ERRO(0,errno,"failed to open calendar file %s",ical_filename);
+    return;
+  }
   ::icalparser_set_gen_data(iparser.get(),stream);
   SComponent ical( ::icalparser_parse(iparser.get(),read_stream) );
   ::fclose(stream);

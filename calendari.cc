@@ -1,14 +1,20 @@
 #include "calendari.h"
 
 #include "calendarlist.h"
-#include "detailview.h"
 #include "db.h"
+#include "detailview.h"
+#include "err.h"
+#include "ics.h"
 #include "monthview.h"
 
-#include <gtk/gtk.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <getopt.h>
 #include <gmodule.h>
-#include <stdio.h>
-#include <unistd.h>
+#include <gtk/gtk.h>
+#include <iostream>
+#include <sysexits.h>
 
 namespace calendari {
 
@@ -16,6 +22,11 @@ namespace calendari {
 void
 Calendari::load(const char* dbname)
 {
+  if(db)
+  {
+    CALI_ERRO(1,0,"Database already loaded");
+    return;
+  }
   db = new Db(dbname);
   db->load_calendars();
   _occurrence = NULL;
@@ -118,6 +129,56 @@ main(int argc, char* argv[])
   gtk_init( &argc, &argv );
   gtk_rc_parse("dot.calrc");
 
+  // Command-line options.
+  calendari::Calendari* cal = g_slice_new( calendari::Calendari );
+  const char* import = NULL;
+
+  option long_options[] = {
+      {"debug",  0, 0, 'd'},
+      {"file",   1, 0, 'f'},
+      {"help",   0, 0, 'h'},
+      {"import", 1, 0, 'i'},
+      {0, 0, 0, 0}
+    };
+  int opt;
+  while((opt=::getopt_long(argc,argv,"d:f:hi:",long_options,NULL)) != -1)
+  {
+    switch(opt)
+    {
+      case 'd':
+          cal->debug = true;
+          break;
+      case 'f':
+          cal->load(optarg);
+          break;
+      case 'i':
+          import = optarg;
+          break;
+      case 'h':
+      default:
+          std::cout<<"syntax: calendari [--file=DB] [--import=ICS]"<<std::endl;
+          exit(EX_USAGE);
+    }
+  }
+
+  // If not set explicitly, work out which database file to use.
+  if(!cal->db)
+  {
+    std::string dbname ="cali.sqlite";
+    const char* home = ::getenv("HOME");
+    if(home)
+        dbname = home + ("/." + dbname);
+    cal->load(dbname.c_str());
+  }
+
+  // Import mode.
+  if(import)
+  {
+    assert(cal->db);
+    calendari::ics::read(import,*cal->db);
+    ::exit(0);
+  }
+
   // Create new GtkBuilder object
   builder = gtk_builder_new();
 
@@ -128,9 +189,6 @@ main(int argc, char* argv[])
       g_free(error);
       return 1;
   }
-
-  calendari::Calendari* cal = g_slice_new( calendari::Calendari );
-  cal->load(argv[1]);
   cal->build(builder);
 
   // Destroy builder, since we don't need it anymore

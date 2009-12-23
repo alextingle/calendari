@@ -15,6 +15,8 @@ class Occurrence;
 /** Main application data store. */
 struct Calendari
 {
+  // Settings
+  bool        debug;
   Db*         db;
 
   // Widgets
