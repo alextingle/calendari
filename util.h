@@ -8,6 +8,7 @@ namespace calendari {
 
 inline time_t normalise_local_tm(struct tm& v)
 {
+  v.tm_isdst = -1;
   time_t result = mktime(&v);
   localtime_r(&result,&v);
   return result;

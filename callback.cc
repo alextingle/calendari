@@ -97,17 +97,17 @@ cali_drawingarea_key_press_event_cb(
   {
     switch(event->keyval)
     {
-      case GDK_Left:
-          printf("Left\n");
-          break;
       case GDK_Up:
-          printf("Up\n");
+          cal->main_view = cal->main_view->go_up();
           break;
       case GDK_Right:
-          printf("Right\n");
+          cal->main_view = cal->main_view->go_right();
           break;
       case GDK_Down:
-          printf("Down\n");
+          cal->main_view = cal->main_view->go_down();
+          break;
+      case GDK_Left:
+          cal->main_view = cal->main_view->go_left();
           break;
       case GDK_BackSpace:
       case GDK_Delete:
@@ -121,7 +121,6 @@ cali_drawingarea_key_press_event_cb(
           cal->main_view = cal->main_view->next();
           break;
       default:
-          printf("Other\n");
           break;
     }
   }

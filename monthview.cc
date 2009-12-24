@@ -11,7 +11,7 @@
 namespace calendari {
 
 
-MonthView::MonthView(Calendari& c): cal(c)
+MonthView::MonthView(Calendari& c): cal(c), current_cell(NULL_CELL)
 {
   head_pfont = pango_font_description_new();
   pango_font_description_set_absolute_size(
@@ -41,7 +41,7 @@ void
 MonthView::set(time_t self_time)
 {
   localtime_r(&self_time,&self_local);
-  
+
   self_local.tm_hour = 0;
   self_local.tm_min  = 0;
   self_local.tm_sec  = 0;
@@ -60,15 +60,24 @@ MonthView::set(time_t self_time)
   i.tm_mday -= (i.tm_wday + 7 - first_day_of_week) % 7;
 
   // Loop forward through days.
-  for(size_t cell=0; cell<MAX_CELLS; ++cell)
+  month_cells = MAX_CELLS;
+  for(int cell=0; cell<MAX_CELLS; ++cell)
   {
     time_t itime = normalise_local_tm(i);
+    // If this is a new row, check there are more days in this month.
+    if(cell>7 && cell%7 == 0 && i.tm_mon != self_local.tm_mon)
+    {
+      month_cells = cell;
+      break;
+    }
     day[cell].start = itime;
     day[cell].mon   = i.tm_mon;
     day[cell].mday  = i.tm_mday;
     day[cell].wday  = i.tm_wday;
     day[cell].occurrence.clear();
     day[cell].slot.clear();
+    if(current_cell==NULL_CELL && day[cell].mday==self_local.tm_mday)
+        current_cell = cell;
     // Set-up weekday names.
     if(cell<7)
     {
@@ -78,16 +87,27 @@ MonthView::set(time_t self_time)
     ++i.tm_mday;
   }
 
+  // Bring current_cell down within range, if necessary.
+  if(current_cell < 0)
+  {
+    current_cell += month_cells;
+  }
+  else
+  {
+    while(current_cell >= month_cells)
+        current_cell -= 7;
+  }
+
   // load events for this time period.
   std::multimap<time_t,Occurrence*> all =
       cal.db->find( day[0].start, normalise_local_tm(i) );
 
   typedef std::multimap<time_t,Occurrence*>::const_reverse_iterator OIt;
   OIt o = all.rbegin();
-  for(size_t c=0; c<MAX_CELLS; ++c)
+  for(int c=0; c<month_cells; ++c)
   {
     std::vector<Occurrence*> tmp_allday;
-    size_t cell = MAX_CELLS-1-c;
+    int cell = month_cells-1-c;
     while(o!=all.rend() && (cell==0 || o->first >= day[cell].start) )
     {
       // All day events should appear first. Save them up here so that we can
@@ -120,6 +140,7 @@ MonthView::draw(GtkWidget* widget, cairo_t* cr)
   // Clear the surface
   cairo_set_source_rgb(cr, 1,1,1);
   cairo_paint(cr);
+  cairo_set_line_width(cr, 0.2 * cairo_get_line_width (cr));
 
   arrange_slots();
 
@@ -140,10 +161,13 @@ MonthView::click(GdkEventType type, double x, double y)
 
   // Find the cell, slot and (possibly) occurrence that we've clicked on.
   size_t row = int((y-header_height)/cell_height);
-  size_t cell = row * 7 + int(x/cell_width);
-  if(cell>=MAX_CELLS)
+  int cell = row * 7 + int(x/cell_width);
+  if(cell>=month_cells)
       return;
   size_t slot = int(y - header_height - cell_height*row) / slot_height;
+
+  bool current_cell_changed =(current_cell != cell);
+  current_cell = cell;
 
   Occurrence* occ = NULL;
   if(slot < day[cell].slot.size())
@@ -166,6 +190,7 @@ MonthView::click(GdkEventType type, double x, double y)
           slot_tm.tm_hour = now_tm.tm_hour;
           time_t dtstart = ::mktime(&slot_tm);
           cal.create_event( dtstart, dtstart+3600 );
+          return;
         }
         break;
     case GDK_BUTTON_PRESS:
@@ -174,11 +199,14 @@ MonthView::click(GdkEventType type, double x, double y)
           // Select an occurrence.
           cal.select( occ );
           gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+          return;
         }
         break;
     default:
         break;
   }
+  if(current_cell_changed)
+      gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
 }
 
 
@@ -193,9 +221,9 @@ MonthView::moved(Occurrence* occ)
   Occurrence* add = occ;
   Occurrence* del = occ;
   typedef std::vector<Occurrence*> OV;
-  for(size_t c=0; c<MAX_CELLS && (add || del); ++c)
+  for(int c=0; c<month_cells && (add || del); ++c)
   {
-    size_t cell = MAX_CELLS-1-c;
+    int cell = month_cells-1-c;
     OV& ov( day[cell].occurrence );
     for(OV::iterator o=ov.begin(); del && o!=ov.end(); ++o)
     {
@@ -236,9 +264,9 @@ MonthView::erase(Occurrence* occ)
 {
   Occurrence* del = occ;
   typedef std::vector<Occurrence*> OV;
-  for(size_t c=0; c<MAX_CELLS; ++c)
+  for(int c=0; c<month_cells; ++c)
   {
-    size_t cell = MAX_CELLS-1-c;
+    int cell = month_cells-1-c;
     OV& ov( day[cell].occurrence );
     for(OV::iterator o=ov.begin(); o!=ov.end(); ++o)
     {
@@ -257,6 +285,65 @@ void
 MonthView::reload(void)
 {
   set( day[7].start );
+}
+
+
+View*
+MonthView::go_up(void)
+{
+  current_cell -= 7;
+  if(current_cell < 0)
+  {
+    if(day[0].mon != self_local.tm_mon)
+        current_cell -= 7;
+    return prev();
+  }
+  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  return this;
+}
+
+
+View*
+MonthView::go_right(void)
+{
+  if(current_cell+1 == month_cells)
+  {
+    current_cell -= 6;
+    return go_down();
+  }
+  current_cell += 1;
+  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  return this;
+}
+
+
+View*
+MonthView::go_down(void)
+{
+  if(current_cell+7 >= month_cells)
+  {
+    current_cell = current_cell%7;
+    if(day[month_cells-1].mon != self_local.tm_mon)
+        current_cell += 7;
+    return next();
+  }
+  current_cell += 7;
+  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  return this;
+}
+
+
+View*
+MonthView::go_left(void)
+{
+  if(current_cell == 0)
+  {
+    current_cell += 6;
+    return go_up();
+  }
+  current_cell -= 1;
+  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  return this;
 }
 
 
@@ -296,7 +383,7 @@ MonthView::init_dimensions(GtkWidget* widget, cairo_t* cr)
       (alc.height - height) / 2.0
     );
   cell_width = width / 7.0;
-  cell_height = (height - header_height) / 5.0;
+  cell_height = (height - header_height) / (month_cells/7);
   slots_per_cell = cell_height / slot_height; // rounds down.
 }
 
@@ -305,12 +392,12 @@ void
 MonthView::arrange_slots(void)
 {
   typedef std::vector<Occurrence*> OV;
-  for(size_t cell=0; cell<MAX_CELLS; ++cell)
+  for(int cell=0; cell<MAX_CELLS; ++cell)
   {
     day[cell].slot.clear();
     day[cell].slot.resize(slots_per_cell,NULL);
   }
-  for(size_t cell=0; cell<MAX_CELLS; ++cell)
+  for(int cell=0; cell<month_cells; ++cell)
   {
     size_t next_slot = 1;
     Day& d( day[cell] );
@@ -330,8 +417,8 @@ MonthView::arrange_slots(void)
       d.slot[next_slot] = &occ;
       if(occ.event.all_day())
       {
-        size_t future_cell = cell+1;
-        while(future_cell<MAX_CELLS && occ.dtend()>day[future_cell].start)
+        int future_cell = cell+1;
+        while(future_cell<month_cells && occ.dtend()>day[future_cell].start)
         {
           day[future_cell].slot[next_slot] = &occ;
           future_cell++;
@@ -347,12 +434,11 @@ MonthView::draw_grid(cairo_t* cr)
 {
   cairo_save(cr);
   cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
-  cairo_set_line_width(cr, 0.2 * cairo_get_line_width (cr));
 
   // Horizontal lines.
   cairo_move_to(cr, 0,0);
   cairo_line_to(cr, width,0);
-  for(int i=0; i<6; ++i)
+  for(int i=0; i<(1+month_cells/7); ++i)
   {
     cairo_move_to(cr, 0, header_height + i * cell_height);
     cairo_line_to(cr, width, header_height + i * cell_height);
@@ -393,6 +479,11 @@ MonthView::draw_cells(cairo_t* cr)
   cairo_save(cr);
 
   cairo_translate(cr,0,header_height);
+  cairo_select_font_face(cr,
+      "sans-serif",
+      CAIRO_FONT_SLANT_NORMAL,
+      CAIRO_FONT_WEIGHT_NORMAL
+    );
   cairo_set_font_size(cr,10.0);
   cairo_font_extents(cr,&font_extents);
 
@@ -404,7 +495,7 @@ MonthView::draw_cells(cairo_t* cr)
   double pl_height = std::max(1.0,/* ??cell_height-*/font_extents.height);
   pango_layout_set_height(pl,pl_height * PANGO_SCALE);
 
-  for(size_t cell=0; cell<MAX_CELLS; ++cell)
+  for(int cell=0; cell<month_cells; ++cell)
       draw_cell(cr,pl,cell);
 
   g_object_unref(pl);
@@ -436,19 +527,6 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
     cairo_fill(cr);
   }
 
-  // Write in the day number.
-  cairo_set_source_rgb(cr, 0.2,0.2,0.2);
-  cairo_text_extents_t extents;
-  char buf[32];
-  snprintf(buf,sizeof(buf),"%i ",day[cell].mday);
-  cairo_text_extents(cr, buf, &extents);
- 
-  cairo_move_to(cr,
-      cellx + cell_width - extents.x_advance,
-      celly + font_extents.height
-    );
-  cairo_show_text(cr,buf);
-
   for(size_t s=1; s<slots_per_cell; ++s)
   {
     if(day[cell].slot[s])
@@ -476,6 +554,36 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
       pango_cairo_show_layout(cr,pl);
     }
   }
+
+  cairo_save(cr);
+
+  // Highlight the current_cell.
+  if(cell == current_cell)
+  {
+    cairo_set_source_rgb(cr,0,0,0);
+    cairo_rectangle(cr, cellx+0.2,celly+0.2, cell_width-0.4,cell_height-0.4);
+    cairo_stroke(cr);
+    cairo_select_font_face(cr,
+        "sans-serif",
+        CAIRO_FONT_SLANT_NORMAL,
+        CAIRO_FONT_WEIGHT_BOLD
+      );
+  }
+
+  // Write in the day number.
+  cairo_set_source_rgb(cr, 0.2,0.2,0.2);
+  cairo_text_extents_t extents;
+  char buf[32];
+  snprintf(buf,sizeof(buf),"%i ",day[cell].mday);
+  cairo_text_extents(cr, buf, &extents);
+
+  cairo_move_to(cr,
+      cellx + cell_width - extents.x_advance,
+      celly + font_extents.height
+    );
+  cairo_show_text(cr,buf);
+ 
+  cairo_restore(cr);
 }
 
 

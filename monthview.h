@@ -33,6 +33,10 @@ public:
   virtual void moved(Occurrence* occ) =0;
   virtual void erase(Occurrence* occ) =0;
   virtual void reload(void) =0;
+  virtual View* go_up(void)    { return this; }
+  virtual View* go_right(void) { return this; }
+  virtual View* go_down(void)  { return this; }
+  virtual View* go_left(void)  { return this; }
   virtual View* prev(void)     { return this; }
   virtual View* next(void)     { return this; }
   virtual View* zoom_in(void)  { return this; }
@@ -52,14 +56,21 @@ public:
   virtual void moved(Occurrence* occ);
   virtual void erase(Occurrence* occ);
   virtual void reload(void);
+  virtual View* go_up(void);
+  virtual View* go_right(void);
+  virtual View* go_down(void);
+  virtual View* go_left(void);
   virtual View* prev(void);
   virtual View* next(void);
 private:
   Calendari& cal;
   // Time
-  time_t now;
-  struct tm self_local;
-  static const size_t MAX_CELLS = 7 * 5;
+  time_t    now; ///< Current, wall-clock time.
+  struct tm self_local; ///< A time somewhere in the current view.
+  int       current_cell; ///< The selected cell, or NULL_CELL.
+  int       month_cells; ///< Num. cells in the current display (28, 35 or 42).
+  static const int MAX_CELLS = 7 * 6;
+  static const int NULL_CELL = -1000;
   Day day[MAX_CELLS];
   std::string dayname[7]; 
   // Dimensions
