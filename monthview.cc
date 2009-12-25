@@ -11,7 +11,8 @@
 namespace calendari {
 
 
-MonthView::MonthView(Calendari& c): cal(c), current_cell(NULL_CELL)
+MonthView::MonthView(Calendari& c)
+  : cal(c), current_cell(NULL_CELL), current_slot(0)
 {
   head_pfont = pango_font_description_new();
   pango_font_description_set_absolute_size(
@@ -180,16 +181,7 @@ MonthView::click(GdkEventType type, double x, double y)
         if(!occ)
         {
           // Create a new event.
-          tm slot_tm;
-          localtime_r(&day[cell].start,&slot_tm);
-          slot_tm.tm_sec  = 0;
-          slot_tm.tm_min  = 0;
-          now = ::time(NULL);
-          tm now_tm;
-          localtime_r(&now,&now_tm);
-          slot_tm.tm_hour = now_tm.tm_hour;
-          time_t dtstart = ::mktime(&slot_tm);
-          cal.create_event( dtstart, dtstart+3600 );
+          create_event();
           return;
         }
         break;
@@ -211,8 +203,11 @@ MonthView::click(GdkEventType type, double x, double y)
 
 
 void
-MonthView::select(Occurrence*)
-{}
+MonthView::select(Occurrence* occ)
+{
+  if(!occ)
+      current_slot = 0;
+}
 
 
 void
@@ -288,9 +283,57 @@ MonthView::reload(void)
 }
 
 
+void
+MonthView::create_event(void)
+{
+  tm slot_tm;
+  localtime_r(&day[current_cell].start,&slot_tm);
+  slot_tm.tm_sec  = 0;
+  slot_tm.tm_min  = 0;
+  now = ::time(NULL);
+  tm now_tm;
+  localtime_r(&now,&now_tm);
+  slot_tm.tm_hour = now_tm.tm_hour;
+  time_t dtstart = ::mktime(&slot_tm);
+  cal.create_event( dtstart, dtstart+3600 );
+}
+
+
+void
+MonthView::ok(void)
+{
+  if(!day[current_cell].slot.empty())
+  {
+    cal.select( day[current_cell].slot[1] );
+    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  }
+}
+
+
+void
+MonthView::cancel(void)
+{
+  if(cal.selected())
+  {
+    cal.select(NULL);
+    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  }
+}
+
+
 View*
 MonthView::go_up(void)
 {
+  int prev_slot = current_slot? current_slot-1: 0;
+  if(prev_slot &&
+     prev_slot < static_cast<int>( day[current_cell].slot.size() ) &&
+     day[current_cell].slot[prev_slot])
+  {
+    cal.select( day[current_cell].slot[prev_slot] );
+    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    return this;
+  }
+  cal.select(NULL);
   current_cell -= 7;
   if(current_cell < 0)
   {
@@ -306,6 +349,7 @@ MonthView::go_up(void)
 View*
 MonthView::go_right(void)
 {
+  cal.select(NULL);
   if(current_cell+1 == month_cells)
   {
     current_cell -= 6;
@@ -320,6 +364,16 @@ MonthView::go_right(void)
 View*
 MonthView::go_down(void)
 {
+  int next_slot = current_slot? current_slot+1: 0;
+  if(next_slot &&
+     next_slot < static_cast<int>( day[current_cell].slot.size() ) &&
+     day[current_cell].slot[next_slot])
+  {
+    cal.select( day[current_cell].slot[next_slot] );
+    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    return this;
+  }
+  cal.select(NULL);
   if(current_cell+7 >= month_cells)
   {
     current_cell = current_cell%7;
@@ -336,6 +390,7 @@ MonthView::go_down(void)
 View*
 MonthView::go_left(void)
 {
+  cal.select(NULL);
   if(current_cell == 0)
   {
     current_cell += 6;
@@ -405,7 +460,7 @@ MonthView::arrange_slots(void)
     {
       Occurrence& occ( **i );
       if(!occ.event.calendar().show())
-        continue;
+          continue;
       while(next_slot<slots_per_cell && d.slot[next_slot])
           next_slot++;
       if(next_slot>=slots_per_cell)
@@ -415,6 +470,10 @@ MonthView::arrange_slots(void)
         break;
       }
       d.slot[next_slot] = &occ;
+      if(&occ == cal.selected())
+      {
+        current_slot = next_slot;
+      }
       if(occ.event.all_day())
       {
         int future_cell = cell+1;

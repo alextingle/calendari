@@ -109,6 +109,16 @@ cali_drawingarea_key_press_event_cb(
       case GDK_Left:
           cal->main_view = cal->main_view->go_left();
           break;
+      case GDK_Return:
+      case GDK_KP_Enter:
+          cal->main_view->ok();
+          break;
+      case GDK_Escape:
+          cal->main_view->cancel();
+          break;
+      case GDK_Insert:
+          cal->main_view->create_event();
+          break;
       case GDK_BackSpace:
       case GDK_Delete:
       case GDK_KP_Delete:

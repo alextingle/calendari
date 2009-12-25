@@ -33,6 +33,9 @@ public:
   virtual void moved(Occurrence* occ) =0;
   virtual void erase(Occurrence* occ) =0;
   virtual void reload(void) =0;
+  virtual void create_event(void) =0;
+  virtual void ok(void) {} ///< Called when user hits ENTER
+  virtual void cancel(void) {} ///< Called when user hits ESC
   virtual View* go_up(void)    { return this; }
   virtual View* go_right(void) { return this; }
   virtual View* go_down(void)  { return this; }
@@ -56,6 +59,9 @@ public:
   virtual void moved(Occurrence* occ);
   virtual void erase(Occurrence* occ);
   virtual void reload(void);
+  virtual void create_event(void);
+  virtual void ok(void);
+  virtual void cancel(void);
   virtual View* go_up(void);
   virtual View* go_right(void);
   virtual View* go_down(void);
@@ -86,6 +92,7 @@ private:
   cairo_font_extents_t font_extents;
   // Slots
   size_t slots_per_cell;
+  size_t current_slot; ///< The selected slot, or zero.
 
   void init_dimensions(GtkWidget* widget, cairo_t* cr);
   void arrange_slots(void);
