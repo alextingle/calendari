@@ -75,7 +75,7 @@ private:
   struct tm self_local; ///< A time somewhere in the current view.
   int       current_cell; ///< The selected cell, or NULL_CELL.
   int       month_cells; ///< Num. cells in the current display (28, 35 or 42).
-  static const int MAX_CELLS = 7 * 6;
+  static const int MAX_CELLS = 7 * 6 + 1;
   static const int NULL_CELL = -1000;
   Day day[MAX_CELLS];
   std::string dayname[7]; 
@@ -99,6 +99,7 @@ private:
   void draw_grid(cairo_t* cr);
   void draw_cells(cairo_t* cr);
   void draw_cell(cairo_t* cr, PangoLayout* pl, int cell);
+  void draw_occurrence(cairo_t* cr, PangoLayout* pl, int cell, int slot);
 };
 
 

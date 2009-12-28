@@ -5,6 +5,7 @@
 #include "util.h"
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <algorithm>
 
@@ -65,18 +66,18 @@ MonthView::set(time_t self_time)
   for(int cell=0; cell<MAX_CELLS; ++cell)
   {
     time_t itime = normalise_local_tm(i);
-    // If this is a new row, check there are more days in this month.
-    if(cell>7 && cell%7 == 0 && i.tm_mon != self_local.tm_mon)
-    {
-      month_cells = cell;
-      break;
-    }
     day[cell].start = itime;
     day[cell].mon   = i.tm_mon;
     day[cell].mday  = i.tm_mday;
     day[cell].wday  = i.tm_wday;
     day[cell].occurrence.clear();
     day[cell].slot.clear();
+    // If this is a new row, check there are more days in this month.
+    if(cell>7 && cell%7 == 0 && i.tm_mon != self_local.tm_mon)
+    {
+      month_cells = cell;
+      break;
+    }
     if(current_cell==NULL_CELL && day[cell].mday==self_local.tm_mday)
         current_cell = cell;
     // Set-up weekday names.
@@ -550,12 +551,10 @@ MonthView::draw_cells(cairo_t* cr)
   pango_layout_set_font_description(pl,body_pfont);
   pango_layout_set_ellipsize(pl,PANGO_ELLIPSIZE_END);
   pango_layout_set_wrap(pl,PANGO_WRAP_WORD_CHAR);
-  pango_layout_set_width(pl,cell_width * PANGO_SCALE);
-  double pl_height = std::max(1.0,/* ??cell_height-*/font_extents.height);
-  pango_layout_set_height(pl,pl_height * PANGO_SCALE);
+  pango_layout_set_height(pl,slot_height*PANGO_SCALE);
 
   for(int cell=0; cell<month_cells; ++cell)
-      draw_cell(cr,pl,cell);
+      draw_cell(cr,pl,month_cells-1-cell);
 
   g_object_unref(pl);
   cairo_restore(cr);
@@ -565,8 +564,8 @@ MonthView::draw_cells(cairo_t* cr)
 void
 MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
 {
-  double cellx = (cell%7) * cell_width;
-  double celly = (cell/7) * cell_height;
+  const double cellx = (cell%7) * cell_width;
+  const double celly = (cell/7) * cell_height;
 
   cairo_set_source_rgb(cr, 0.95,0.95,0.95);
   if(self_local.tm_mon != day[cell].mon)
@@ -576,7 +575,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
     cairo_fill(cr);
   }
 
-  if(now>=day[cell].start && now<day[cell].start+86400) //??bs
+  if(now>=day[cell].start && now<day[cell+1].start)
   {
     // Mark the current day.
     cairo_set_source_rgb(cr, 1,0,0);
@@ -590,27 +589,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
   {
     if(day[cell].slot[s])
     {
-      Occurrence& occ = *day[cell].slot[s];
-      GdkColor col;
-      gdk_color_parse(occ.event.calendar().colour().c_str(),&col);
-      gdk_cairo_set_source_color(cr,&col);
-
-      if(&occ == cal.selected())
-      {
-        // Selected - fill slot.
-        cairo_rectangle(cr,
-            cellx, celly + s * slot_height,
-            cell_width, slot_height
-          );
-        cairo_fill(cr);
-        cairo_set_source_rgb(cr,1,1,1);
-      }
-      pango_layout_set_height(pl,slot_height*PANGO_SCALE);
-      std::string pango_text =
-          (occ.event.all_day()? "*": "") + occ.event.summary();
-      cairo_move_to(cr, cellx, celly + s * slot_height);
-      pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
-      pango_cairo_show_layout(cr,pl);
+      draw_occurrence(cr,pl,cell,s);
     }
   }
 
@@ -643,6 +622,126 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
   cairo_show_text(cr,buf);
  
   cairo_restore(cr);
+}
+
+
+void
+MonthView::draw_occurrence(cairo_t* cr, PangoLayout* pl, int cell, int slot)
+{
+  const double cellx = (cell%7) * cell_width;
+  const double celly = (cell/7) * cell_height;
+  const double sloty = celly + slot * slot_height;
+  const double bar_height = slot_height - 1.0;
+
+  assert(day[cell].slot[slot]);
+  Occurrence& occ = *day[cell].slot[slot];
+  GdkColor col;
+  gdk_color_parse(occ.event.calendar().colour().c_str(),&col);
+
+  if(occ.event.all_day())
+  {
+    const double r = bar_height/2.0;
+    // Draw start of all-day bar.
+    bool start_rounded = false;
+    if(day[cell].start < occ.dtstart())
+    {
+      // First day, so start with a rounded end.
+      start_rounded = true;
+      cairo_move_to(cr, cellx + r, sloty + bar_height);
+      cairo_arc(cr,
+          cellx + r, sloty + r,
+          r, M_PI/2.0, 3.0*M_PI/2.0
+        );
+    }
+    else
+    {
+      if(cell%7 != 0 )
+          return;
+      cairo_move_to(cr, cellx, sloty + bar_height);
+      cairo_line_to(cr, cellx, sloty);
+    }
+    // Find end of all-day bar.
+    int end_cell = cell;
+    bool end_rounded = false;
+    while(true)
+    {
+      if(day[end_cell+1].start > occ.dtend())
+      {
+        end_rounded = true;
+        break;
+      }
+      if(end_cell%7==6)
+      {
+        // end of row.
+        break;
+      }
+      ++end_cell;
+    }
+    // Draw end of all-day bar.
+    const double end_cellx = (end_cell%7 + 1) * cell_width;
+    if(end_rounded)
+    {
+      cairo_line_to(cr, end_cellx - r, sloty);
+      cairo_arc(cr,
+          end_cellx - r, sloty + r,
+          r, 3.0*M_PI/2.0, M_PI/2.0
+        );
+    }
+    else
+    {
+      cairo_line_to(cr, end_cellx, sloty);
+      cairo_line_to(cr, end_cellx, sloty + bar_height);
+    }
+    cairo_close_path(cr);
+    // Fill-in with an appropriate colour.
+    if(&occ == cal.selected())
+    {
+      gdk_cairo_set_source_color(cr,&col);
+    }
+    else
+    {
+      cairo_set_source_rgba(cr,
+          col.red/65536.0,
+          col.green/65536.0,
+          col.blue/65536.0,
+          0.5
+        );
+    }
+    cairo_fill(cr);
+
+    cairo_set_source_rgb(cr,1,1,1);
+    pango_layout_set_width(pl,
+        PANGO_SCALE * (end_cellx - cellx
+        - (start_rounded? r: 0.0)
+        - (end_rounded? r: 0.0) )
+      );
+    cairo_move_to(cr, cellx + (start_rounded? r: 0.0), sloty);
+    pango_layout_set_text(pl,
+        occ.event.summary().c_str(),
+        occ.event.summary().size()
+      );
+    pango_cairo_show_layout(cr,pl);
+  }
+  else // not all day
+  {
+    gdk_cairo_set_source_color(cr,&col);
+    if(&occ == cal.selected())
+    {
+      // Selected - fill slot.
+      cairo_rectangle(cr,
+          cellx, sloty,
+          cell_width, bar_height
+        );
+      cairo_fill(cr);
+      cairo_set_source_rgb(cr,1,1,1);
+    }
+    pango_layout_set_width(pl,cell_width * PANGO_SCALE);
+    cairo_move_to(cr, cellx, sloty);
+    // Start with a "bullet" character (U2022).
+    std::string pango_text = "•" + occ.event.summary();
+    pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
+    pango_cairo_show_layout(cr,pl);
+  }
 }
 
 
