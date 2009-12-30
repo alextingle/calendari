@@ -78,8 +78,12 @@ MonthView::set(time_t self_time)
       month_cells = cell;
       break;
     }
-    if(current_cell==NULL_CELL && day[cell].mday==self_local.tm_mday)
-        current_cell = cell;
+    if(current_cell==NULL_CELL &&
+       day[cell].mday==self_local.tm_mday &&
+       day[cell].mon==self_local.tm_mon )
+    {
+      current_cell = cell;
+    }
     // Set-up weekday names.
     if(cell<7)
     {
