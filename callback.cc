@@ -73,6 +73,7 @@ cali_drawingarea_expose_event_cb(
     calendari::Calendari*  cal
   )
 {
+  cal->main_drawingarea_redraw_queued = false;
   cairo_t* cr = gdk_cairo_create(widget->window);
   // set a clip region for the expose event
   cairo_rectangle(cr,

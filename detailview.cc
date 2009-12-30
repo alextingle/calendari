@@ -109,7 +109,7 @@ DetailView::entry_cb(GtkEntry* entry, calendari::Calendari* cal)
     if(selected->event.summary()!=newval && ::strlen(newval))
     {
       selected->event.set_summary( newval );
-      gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+      cal->queue_main_redraw();
     }
   }
   // ?? Need much more work on this bit.
@@ -186,7 +186,7 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
       );
     selected->event.set_calendar( *calendar );
     cal->calendar_list->select(selected);
-    gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+    cal->queue_main_redraw();
   }
 }
 

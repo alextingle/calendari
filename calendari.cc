@@ -44,6 +44,8 @@ Calendari::build(GtkBuilder* builder)
     GTK_LABEL(gtk_builder_get_object(builder,"main_label"));
   about = GTK_DIALOG(gtk_builder_get_object(builder,"cali_aboutdialog"));
 
+  main_drawingarea_redraw_queued = false;
+
   calendar_list = new CalendarList();
   calendar_list->build(this,builder);
 
@@ -56,6 +58,17 @@ Calendari::build(GtkBuilder* builder)
 
   // Connect signals
   gtk_builder_connect_signals(builder,this);
+}
+
+
+void
+Calendari::queue_main_redraw(void)
+{
+  if(!main_drawingarea_redraw_queued)
+  {
+    main_drawingarea_redraw_queued = true;
+    gtk_widget_queue_draw(GTK_WIDGET(main_drawingarea));
+  }
 }
 
 

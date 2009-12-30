@@ -191,7 +191,7 @@ MonthView::click(GdkEventType type, double x, double y)
         {
           // Select an occurrence.
           cal.select( occ );
-          gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+          cal.queue_main_redraw();
           return;
         }
         break;
@@ -199,7 +199,7 @@ MonthView::click(GdkEventType type, double x, double y)
         break;
   }
   if(current_cell_changed)
-      gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+      cal.queue_main_redraw();
 }
 
 
@@ -251,7 +251,7 @@ MonthView::moved(Occurrence* occ)
     }
   }
   if(!add || !del) // Something was changed
-      gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+      cal.queue_main_redraw();
 }
 
 
@@ -269,7 +269,7 @@ MonthView::erase(Occurrence* occ)
       if(*o == del)
       {
         ov.erase( o );
-        gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+        cal.queue_main_redraw();
         return;
       }
     }
@@ -306,7 +306,7 @@ MonthView::ok(void)
   if(!day[current_cell].slot.empty())
   {
     cal.select( day[current_cell].slot[1] );
-    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    cal.queue_main_redraw();
   }
 }
 
@@ -317,7 +317,7 @@ MonthView::cancel(void)
   if(cal.selected())
   {
     cal.select(NULL);
-    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    cal.queue_main_redraw();
   }
 }
 
@@ -331,7 +331,7 @@ MonthView::go_up(void)
      day[current_cell].slot[prev_slot])
   {
     cal.select( day[current_cell].slot[prev_slot] );
-    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    cal.queue_main_redraw();
     return this;
   }
   cal.select(NULL);
@@ -342,7 +342,7 @@ MonthView::go_up(void)
         current_cell -= 7;
     return prev();
   }
-  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  cal.queue_main_redraw();
   return this;
 }
 
@@ -357,7 +357,7 @@ MonthView::go_right(void)
     return go_down();
   }
   current_cell += 1;
-  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  cal.queue_main_redraw();
   return this;
 }
 
@@ -371,7 +371,7 @@ MonthView::go_down(void)
      day[current_cell].slot[next_slot])
   {
     cal.select( day[current_cell].slot[next_slot] );
-    gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+    cal.queue_main_redraw();
     return this;
   }
   cal.select(NULL);
@@ -383,7 +383,7 @@ MonthView::go_down(void)
     return next();
   }
   current_cell += 7;
-  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  cal.queue_main_redraw();
   return this;
 }
 
@@ -398,7 +398,7 @@ MonthView::go_left(void)
     return go_up();
   }
   current_cell -= 1;
-  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  cal.queue_main_redraw();
   return this;
 }
 
@@ -408,7 +408,7 @@ MonthView::prev(void)
 {
   --self_local.tm_mon;
   set( normalise_local_tm(self_local) );
-  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  cal.queue_main_redraw();
   return this;
 }
 
@@ -418,7 +418,7 @@ MonthView::next(void)
 {
   ++self_local.tm_mon;
   set( normalise_local_tm(self_local) );
-  gtk_widget_queue_draw(GTK_WIDGET(cal.main_drawingarea));
+  cal.queue_main_redraw();
   return this;
 }
 

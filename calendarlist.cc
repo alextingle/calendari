@@ -98,7 +98,7 @@ CalendarList::toggle(gchar* path, calendari::Calendari* cal)
     gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal),&iter,0,&calendar,-1);
     calendar->toggle_show();
     gtk_list_store_set(liststore_cal,&iter,1,calendar->show(),-1);
-    gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+    cal->queue_main_redraw();
   }
   gtk_tree_path_free(tp);
 }
@@ -135,7 +135,7 @@ CalendarList::refresh(calendari::Calendari* cal)
       ics::read(curr->path().c_str(), *cal->db, 2);
       cal->db->refresh_cal(curr->calnum,2);
       cal->main_view->reload();
-      gtk_widget_queue_draw(GTK_WIDGET(cal->main_drawingarea));
+      cal->queue_main_redraw();
     }
     else
     {

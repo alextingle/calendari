@@ -25,6 +25,8 @@ struct Calendari
   GtkLabel*   main_label;        ///< Label for the main view.
   GtkDialog*  about;             ///< About box.
 
+  bool main_drawingarea_redraw_queued;
+
   // Subordinate components.
   View*          main_view;
   CalendarList*  calendar_list;
@@ -35,6 +37,9 @@ struct Calendari
 
   /** Populate members. */
   void build(GtkBuilder* builder);
+
+  /** Requests a redraw of main_drawingarea. */
+  void queue_main_redraw(void);
 
   /** Set the currently selected occurrence. */
   void select(Occurrence* occ);
