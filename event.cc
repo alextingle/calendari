@@ -34,6 +34,20 @@ Calendar::Calendar(
 
 
 void
+Calendar::set_position(int p)
+{
+  if(p==_position)
+      return;
+  _position = p;
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update CALENDAR set POSITION=%d where VERSION=%d and CALNUM=%d",
+      _position, version, calnum
+    );
+}
+
+
+void
 Calendar::toggle_show(void)
 {
   _show = !_show;

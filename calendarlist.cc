@@ -2,7 +2,7 @@
 
 #include "calendari.h"
 #include "db.h"
-#include "event.h"
+#include "err.h"
 #include "event.h"
 #include "ics.h"
 #include "monthview.h"
@@ -40,6 +40,28 @@ CalendarList::build(Calendari* cal, GtkBuilder* builder)
         4,!(*v)->readonly(),
         -1
       );
+  }
+}
+
+
+void
+CalendarList::reorder(void)
+{
+  GtkTreeModel* m = GTK_TREE_MODEL(liststore_cal);
+  GtkTreeIter iter;
+  if(!gtk_tree_model_get_iter_first(m,&iter))
+  {
+    CALI_WARN(0,"Failed to get first iterator from calendar list store.");
+    return;
+  }
+  int position = 0;
+  while(true)
+  {
+    Calendar* calendar;
+    gtk_tree_model_get(m,&iter,0,&calendar,-1);
+    calendar->set_position( position++ );
+    if(!gtk_tree_model_iter_next(m,&iter))
+        break;
   }
 }
 

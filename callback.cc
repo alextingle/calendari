@@ -179,6 +179,30 @@ calendar_toggle_cb(
 }
 
 
+G_MODULE_EXPORT void
+calendar_deleted_cb(
+    GtkTreeModel*,
+    GtkTreePath*,
+    calendari::Calendari* cal
+  )
+{
+  printf("deleted\n");
+  cal->calendar_list->reorder();
+}
+
+
+G_MODULE_EXPORT void
+calendar_inserted_cb(
+    GtkTreeModel*,
+    GtkTreePath*,
+    GtkTreeIter*,
+    calendari::Calendari*
+  )
+{
+  printf("inserted\n");
+}
+
+
 // -- detail view --
 
 G_MODULE_EXPORT gboolean

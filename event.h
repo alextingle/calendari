@@ -24,6 +24,7 @@ public:
   const std::string& colour(void)   const { return _colour; }
   bool               show(void)     const { return _show; }
 
+  void set_position(int p);
   void toggle_show(void);
 
   bool operator == (const Calendar& right) const

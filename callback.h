@@ -66,12 +66,31 @@ extern "C"
   G_MODULE_EXPORT void
   zoom_out_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
+  // -- calendar list --
+
   G_MODULE_EXPORT void
   calendar_toggle_cb(
-      GtkCellRendererToggle*cell_renderer,
-      gchar*path,
-      calendari::Calendari* cal
+      GtkCellRendererToggle*  cell_renderer,
+      gchar*                  path,
+      calendari::Calendari*   cal
     );
+
+  G_MODULE_EXPORT void
+  calendar_deleted_cb(
+      GtkTreeModel*          tree_model,
+      GtkTreePath*           path,
+      calendari::Calendari*  cal
+    );
+
+  G_MODULE_EXPORT void
+  calendar_inserted_cb(
+      GtkTreeModel*          tree_model,
+      GtkTreePath*           path,
+      GtkTreeIter*           iter,
+      calendari::Calendari*  cal
+    );
+
+  // -- detail view --
 
   G_MODULE_EXPORT gboolean
   detail_entry_focus_event_cb(

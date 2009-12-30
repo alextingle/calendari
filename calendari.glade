@@ -15,6 +15,8 @@
       <!-- column-name writeable -->
       <column type="gboolean"/>
     </columns>
+    <signal name="row_inserted" handler="calendar_inserted_cb"/>
+    <signal name="row_deleted" handler="calendar_deleted_cb"/>
   </object>
   <object class="GtkWindow" id="cali_window">
     <property name="title" translatable="yes">Calendari</property>
