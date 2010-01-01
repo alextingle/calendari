@@ -68,7 +68,7 @@ DetailView::select(Occurrence* occ)
   }
   gtk_combo_box_set_active_iter(calendar_combobox,&iter);
 
-  const bool sensitive = !occ->event.calendar().readonly();
+  const bool sensitive = !occ->event.readonly();
   gtk_widget_set_sensitive(GTK_WIDGET(title_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(start_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(end_entry),sensitive);

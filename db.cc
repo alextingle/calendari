@@ -15,7 +15,7 @@ namespace calendari {
 void
 Version::purge(int calnum)
 {
-  typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
+  typedef std::map<Occurrence::key_type,Occurrence*>::iterator OIt;
   for(OIt oi =_occurrence.begin(); oi!=_occurrence.end(); )
   {
     OIt o = oi++;
@@ -47,7 +47,7 @@ Version::destroy(void)
   typedef std::map<std::string,Event*>::iterator EIt;
   for(EIt e =_event.begin(); e!=_event.end(); ++e)
       delete e->second;
-  typedef std::map<std::pair<time_t,std::string>,Occurrence*>::iterator OIt;
+  typedef std::map<Occurrence::key_type,Occurrence*>::iterator OIt;
   for(OIt o =_occurrence.begin(); o!=_occurrence.end(); ++o)
       delete o->second;
   _calendar.clear();
@@ -101,6 +101,7 @@ Db::create_db(void)
       "  SUMMARY  string,"
       "  SEQUENCE integer,"
       "  ALLDAY   boolean,"
+      "  RECURS   boolean,"
       "  VEVENT   blob,"
       "  primary key(VERSION,UID)"
       ")"
@@ -229,7 +230,7 @@ Db::find(time_t begin, time_t end, int version)
 
   sqlite3_stmt* select_stmt;
   const char* sql =
-      "select O.CALNUM,O.UID,SUMMARY,SEQUENCE,ALLDAY,DTSTART,DTEND "
+      "select O.CALNUM,O.UID,SUMMARY,SEQUENCE,ALLDAY,RECURS,DTSTART,DTEND "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
       "where DTEND>=? and DTSTART<? and O.VERSION=? "
@@ -250,8 +251,9 @@ Db::find(time_t begin, time_t end, int version)
           safestr(::sqlite3_column_text(select_stmt,2)), // summary
                   ::sqlite3_column_int( select_stmt,3),  // sequence
                   ::sqlite3_column_int( select_stmt,4),  // all_day
-                  ::sqlite3_column_int( select_stmt,5),  // dtstart
-                  ::sqlite3_column_int( select_stmt,6),  // dtend
+                  ::sqlite3_column_int( select_stmt,5),  // recurs
+                  ::sqlite3_column_int( select_stmt,6),  // dtstart
+                  ::sqlite3_column_int( select_stmt,7),  // dtend
           version
         );
       result.insert(std::make_pair(occ->dtstart(),occ));
@@ -324,6 +326,7 @@ Occurrence* Db::create_event(
         summary,
         1, // sequence
         all_day,
+        false, // recurs
         dtstart,
         dtend,
         version
@@ -360,6 +363,7 @@ Occurrence* Db::make_occurrence(
     const char*  summary,
     int          sequence,
     bool         all_day,
+    bool         recurs,
     time_t       dtstart,
     time_t       dtend,
     int          version
@@ -376,7 +380,8 @@ Occurrence* Db::make_occurrence(
           uid,
           summary,
           sequence,
-          all_day
+          all_day,
+          recurs
         );
   }
   else
@@ -384,7 +389,7 @@ Occurrence* Db::make_occurrence(
     event = e->second;
   }
 
-  Occurrence::key_type key(dtstart,uid);
+  Occurrence::key_type key(uid,dtstart);
   std::map<Occurrence::key_type,Occurrence*>::iterator o =
       ver._occurrence.find(key);
   if(o!=ver._occurrence.end())

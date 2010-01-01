@@ -45,13 +45,15 @@ class Event
 public:
   const std::string  uid;
 
-  Event(Calendar& c, const char* u, const char* s, int q, bool a);
+  Event(Calendar& c, const char* u, const char* s, int q, bool a, bool r);
   /** Write this to a new row in the database. */
   void create(void);
 
   Calendar& calendar(void) const         { return *_calendar; }
   const std::string& summary(void) const { return _summary; }
   bool all_day(void) const               { return _all_day; }
+  bool recurs(void) const                { return _recurs; }
+  bool readonly(void) const;
 
   void set_calendar(Calendar& c);
   void set_summary(const std::string& s);
@@ -63,18 +65,19 @@ private:
   std::string        _summary;
   int                _sequence;
   bool               _all_day;
+  bool               _recurs; ///< Event has an RRULE or RDATE property.
 };
 
 
 class Occurrence
 {
 public:
-  typedef std::pair<time_t,std::string> key_type;
+  typedef std::pair<std::string,time_t> key_type;
 
   Event&      event;
   
   Occurrence(Event& e, time_t t0, time_t t1):
-    event(e), _dtstart(t0), _dtend(t1), _key(t0,e.uid)
+    event(e), _dtstart(t0), _dtend(t1), _key(e.uid,t0)
     {}
   /** Write this to a new row in the database. */
   void create(void);
@@ -96,7 +99,7 @@ public:
 
   /** Reset the _key, and return the new value. */
   const key_type& rekey(void)
-    { return _key = key_type(_dtstart,event.uid); }
+    { return _key = key_type(event.uid,_dtstart); }
 
   /** Notify this occurrence has been removed. */
   void destroy(void);

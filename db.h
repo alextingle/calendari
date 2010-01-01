@@ -70,6 +70,7 @@ private:
       const char*  summary,
       int          sequence,
       bool         all_day,
+      bool         recurs,
       time_t       dtstart,
       time_t       dtend,
       int          version

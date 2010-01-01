@@ -119,7 +119,7 @@ Calendari::create_event(time_t dtstart, time_t dtend)
 void
 Calendari::erase_selected(void)
 {
-  if(_occurrence && !_occurrence->event.calendar().readonly())
+  if(_occurrence && !_occurrence->event.readonly())
   {
     main_view->erase(_occurrence);
     db->erase(_occurrence);

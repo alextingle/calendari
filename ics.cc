@@ -180,8 +180,6 @@ void process_rrule(
 
   make_occurrence(dtstart, duration, db,insert_occ);
 
-#if 0 // Don't support recurring events yet.
-
   // Cycle through RRULE entries.
   icalproperty* rrule;
   for (rrule = icalcomponent_get_first_property(ievt,ICAL_RRULE_PROPERTY);
@@ -229,7 +227,6 @@ void process_rrule(
       make_occurrence(rdate_period.time, duration, db,insert_occ);
     }
   }
-#endif
 }
 
 
@@ -266,8 +263,8 @@ void read(const char* ical_filename, Db& db, int version)
 
   sqlite3_stmt*  insert_evt;
   sql="insert into EVENT "
-        "(VERSION,CALNUM,UID,SUMMARY,SEQUENCE,ALLDAY,VEVENT) "
-        "values (?,?,?,?,?,?,?)";
+        "(VERSION,CALNUM,UID,SUMMARY,SEQUENCE,ALLDAY,RECURS,VEVENT) "
+        "values (?,?,?,?,?,?,?,?)";
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) );
 
   sqlite3_stmt*  insert_occ;
@@ -378,6 +375,12 @@ void read(const char* ical_filename, Db& db, int version)
     if(dtend.is_date)
       --dtend.day; // iCal allday events end the day after.
 
+    // -- recurs --
+    bool recurs = (
+         icalcomponent_get_first_property(ievt,ICAL_RRULE_PROPERTY)!=NULL ||
+         icalcomponent_get_first_property(ievt,ICAL_RDATE_PROPERTY)!=NULL
+       );
+
     // Bind these values to the statements.
     sql::bind_int( CALI_HERE,db,insert_evt,1,version);
     sql::bind_int( CALI_HERE,db,insert_evt,2,calnum);
@@ -385,7 +388,8 @@ void read(const char* ical_filename, Db& db, int version)
     sql::bind_text(CALI_HERE,db,insert_evt,4,summary);
     sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
     sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
-    sql::bind_text(CALI_HERE,db,insert_evt,7,vevent);
+    sql::bind_int( CALI_HERE,db,insert_evt,7,recurs);
+    sql::bind_text(CALI_HERE,db,insert_evt,8,vevent);
     sql::step_reset(CALI_HERE,db,insert_evt);
 
     // Bind values common to all occurrences.

@@ -67,13 +67,15 @@ Event::Event(
     const char*  u,
     const char*  s,
     int          q,
-    bool         a
+    bool         a,
+    bool         r
   )
   : uid(u),
     _calendar(&c),
     _summary(s),
     _sequence(q),
-    _all_day(a)
+    _all_day(a),
+    _recurs(r)
 {}
 
 
@@ -89,6 +91,7 @@ Event::create(void)
           "SUMMARY,"
           "SEQUENCE,"
           "ALLDAY,"
+          "RECURS,"
           "VEVENT"
       ") values ("
           "%d,"   // VERSION
@@ -97,6 +100,7 @@ Event::create(void)
           "'%s'," // SUMMARY
           "%d,"   // SEQUENCE
           "%d,"   // ALLDAY
+          "%d,"   // RECURS
           "''"    // VEVENT
       ");",
       _calendar->version,
@@ -104,8 +108,17 @@ Event::create(void)
       sql::quote(uid).c_str(),
       sql::quote(_summary).c_str(),
       _sequence,
-      (_all_day? 1: 0)
+      (_all_day? 1: 0),
+      (_recurs? 1: 0)
     );
+}
+
+
+bool
+Event::readonly(void) const
+{
+  // For the time being, just make all recurring events readonly.
+  return _calendar->readonly() || _recurs;
 }
 
 
