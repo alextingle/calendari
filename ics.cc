@@ -18,8 +18,8 @@
 namespace
 {
   /** Stream reader function for iCalendar parser. */
-  char* read_stream(char *s, size_t size, void *d) 
-  { 
+  char* read_stream(char *s, size_t size, void *d)
+  {
     char *c = ::fgets(s,size, (FILE*)d);
     return c;
   }
@@ -47,11 +47,12 @@ const char* colours[] = {
 
 // -- private --
 
-/** Convert icaltime 'it' into time_t. 'it' is in timezone 'tzid'.
-*   This function actually works, unlike the libical version which just assumes
-*   that icaltime is always in UTC. */
+/** Convert icaltime 'it' into time_t.
+*   This function actually works, unlike the libical versions which either
+*   assume that icaltime is always in UTC or fail to restore the system
+*   timezone properly. */
 time_t
-ical2timet(icaltimetype& it, const char* tzid = NULL)
+ical2timet(icaltimetype& it)
 {
   if(it.is_utc)
       return ::icaltime_as_timet(it);
@@ -77,6 +78,7 @@ ical2timet(icaltimetype& it, const char* tzid = NULL)
 
   time_t result;
 
+  const char* tzid =icaltime_get_tzid(it);
   if(tzid)
   {
     char* tz;
@@ -94,6 +96,7 @@ ical2timet(icaltimetype& it, const char* tzid = NULL)
   }
   else
   {
+    // Assume that 'it' is in local time.
     result = ::mktime(&result_tm);
   }
   return result;
@@ -146,6 +149,90 @@ timet2ical(time_t t, bool is_date, const char* tzid = NULL)
 }
 
 
+void make_occurrence(
+    icaltimetype&  dtstart,
+    time_t         duration,
+    sqlite3*       db,
+    sqlite3_stmt*  insert_occ
+  )
+{
+  time_t start_time = ical2timet(dtstart);
+  time_t end_time = start_time + duration;
+  sql::bind_int(  CALI_HERE,db,insert_occ,4,start_time);
+  sql::bind_int(  CALI_HERE,db,insert_occ,5,end_time);
+  sql::step_reset(CALI_HERE,db,insert_occ);
+}
+
+
+/** Based on source from libical. */
+void process_rrule(
+    icalcomponent*  ievt,
+    icaltimetype&   dtstart,
+    icaltimetype&   dtend,
+    sqlite3*        db,
+    sqlite3_stmt*   insert_occ
+  )
+{
+  time_t start_time = ical2timet(dtstart);
+  time_t end_time   = ical2timet(dtend);
+  assert(end_time>=start_time);
+  const time_t duration = end_time - start_time;
+
+  make_occurrence(dtstart, duration, db,insert_occ);
+
+#if 0 // Don't support recurring events yet.
+
+  // Cycle through RRULE entries.
+  icalproperty* rrule;
+  for (rrule = icalcomponent_get_first_property(ievt,ICAL_RRULE_PROPERTY);
+       rrule != NULL;
+       rrule = icalcomponent_get_next_property(ievt,ICAL_RRULE_PROPERTY))
+  {
+    struct icalrecurrencetype recur = icalproperty_get_rrule(rrule);
+    icalrecur_iterator *rrule_itr  = icalrecur_iterator_new(recur, dtstart);
+    struct icaltimetype rrule_time;
+    if(rrule_itr)
+        rrule_time = icalrecur_iterator_next(rrule_itr);
+    // note: icalrecur_iterator_next always returns dtstart the first time...
+
+    while(rrule_itr)
+    {
+      rrule_time = icalrecur_iterator_next(rrule_itr);
+      if(icaltime_is_null_time(rrule_time))
+          break;
+      if(!icalproperty_recurrence_is_excluded(ievt, &dtstart, &rrule_time))
+      {
+        make_occurrence(rrule_time, duration, db,insert_occ);
+      }
+    }
+    icalrecur_iterator_free(rrule_itr);
+  }
+
+  // Process RDATE entries
+  icalproperty* rdate;
+  for (rdate = icalcomponent_get_first_property(ievt,ICAL_RDATE_PROPERTY);
+       rdate != NULL;
+       rdate = icalcomponent_get_next_property(ievt,ICAL_RDATE_PROPERTY))
+  {
+    struct icaldatetimeperiodtype rdate_period = icalproperty_get_rdate(rdate);
+
+    /** RDATES can specify raw datetimes, periods, or dates.
+	we only support raw datetimes for now..
+
+        @todo Add support for other types **/
+
+    if (icaltime_is_null_time(rdate_period.time))
+      continue;
+
+    if(!icalproperty_recurrence_is_excluded(ievt, &dtstart,&rdate_period.time))
+    {
+      make_occurrence(rdate_period.time, duration, db,insert_occ);
+    }
+  }
+#endif
+}
+
+
 // -- public --
 
 void read(const char* ical_filename, Db& db, int version)
@@ -191,10 +278,9 @@ void read(const char* ical_filename, Db& db, int version)
   CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
 
   icalproperty* iprop;
-  const char* tzid;
 
   // Calendar properties
-  
+
   // -- calid --
   const char* calid ="??dummy_id??";
   const char* calname ="??dummy_name??";
@@ -271,32 +357,26 @@ void read(const char* ical_filename, Db& db, int version)
     }
     int sequence = icalproperty_get_sequence(iprop);
 
-    // dtstart
-    iprop = ::icalcomponent_get_first_property(ievt,ICAL_DTSTART_PROPERTY);
-    if(!iprop)
+    // dtstart + tzid (if any)
+    icaltimetype dtstart = icalcomponent_get_dtstart(ievt);
+    if(icaltime_is_null_time(dtstart))
     {
       CALI_WARN(0,"UID:%s missing VEVENT::DTSTART property",uid);
       continue;
     }
-    struct icaltimetype dtstart = ::icalproperty_get_dtstart(iprop);
-    tzid = icalproperty_get_parameter_as_string(iprop,"TZID");
-    time_t start_time = ical2timet(dtstart,tzid);
 
     // all_day
     int all_day = dtstart.is_date;
 
-    // dtend
-    iprop = ::icalcomponent_get_first_property(ievt,ICAL_DTEND_PROPERTY);
-    if(!iprop)
+    // dtend + tzid (if any)
+    icaltimetype dtend = icalcomponent_get_dtend(ievt);
+    if(icaltime_is_null_time(dtend))
     {
       CALI_WARN(0,"UID:%s missing VEVENT::DTEND property",uid);
       continue;
     }
-    struct icaltimetype dtend = ::icalproperty_get_dtend(iprop);
     if(dtend.is_date)
       --dtend.day; // iCal allday events end the day after.
-    tzid = icalproperty_get_parameter_as_string(iprop,"TZID");
-    time_t end_time = ical2timet(dtend,tzid);
 
     // Bind these values to the statements.
     sql::bind_int( CALI_HERE,db,insert_evt,1,version);
@@ -308,12 +388,12 @@ void read(const char* ical_filename, Db& db, int version)
     sql::bind_text(CALI_HERE,db,insert_evt,7,vevent);
     sql::step_reset(CALI_HERE,db,insert_evt);
 
+    // Bind values common to all occurrences.
     sql::bind_int( CALI_HERE,db,insert_occ,1,version);
     sql::bind_int( CALI_HERE,db,insert_occ,2,calnum);
     sql::bind_text(CALI_HERE,db,insert_occ,3,uid);
-    sql::bind_int( CALI_HERE,db,insert_occ,4,start_time);
-    sql::bind_int( CALI_HERE,db,insert_occ,5,end_time);
-    sql::step_reset(CALI_HERE,db,insert_occ);
+    // Generate occurrences.
+    process_rrule(ievt,dtstart,dtend,db,insert_occ);
   }
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
   CALI_SQLCHK(db, ::sqlite3_finalize(insert_evt) );
@@ -390,8 +470,17 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   icalcomponent_add_property(ical.get(),prop);
 
   CALI_SQLCHK(db, ::sqlite3_finalize(select_cal) );
-  
-  // ?? VTIMEZONE component
+
+  // VTIMEZONE component
+  icaltimezone* zone =icaltimezone_get_builtin_timezone(tzid);
+  assert(zone);
+  icalcomponent* vtimezone =
+      icalcomponent_new_clone( icaltimezone_get_component(zone) );
+  // Replace the libical TZID with the Olsen location.
+  prop = icalcomponent_get_first_property(vtimezone,ICAL_TZID_PROPERTY);
+  icalproperty_set_tzid(prop,tzid);
+  icalcomponent_add_component(ical.get(),vtimezone);
+
 
   // Read in VEVENTS from the database...
   // Load calendar from database.
