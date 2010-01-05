@@ -346,13 +346,12 @@ void read(const char* ical_filename, Db& db, int version)
     }
 
     // -- sequence --
+    int sequence = 1;
     iprop = icalcomponent_get_first_property(ievt,ICAL_SEQUENCE_PROPERTY);
-    if(!iprop)
-    {
-      CALI_WARN(0,"UID:%s missing VEVENT::SEQUENCE property",uid);
-      continue;
-    }
-    int sequence = icalproperty_get_sequence(iprop);
+    if(iprop)
+        sequence = icalproperty_get_sequence(iprop);
+    else
+        CALI_WARN(0,"UID:%s missing VEVENT::SEQUENCE property",uid);
 
     // dtstart + tzid (if any)
     icaltimetype dtstart = icalcomponent_get_dtstart(ievt);
