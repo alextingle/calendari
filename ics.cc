@@ -11,6 +11,7 @@
 #include <fstream>
 #include <iostream>
 #include <libical/ical.h>
+#include <set>
 #include <sqlite3.h>
 #include <string>
 #include <unistd.h>
@@ -278,9 +279,9 @@ void read(const char* ical_filename, Db& db, int version)
 
   // Calendar properties
 
-  // -- calid --
-  const char* calid ="??dummy_id??";
-  const char* calname ="??dummy_name??";
+  // -- calid & calname --
+  std::string calid;
+  std::string calname;
   iprop = icalcomponent_get_first_property(ical.get(),ICAL_X_PROPERTY);
   while(iprop)
   {
@@ -291,8 +292,26 @@ void read(const char* ical_filename, Db& db, int version)
         calid = icalproperty_get_x(iprop);
     iprop = icalcomponent_get_next_property(ical.get(),ICAL_X_PROPERTY);
   }
+  if(calid.empty() || calname.empty())
+  {
+    // Fall back to using the file name.
+    char* path = ::strdup(ical_filename); //           E.g. "path/to/mycal.ics"
+    std::string bname = ::basename(path);
+    ::free(path);
+    if(calid.empty())
+        calid = bname; //                              E.g. "mycal.ics"
+    if(calname.empty())
+    {
+      std::string::size_type pos = bname.find_last_of(".");
+      if(pos==std::string::npos || pos==0)
+          calname = bname;
+      else
+          calname = bname.substr(0,pos); //            E.g. "mycal"
+    }
+  }
+
   // Get the calnum.
-  int calnum = db.calnum(calid);
+  int calnum = db.calnum(calid.c_str());
   assert(calnum);
   // Is it readonly?
   bool readonly =( 0 != ::access(ical_filename,W_OK) );
@@ -301,13 +320,16 @@ void read(const char* ical_filename, Db& db, int version)
   // Bind these values to the statements.
   sql::bind_int( CALI_HERE,db,insert_cal,1,version);
   sql::bind_int( CALI_HERE,db,insert_cal,2,calnum);
-  sql::bind_text(CALI_HERE,db,insert_cal,3,calid);
-  sql::bind_text(CALI_HERE,db,insert_cal,4,calname);
+  sql::bind_text(CALI_HERE,db,insert_cal,3,calid.c_str());
+  sql::bind_text(CALI_HERE,db,insert_cal,4,calname.c_str());
   sql::bind_text(CALI_HERE,db,insert_cal,5,ical_filename);
   sql::bind_int( CALI_HERE,db,insert_cal,6,readonly);
   sql::bind_int( CALI_HERE,db,insert_cal,7,-1); // position
   sql::bind_text(CALI_HERE,db,insert_cal,8,colour);
   sql::step_reset(CALI_HERE,db,insert_cal);
+
+  // Remember events' UIDs, so that we can reject duplicates.
+  std::set<std::string> uids_seen;
 
   // Iterate through all components (VEVENTs).
   for(icalcompiter e=icalcomponent_begin_component(ical.get(),ICAL_VEVENT_COMPONENT);
@@ -330,6 +352,11 @@ void read(const char* ical_filename, Db& db, int version)
       CALI_WARN(0,"VEVENT::UID property has no value");
       continue;
     }
+    if(!uids_seen.insert(uid).second)
+    {
+      CALI_WARN(0,"VEVENT::UID property not unique: %s",uid);
+      continue;
+    }
 
     // -- summary --
     iprop = icalcomponent_get_first_property(ievt,ICAL_SUMMARY_PROPERTY);
@@ -350,8 +377,6 @@ void read(const char* ical_filename, Db& db, int version)
     iprop = icalcomponent_get_first_property(ievt,ICAL_SEQUENCE_PROPERTY);
     if(iprop)
         sequence = icalproperty_get_sequence(iprop);
-    else
-        CALI_WARN(0,"UID:%s missing VEVENT::SEQUENCE property",uid);
 
     // dtstart + tzid (if any)
     icaltimetype dtstart = icalcomponent_get_dtstart(ievt);
