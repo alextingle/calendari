@@ -34,12 +34,14 @@ S_OK = 0
 S_NOCHANGE = 1
 S_NOTFOUND = 2
 S_TOOSOON = 3
+_status = ['OK','NOCHANGE','NOTFOUND','TOOSOON']
 
 global _next_full_sync
 _next_full_sync = 0
 
 
 def log(*args):
+  _log.write(time.ctime(time.time())+'  ')
   _log.write(' '.join(map(str,args))+'\n')
   _log.flush()
   print ' '.join(map(str,args))
@@ -59,8 +61,8 @@ class SyncObj(object):
         os.mkdir(self._dir)
       _idx[self._this] = self
   def changed(self):
-      log('queuing',self._name)
       self._next = time.time() + CYCLE_TIME_SEC
+      log('queuing',self._name,'until',time.ctime(self._next))
       _queue[self._next] = self._this
   def check_time(self):
       return (time.time() >= self._next)
@@ -196,7 +198,10 @@ def have_network():
   bus = dbus.SystemBus()
   network_manager = bus.get_object(
     'org.freedesktop.NetworkManager','/org/freedesktop/NetworkManager')
-  return network_manager.state() == NM_STATE_CONNECTED
+  try:
+    return network_manager.state() == NM_STATE_CONNECTED
+  except:
+    return True
 
 
 def read_config():
@@ -225,7 +230,7 @@ def do_sync(obj):
   log(obj.__class__.__name__,obj._name)
   try:
     result = obj.sync()
-    log(result)
+    log(_status[result])
     if result in (S_OK,S_NOTFOUND):
       msg = obj.message(result)
       if msg:
@@ -239,29 +244,34 @@ def do_work(dummy):
   global _messages
   _messages = []
   global _next_full_sync
-  if time.time() < _next_full_sync:
+  now = time.time()
+  if now < _next_full_sync:
     # See if there is work to do...
     if have_network():
       keys = _queue.keys()
       keys.sort()
+      done = set()
       for qtime in keys:
-        if time.time() < qtime:
+        if now < qtime:
           break
         path = _queue[qtime]
+        del _queue[qtime]
+        if path in done:
+          continue
+        done.add(path)
         obj = _idx[path]
         do_sync(obj)
-        del _queue[qtime]
-  elif not _queue:
+  elif _queue:
+    # Postpone the full sync until activity ceases.
+    _next_full_sync = now + 60
+    log('postponing full sync until '+time.ctime(_next_full_sync))
+  else:
     # Time for a full sync
-    log(time.time(),'full sync')
-    _next_full_sync = time.time() + (FULL_SYNC_MINS * 60)
+    log('full sync for '+time.ctime(_next_full_sync))
+    _next_full_sync = now + (FULL_SYNC_MINS * 60)
     if have_network():
       for obj in _obj:
         do_sync(obj)
-  else:
-    # Postpone the full sync until activity ceases.
-    log(time.time(),'postponing full sync')
-    _next_full_sync += 60
   if _messages:
     n = pynotify.Notification('Calendar Sync','\n'.join(_messages))
     n.show()
