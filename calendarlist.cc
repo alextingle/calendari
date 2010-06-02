@@ -14,14 +14,22 @@
 namespace calendari {
 
 
+bool
+CalendarList::idle(void* param)
+{
+  Calendari* app = static_cast<Calendari*>(param);
+  return app->calendar_list->refresh_next(app);
+}
+
+
 void
-CalendarList::build(Calendari* cal, GtkBuilder* builder)
+CalendarList::build(Calendari* app, GtkBuilder* builder)
 {
   liststore_cal=GTK_LIST_STORE(gtk_builder_get_object(builder,"liststore_cal"));
   treeview =GTK_TREE_VIEW(gtk_builder_get_object(builder,"cali_cals_treeview"));
 
   typedef std::map<int,Calendar*> CalMap;
-  const CalMap& cc = cal->db->calendars();
+  const CalMap& cc = app->db->calendars();
 
   // Sort by position.
   std::vector<Calendar*> vec(cc.size(),NULL);
@@ -87,7 +95,7 @@ CalendarList::current(void) const
 
 
 void
-CalendarList::toggle(gchar* path, calendari::Calendari* cal)
+CalendarList::toggle(gchar* path, calendari::Calendari* app)
 {
   GtkTreePath* tp = gtk_tree_path_new_from_string(path);
   GtkTreeIter iter;
@@ -98,7 +106,7 @@ CalendarList::toggle(gchar* path, calendari::Calendari* cal)
     gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal),&iter,0,&calendar,-1);
     calendar->toggle_show();
     gtk_list_store_set(liststore_cal,&iter,1,calendar->show(),-1);
-    cal->queue_main_redraw();
+    app->queue_main_redraw();
   }
   gtk_tree_path_free(tp);
 }
@@ -122,32 +130,38 @@ CalendarList::add(void)
 
 
 void
-CalendarList::refresh(calendari::Calendari* cal)
+CalendarList::refresh(calendari::Calendari* app, Calendar* calendar)
 {
-  Calendar* curr = current();
-  if(curr && !curr->path().empty())
+  if(calendar && !calendar->path().empty())
   {
-    if(curr->readonly())
+    if(calendar->readonly())
     {
-      printf("read %s at %s\n",curr->name().c_str(),curr->path().c_str());
-      if(cal->selected() && cal->selected()->event.calendar()==*curr)
-          cal->select(NULL);
-      ics::read(curr->path().c_str(), *cal->db, 2);
-      cal->db->refresh_cal(curr->calnum,2);
-      cal->main_view->reload();
-      cal->queue_main_redraw();
+      printf("read %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
+      if(app->selected() && app->selected()->event.calendar()==*calendar)
+          app->select(NULL);
+      ics::read(calendar->path().c_str(), *app->db, 2);
+      app->db->refresh_cal(calendar->calnum,2);
+      app->main_view->reload();
+      app->queue_main_redraw();
     }
     else
     {
-      printf("write %s at %s\n",curr->name().c_str(),curr->path().c_str());
-      ics::write(curr->path().c_str(), *cal->db, curr->calid.c_str());
+      printf("write %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
+      ics::write(calendar->path().c_str(), *app->db, calendar->calid.c_str());
     }
   }
 }
 
 
 void
-CalendarList::refresh_all(calendari::Calendari* cal)
+CalendarList::refresh_selected(calendari::Calendari* app)
+{
+  refresh(app,current());
+}
+
+
+void
+CalendarList::refresh_all(calendari::Calendari* app)
 {
   GtkTreeModel* m = GTK_TREE_MODEL(liststore_cal);
   GtkTreeIter iter;
@@ -156,36 +170,33 @@ CalendarList::refresh_all(calendari::Calendari* cal)
     CALI_WARN(0,"Failed to get first iterator from calendar list store.");
     return;
   }
-  // Make sure that no calendar is selected.
-  cal->select(NULL);
-  bool view_is_dirty = false;
+  // Enqueue all calendars.
   while(true)
   {
     Calendar* calendar;
     gtk_tree_model_get(m,&iter,0,&calendar,-1);
     if(calendar && !calendar->path().empty())
-    {
-      if(calendar->readonly())
-      {
-        printf("read %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
-        ics::read(calendar->path().c_str(), *cal->db, 2);
-        cal->db->refresh_cal(calendar->calnum,2);
-        view_is_dirty = true;
-      }
-      else
-      {
-        printf("write %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
-        ics::write(calendar->path().c_str(), *cal->db, calendar->calid.c_str());
-      }
-    }
+        refresh_queue.insert( calendar->calnum );
     if(!gtk_tree_model_iter_next(m,&iter))
         break;
   }
-  if(view_is_dirty)
-  {
-    cal->main_view->reload();
-    cal->queue_main_redraw();
-  }
+  // Hook-in idle processing.
+  (void)g_idle_add((GSourceFunc)idle,(gpointer)app);
+}
+
+
+bool
+CalendarList::refresh_next(Calendari* app)
+{
+  if(refresh_queue.empty())
+      return false; // Nothing more to do.
+  std::set<int>::iterator next_calnum = refresh_queue.begin();
+  Calendar* calendar = app->db->calendar(*next_calnum);
+  refresh_queue.erase(next_calnum);
+  if(!calendar)
+      return refresh_next(app);
+  refresh(app,calendar);
+  return !refresh_queue.empty();
 }
 
 

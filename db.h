@@ -41,6 +41,13 @@ public:
   /** Look up the calnum of the given calid, or generate a new unique number. */
   int calnum(const char* calid);
 
+  Calendar* calendar(int calnum, int version=1)
+    {
+      const std::map<int,Calendar*>& m( calendars(version) );
+      std::map<int,Calendar*>::const_iterator it = m.find(calnum);
+      return( it==m.end()? NULL: it->second );
+    }
+
   const std::map<int,Calendar*>& calendars(int version=1)
     { return _ver[version]._calendar; }
 

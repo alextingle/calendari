@@ -17,7 +17,7 @@ cali_menu_refresh_cb(
     calendari::Calendari*  cal
   )
 {
-  cal->calendar_list->refresh(cal);
+  cal->calendar_list->refresh_selected(cal);
 }
 
 

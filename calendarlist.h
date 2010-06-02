@@ -2,6 +2,7 @@
 #define CALENDARI__CALENDAR_LIST_H 1
 
 #include <gtk/gtk.h>
+#include <set>
 
 namespace calendari {
 
@@ -12,26 +13,38 @@ class Occurrence;
 
 struct CalendarList
 {
+  static bool idle(void*);
+
   GtkListStore* liststore_cal; ///< List of calendars
   GtkTreeView*  treeview;
 
   /** Populate members. */
-  void build(Calendari* cal, GtkBuilder* builder);
+  void build(Calendari* app, GtkBuilder* builder);
 
   /** The order of calendars in the list view has been changed. Change the
   *   model accordingly. */
   void reorder(void);
 
   Calendar* current(void) const;
-  void toggle(gchar* path, calendari::Calendari* cal);
+  void toggle(gchar* path, Calendari* app);
   void add(void);
+
+  /** Synchronise the calendar with its .ics file.
+  *   Readonly calendars are re-read from the .ics file. Other calendars are
+  *   written-out to the .ics file. */
+  void refresh(Calendari* app, Calendar* calendar);
 
   /** Synchronise the currently selected calendar with its .ics file.
   *   Readonly calendars are re-read from the .ics file. Other calendars are
   *   written-out to the .ics file. */
-  void refresh(calendari::Calendari* cal);
-  void refresh_all(calendari::Calendari* cal);
+  void refresh_selected(Calendari* app);
+  void refresh_all(Calendari* app);
+  bool refresh_next(Calendari* app);
   void select(Occurrence* occ);
+
+private:
+  /** Queue of calendars (CALNUMs) to refresh. */
+  std::set<int> refresh_queue;
 };
 
 
