@@ -22,6 +22,16 @@ cali_menu_refresh_cb(
 
 
 G_MODULE_EXPORT void
+cali_menu_refreshall_cb(
+    GtkMenuItem*,
+    calendari::Calendari*  cal
+  )
+{
+  cal->calendar_list->refresh_all(cal);
+}
+
+
+G_MODULE_EXPORT void
 cali_menu_delete_cb(
     GtkMenuItem*,
     calendari::Calendari*  cal

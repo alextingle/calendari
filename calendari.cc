@@ -14,6 +14,7 @@
 #include <gmodule.h>
 #include <gtk/gtk.h>
 #include <iostream>
+#include <memory>
 #include <sysexits.h>
 
 namespace calendari {
@@ -143,7 +144,7 @@ main(int argc, char* argv[])
   gtk_rc_parse("dot.calrc");
 
   // Command-line options.
-  calendari::Calendari* cal = g_slice_new( calendari::Calendari );
+  std::auto_ptr<calendari::Calendari> cal( new calendari::Calendari() );
   const char* import = NULL;
 
   option long_options[] = {
@@ -189,7 +190,7 @@ main(int argc, char* argv[])
   {
     assert(cal->db);
     calendari::ics::read(import,*cal->db);
-    ::exit(0);
+    return 0;
   }
 
   // Create new GtkBuilder object

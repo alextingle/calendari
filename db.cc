@@ -162,6 +162,7 @@ Db::refresh_cal(int calnum, int from_version, int to_version)
     sql::execf(CALI_HERE,_sdb,
         "update OCCURRENCE set VERSION=%d where VERSION=%d",
         to_version,from_version);
+    // ?? Does this need to be restricted by calnum...?
     sql::execf(CALI_HERE,_sdb,
         "update EVENT set VERSION=%d where VERSION=%d",to_version,from_version);
     sql::execf(CALI_HERE,_sdb,

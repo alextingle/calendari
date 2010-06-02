@@ -26,10 +26,11 @@ struct CalendarList
   void toggle(gchar* path, calendari::Calendari* cal);
   void add(void);
 
-  /** Synchronise the currently selected calendar with it's .ics file.
+  /** Synchronise the currently selected calendar with its .ics file.
   *   Readonly calendars are re-read from the .ics file. Other calendars are
   *   written-out to the .ics file. */
   void refresh(calendari::Calendari* cal);
+  void refresh_all(calendari::Calendari* cal);
   void select(Occurrence* occ);
 };
 

@@ -147,6 +147,49 @@ CalendarList::refresh(calendari::Calendari* cal)
 
 
 void
+CalendarList::refresh_all(calendari::Calendari* cal)
+{
+  GtkTreeModel* m = GTK_TREE_MODEL(liststore_cal);
+  GtkTreeIter iter;
+  if(!gtk_tree_model_get_iter_first(m,&iter))
+  {
+    CALI_WARN(0,"Failed to get first iterator from calendar list store.");
+    return;
+  }
+  // Make sure that no calendar is selected.
+  cal->select(NULL);
+  bool view_is_dirty = false;
+  while(true)
+  {
+    Calendar* calendar;
+    gtk_tree_model_get(m,&iter,0,&calendar,-1);
+    if(calendar && !calendar->path().empty())
+    {
+      if(calendar->readonly())
+      {
+        printf("read %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
+        ics::read(calendar->path().c_str(), *cal->db, 2);
+        cal->db->refresh_cal(calendar->calnum,2);
+        view_is_dirty = true;
+      }
+      else
+      {
+        printf("write %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
+        ics::write(calendar->path().c_str(), *cal->db, calendar->calid.c_str());
+      }
+    }
+    if(!gtk_tree_model_iter_next(m,&iter))
+        break;
+  }
+  if(view_is_dirty)
+  {
+    cal->main_view->reload();
+    cal->queue_main_redraw();
+  }
+}
+
+
+void
 CalendarList::select(Occurrence* occ)
 {
   if(!occ)
