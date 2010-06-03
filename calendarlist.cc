@@ -15,7 +15,16 @@ namespace calendari {
 
 
 bool
-CalendarList::idle(void* param)
+CalendarList::timeout_refresh_all(void* param)
+{
+  Calendari* app = static_cast<Calendari*>(param);
+  app->calendar_list->refresh_all(app);
+  return true;
+}
+
+
+bool
+CalendarList::idle_refresh_next(void* param)
 {
   Calendari* app = static_cast<Calendari*>(param);
   return app->calendar_list->refresh_next(app);
@@ -139,7 +148,7 @@ CalendarList::refresh(calendari::Calendari* app, Calendar* calendar)
       printf("read %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
       if(app->selected() && app->selected()->event.calendar()==*calendar)
           app->select(NULL);
-      ics::read(calendar->path().c_str(), *app->db, 2);
+      ics::read(app, calendar->path().c_str(), *app->db, 2);
       app->db->refresh_cal(calendar->calnum,2);
       app->main_view->reload();
       app->queue_main_redraw();
@@ -181,7 +190,7 @@ CalendarList::refresh_all(calendari::Calendari* app)
         break;
   }
   // Hook-in idle processing.
-  (void)g_idle_add((GSourceFunc)idle,(gpointer)app);
+  (void)g_idle_add((GSourceFunc)idle_refresh_next,(gpointer)app);
 }
 
 

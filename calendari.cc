@@ -144,7 +144,7 @@ main(int argc, char* argv[])
   gtk_rc_parse("dot.calrc");
 
   // Command-line options.
-  std::auto_ptr<calendari::Calendari> cal( new calendari::Calendari() );
+  std::auto_ptr<calendari::Calendari> app( new calendari::Calendari() );
   const char* import = NULL;
 
   option long_options[] = {
@@ -160,10 +160,10 @@ main(int argc, char* argv[])
     switch(opt)
     {
       case 'd':
-          cal->debug = true;
+          app->debug = true;
           break;
       case 'f':
-          cal->load(optarg);
+          app->load(optarg);
           break;
       case 'i':
           import = optarg;
@@ -176,20 +176,20 @@ main(int argc, char* argv[])
   }
 
   // If not set explicitly, work out which database file to use.
-  if(!cal->db)
+  if(!app->db)
   {
     std::string dbname ="cali.sqlite";
     const char* home = ::getenv("HOME");
     if(home)
         dbname = home + ("/." + dbname);
-    cal->load(dbname.c_str());
+    app->load(dbname.c_str());
   }
 
   // Import mode.
   if(import)
   {
-    assert(cal->db);
-    calendari::ics::read(import,*cal->db);
+    assert(app->db);
+    calendari::ics::read(app.get(),import,*app->db);
     return 0;
   }
 
@@ -203,13 +203,20 @@ main(int argc, char* argv[])
       g_free(error);
       return 1;
   }
-  cal->build(builder);
+  app->build(builder);
 
   // Destroy builder, since we don't need it anymore
   g_object_unref( G_OBJECT(builder) );
 
   // Show window. All other widgets are automatically shown by GtkBuilder
-  gtk_widget_show( cal->window );
+  gtk_widget_show( app->window );
+
+  // Hook-in periodic refresh_all.
+  (void)g_timeout_add(
+      10 * 60 * 1000, // 10 minutes, in milliseconds.
+      (GSourceFunc)calendari::CalendarList::timeout_refresh_all,
+      (gpointer)app.get()
+    );
 
   // Start main loop
   gtk_main();

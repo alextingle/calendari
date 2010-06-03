@@ -1,5 +1,6 @@
 #include "ics.h"
 
+#include "calendari.h"
 #include "db.h"
 #include "err.h"
 #include "event.h"
@@ -233,7 +234,7 @@ void process_rrule(
 
 // -- public --
 
-void read(const char* ical_filename, Db& db, int version)
+void read(Calendari* app, const char* ical_filename, Db& db, int version)
 {
   assert(ical_filename);
   assert(ical_filename[0]);
@@ -354,7 +355,8 @@ void read(const char* ical_filename, Db& db, int version)
     }
     if(!uids_seen.insert(uid).second)
     {
-      CALI_WARN(0,"VEVENT::UID property not unique: %s",uid);
+      if(!app || app->debug)
+          CALI_WARN(0,"VEVENT::UID property not unique: %s",uid);
       continue;
     }
 

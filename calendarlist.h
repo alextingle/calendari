@@ -13,7 +13,12 @@ class Occurrence;
 
 struct CalendarList
 {
-  static bool idle(void*);
+  /** Periodically trigger a call to refresh_all(). */
+  static bool timeout_refresh_all(void*);
+
+  /** Refreshes the next calendar in the refresh_queue. Returns TRUE if there
+  *   are more refreshes queued. */
+  static bool idle_refresh_next(void*);
 
   GtkListStore* liststore_cal; ///< List of calendars
   GtkTreeView*  treeview;
