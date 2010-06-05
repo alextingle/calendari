@@ -577,12 +577,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
     }
     else
     {
-      vevent = icalcomponent_vanew(ICAL_VEVENT_COMPONENT,
-          icalproperty_new_uid(uid),
-          icalproperty_new_created( timet2ical(::time(NULL),false) ),
-          icalproperty_new_transp(ICAL_TRANSP_OPAQUE), //??
-          0
-        );
+      vevent = make_new_vevent(uid);
     }
     icalcomponent_add_property(vevent,
         icalproperty_new_summary( summary )
@@ -614,6 +609,18 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   std::ofstream ofile(ical_filename);
   if(ofile)
       ofile << icalcomponent_as_ical_string( ical.get() );
+}
+
+
+icalcomponent*
+make_new_vevent(const char* uid)
+{
+  return icalcomponent_vanew(ICAL_VEVENT_COMPONENT,
+      icalproperty_new_uid(uid),
+      icalproperty_new_created( timet2ical(::time(NULL),false) ),
+      icalproperty_new_transp(ICAL_TRANSP_OPAQUE), //??
+      0
+    );
 }
 
 

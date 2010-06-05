@@ -20,6 +20,7 @@ public:
       return q;
     }
 
+  Db* db(void) const { return _db; }
   void set_db(Db* db_);
 
   bool empty(void) const { return _changes.empty(); }

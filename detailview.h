@@ -31,6 +31,7 @@ struct DetailView
 
   void entry_cb(GtkEntry* entry, calendari::Calendari* cal);
   void combobox_cb(GtkComboBox* cb, calendari::Calendari* cal);
+  void textview_cb(GtkTextView* tv, calendari::Calendari* cal);
 };
 
 

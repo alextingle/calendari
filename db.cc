@@ -1,12 +1,14 @@
 #include "db.h"
 
 #include "err.h"
+#include "ics.h"
 #include "queue.h"
 #include "sql.h"
 #include "util.h"
 
 #include <cassert>
 #include <cstdarg>
+#include <libical/ical.h>
 #include <set>
 
 namespace calendari {
@@ -335,6 +337,42 @@ Occurrence* Db::create_event(
   occ->event.create();
   occ->create();
   return occ;
+}
+
+
+icalcomponent*
+Db::vevent(const char* uid, int version)
+{
+  // Read in VEVENTS from the database...
+  sqlite3_stmt* select_evt;
+  const char* sql = "select VEVENT from EVENT where VERSION=? and UID=?";
+  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_evt,NULL) );
+  sql::bind_int( CALI_HERE,_sdb,select_evt,1,version);
+  sql::bind_text(CALI_HERE,_sdb,select_evt,2,uid,-1);
+
+  const char* veventz =NULL;
+  int return_code = ::sqlite3_step(select_evt);
+  if(return_code==SQLITE_ROW)
+  {
+    veventz = safestr(::sqlite3_column_text(select_evt,0));
+  }
+  else if(return_code!=SQLITE_DONE)
+  {
+    calendari::sql::error(CALI_HERE,_sdb);
+  }
+
+  icalcomponent* vevent =NULL;
+  if(veventz && veventz[0])
+  {
+    vevent = icalparser_parse_string(veventz);
+    // ?? Check for error.
+  }
+  else
+  {
+    vevent = ics::make_new_vevent(uid);
+  }
+  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_evt) );
+  return vevent;
 }
 
 

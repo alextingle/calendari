@@ -7,6 +7,9 @@
 #include <sqlite3.h>
 #include <string>
 
+struct icalcomponent_impl;
+typedef struct icalcomponent_impl icalcomponent;
+
 namespace calendari {
 
 
@@ -60,6 +63,9 @@ public:
       int          calnum,
       int          version=1
     );
+
+  /** Read a VEVENT from the database, or create a new, empty one. */
+  icalcomponent* vevent(const char* uid, int version=1);
 
   void moved(Occurrence* occ, int version=1);
   void erase(Occurrence* occ, int version=1);

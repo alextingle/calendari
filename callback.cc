@@ -241,3 +241,15 @@ detail_combobox_changed_cb(GtkComboBox* cb, calendari::Calendari* cal)
 {
   cal->detail_view->combobox_cb(cb,cal);
 }
+
+
+G_MODULE_EXPORT gboolean
+detail_text_focus_event_cb(
+    GtkTextView*           tv,
+    GdkEventFocus*,
+    calendari::Calendari*  cal
+  )
+{
+  cal->detail_view->textview_cb(tv,cal);
+  return false;
+}

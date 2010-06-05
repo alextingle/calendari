@@ -4,6 +4,9 @@
 #include <string>
 #include <time.h>
 
+struct icalcomponent_impl;
+typedef struct icalcomponent_impl icalcomponent;
+
 namespace calendari {
 
 
@@ -46,6 +49,7 @@ public:
   const std::string  uid;
 
   Event(Calendar& c, const char* u, const char* s, int q, bool a, bool r);
+  ~Event(void);
   /** Write this to a new row in the database. */
   void create(void);
 
@@ -54,10 +58,12 @@ public:
   bool all_day(void) const               { return _all_day; }
   bool recurs(void) const                { return _recurs; }
   bool readonly(void) const;
+  const char* description(void) const;
 
   void set_calendar(Calendar& c);
   void set_summary(const std::string& s);
   void set_all_day(bool v);
+  void set_description(const char* s);
   void increment_sequence(void);
 
 private:
@@ -66,6 +72,13 @@ private:
   int                _sequence;
   bool               _all_day;
   bool               _recurs; ///< Event has an RRULE or RDATE property.
+
+  /**  VEVENT ical component. If NULL, then not cached. Owned by 'this'. */
+  mutable icalcomponent* _vevent;
+
+  /** Read _vevent from database, if it is not already loaded. Creates
+  *   a new VEVENT if there is none in the database. */
+  void load_vevent(void) const;
 };
 
 

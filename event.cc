@@ -1,9 +1,11 @@
 #include "event.h"
 
+#include "db.h"
 #include "queue.h"
 #include "sql.h"
 
 #include <cassert>
+#include <libical/ical.h>
 
 namespace calendari {
 
@@ -75,8 +77,19 @@ Event::Event(
     _summary(s),
     _sequence(q),
     _all_day(a),
-    _recurs(r)
+    _recurs(r),
+    _vevent(NULL)
 {}
+
+
+Event::~Event(void)
+{
+  if(_vevent)
+  {
+    icalcomponent_free(_vevent);
+    _vevent = NULL;
+  }
+}
 
 
 void
@@ -119,6 +132,19 @@ Event::readonly(void) const
 {
   // For the time being, just make all recurring events readonly.
   return _calendar->readonly() || _recurs;
+}
+
+
+const char*
+Event::description(void) const
+{
+  load_vevent();
+  icalproperty* iprop =
+      icalcomponent_get_first_property(_vevent,ICAL_DESCRIPTION_PROPERTY);
+  if(!iprop)
+      return "";
+  const char* desc = icalproperty_get_description(iprop);
+  return( desc? desc: "" );
 }
 
 
@@ -179,6 +205,37 @@ Event::set_all_day(bool v)
 
 
 void
+Event::set_description(const char* s)
+{
+  assert(s);
+  load_vevent();
+  icalproperty* iprop =
+      icalcomponent_get_first_property(_vevent,ICAL_DESCRIPTION_PROPERTY);
+  if(iprop)
+  {
+    const char* old_desc = icalproperty_get_description(iprop);
+    if(old_desc && 0==::strcmp(s,old_desc))
+        return; // No change.
+    icalproperty_set_description(iprop,s);
+  }
+  else
+  {
+    iprop = icalproperty_new_description(s);
+    icalcomponent_add_property(_vevent,iprop);
+  }
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update EVENT set VEVENT='%s' where VERSION=%d and UID='%s'",
+      sql::quote(icalcomponent_as_ical_string(_vevent)).c_str(),
+      _calendar->version,
+      sql::quote(uid).c_str()
+    );
+  increment_sequence();
+}
+
+
+void
 Event::increment_sequence(void)
 {
   assert(!_calendar->readonly());
@@ -191,6 +248,14 @@ Event::increment_sequence(void)
       _calendar->version,
       sql::quote(uid).c_str()
     );
+}
+
+
+void
+Event::load_vevent(void) const
+{
+  if(!_vevent)
+      _vevent = Queue::inst().db()->vevent(uid.c_str(),_calendar->version);
 }
 
 

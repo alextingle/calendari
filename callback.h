@@ -112,6 +112,10 @@ extern "C"
   G_MODULE_EXPORT void
   detail_combobox_changed_cb(GtkComboBox* cb, calendari::Calendari* cal);
 
+  G_MODULE_EXPORT gboolean
+  detail_text_focus_event_cb(GtkTextView*,GdkEventFocus*,calendari::Calendari*);
+
+
 } // end extern "C"
 
 #endif // CALENDARI__CALLBACK_H

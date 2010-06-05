@@ -32,10 +32,15 @@ DetailView::clear(void)
   gtk_entry_set_text(title_entry,"");
   gtk_entry_set_text(start_entry,"");
   gtk_entry_set_text(end_entry,"");
+
+  GtkTextBuffer* buffer = gtk_text_view_get_buffer(textview);
+  gtk_text_buffer_set_text (buffer,"",0);
+
   gtk_widget_set_sensitive(GTK_WIDGET(title_entry),false);
   gtk_widget_set_sensitive(GTK_WIDGET(start_entry),false);
   gtk_widget_set_sensitive(GTK_WIDGET(end_entry),false);
   gtk_widget_set_sensitive(GTK_WIDGET(calendar_combobox),false);
+  gtk_widget_set_sensitive(GTK_WIDGET(textview),false);
 }
 
 
@@ -68,11 +73,15 @@ DetailView::select(Occurrence* occ)
   }
   gtk_combo_box_set_active_iter(calendar_combobox,&iter);
 
+  GtkTextBuffer* buffer = gtk_text_view_get_buffer(textview);
+  gtk_text_buffer_set_text (buffer,occ->event.description(),-1);
+
   const bool sensitive = !occ->event.readonly();
   gtk_widget_set_sensitive(GTK_WIDGET(title_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(start_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(end_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(calendar_combobox),sensitive);
+  gtk_widget_set_sensitive(GTK_WIDGET(textview),sensitive);
 }
 
 
@@ -188,6 +197,23 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
     cal->calendar_list->select(selected);
     cal->queue_main_redraw();
   }
+}
+
+
+void
+DetailView::textview_cb(GtkTextView* tv, calendari::Calendari* cal)
+{
+  Occurrence* selected = cal->selected();
+  if(!selected)
+      return;
+
+  GtkTextBuffer* buffer = gtk_text_view_get_buffer(tv);
+  GtkTextIter begin,end;
+  gtk_text_buffer_get_start_iter(buffer,&begin);
+  gtk_text_buffer_get_end_iter(buffer,&end);
+  char* desc = gtk_text_buffer_get_text(buffer,&begin,&end,false);
+  selected->event.set_description(desc);
+  ::free(desc);
 }
 
 

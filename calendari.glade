@@ -566,7 +566,10 @@
                                 <child>
                                   <object class="GtkTextView" id="detail_textview">
                                     <property name="visible">True</property>
+                                    <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
+                                    <property name="wrap_mode">word</property>
+                                    <signal name="focus_out_event" handler="detail_text_focus_event_cb"/>
                                   </object>
                                 </child>
                               </object>
