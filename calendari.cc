@@ -43,6 +43,8 @@ Calendari::build(GtkBuilder* builder)
     GTK_WIDGET(gtk_builder_get_object(builder,"cali_main_drawingarea"));
   main_label =
     GTK_LABEL(gtk_builder_get_object(builder,"main_label"));
+  statusbar =
+    GTK_STATUSBAR(gtk_builder_get_object(builder,"cali_statusbar"));
   about = GTK_DIALOG(gtk_builder_get_object(builder,"cali_aboutdialog"));
 
   main_drawingarea_redraw_queued = false;

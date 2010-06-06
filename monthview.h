@@ -29,6 +29,7 @@ public:
   virtual void set(time_t self_time) =0;
   virtual void draw(GtkWidget* widget, cairo_t* cr) =0;
   virtual void click(GdkEventType type, double x, double y) =0;
+  virtual void motion(double x, double y) =0;
   virtual void select(Occurrence* occ) =0;
   virtual void moved(Occurrence* occ) =0;
   virtual void erase(Occurrence* occ) =0;
@@ -55,6 +56,7 @@ public:
   virtual void set(time_t self_time);
   virtual void draw(GtkWidget* widget, cairo_t* cr);
   virtual void click(GdkEventType type, double x, double y);
+  virtual void motion(double x, double y);
   virtual void select(Occurrence* occ);
   virtual void moved(Occurrence* occ);
   virtual void erase(Occurrence* occ);
@@ -93,6 +95,9 @@ private:
   // Slots
   size_t slots_per_cell;
   size_t current_slot; ///< The selected slot, or zero.
+  // Statusbar
+  Occurrence*   statusbar_occ;
+  unsigned int  statusbar_ctx_id;
 
   void init_dimensions(GtkWidget* widget, cairo_t* cr);
   void arrange_slots(void);
@@ -100,6 +105,13 @@ private:
   void draw_cells(cairo_t* cr);
   void draw_cell(cairo_t* cr, PangoLayout* pl, int cell);
   void draw_occurrence(cairo_t* cr, PangoLayout* pl, int cell, int slot);
+
+  /** Find the cell, slot and (maybe) Occurrence at coordinates x,y.
+   *  Returns TRUE if the cell and slot are valid, and FALSE otherwise. */
+  bool xy(
+      double x, double y,
+      int& out_cell, size_t& out_slot, Occurrence*& out_occ
+    ) const;
 };
 
 

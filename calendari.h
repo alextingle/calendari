@@ -3,6 +3,9 @@
 
 #include <gtk/gtk.h>
 
+#define FORMAT_DATE "%Y-%m-%d"
+#define FORMAT_TIME " %H:%M"
+
 namespace calendari {
 
 class Db;
@@ -20,10 +23,11 @@ struct Calendari
   Db*         db;
 
   // Widgets
-  GtkWidget*  window;            ///< Application window
-  GtkWidget*  main_drawingarea;  ///< Canvas for the main view.
-  GtkLabel*   main_label;        ///< Label for the main view.
-  GtkDialog*  about;             ///< About box.
+  GtkWidget*     window;            ///< Application window
+  GtkWidget*     main_drawingarea;  ///< Canvas for the main view.
+  GtkLabel*      main_label;        ///< Label for the main view.
+  GtkStatusbar*  statusbar;         ///< Status bar.
+  GtkDialog*     about;             ///< About box.
 
   bool main_drawingarea_redraw_queued;
 

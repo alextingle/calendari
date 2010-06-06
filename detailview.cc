@@ -8,9 +8,6 @@
 #include <cassert>
 #include <cstring>
 
-#define FORMAT_DATE "%Y-%m-%d"
-#define FORMAT_TIME " %H:%M"
-
 namespace calendari {
 
 

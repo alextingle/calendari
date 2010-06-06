@@ -13,7 +13,9 @@ namespace calendari {
 
 
 MonthView::MonthView(Calendari& c)
-  : cal(c), current_cell(NULL_CELL), current_slot(0)
+  : cal(c), current_cell(NULL_CELL), current_slot(0),
+    statusbar_occ(NULL),
+    statusbar_ctx_id(gtk_statusbar_get_context_id(cal.statusbar,"Month View"))
 {
   head_pfont = pango_font_description_new();
   pango_font_description_set_absolute_size(
@@ -160,24 +162,14 @@ MonthView::draw(GtkWidget* widget, cairo_t* cr)
 void
 MonthView::click(GdkEventType type, double x, double y)
 {
-  if(x<0.0 || x>=width)
+  int cell;
+  size_t slot;
+  Occurrence* occ;
+  if(!xy(x,y,cell,slot,occ))
       return;
-  if(y<header_height || y>=height)
-      return;
-
-  // Find the cell, slot and (possibly) occurrence that we've clicked on.
-  size_t row = int((y-header_height)/cell_height);
-  int cell = row * 7 + int(x/cell_width);
-  if(cell>=month_cells)
-      return;
-  size_t slot = int(y - header_height - cell_height*row) / slot_height;
 
   bool current_cell_changed =(current_cell != cell);
   current_cell = cell;
-
-  Occurrence* occ = NULL;
-  if(slot < day[cell].slot.size())
-      occ = day[cell].slot[slot];
 
   // Take action...
   switch(type)
@@ -204,6 +196,40 @@ MonthView::click(GdkEventType type, double x, double y)
   }
   if(current_cell_changed)
       cal.queue_main_redraw();
+}
+
+
+void
+MonthView::motion(double x, double y)
+{
+  int cell;
+  size_t slot;
+  Occurrence* occ;
+  if(!xy(x,y,cell,slot,occ))
+      return;
+  if(statusbar_occ == occ)
+      return;
+  if(statusbar_occ)
+      gtk_statusbar_pop(cal.statusbar,statusbar_ctx_id);
+  if(occ)
+  {
+    const std::string& summary( occ->event.summary() );
+    if(occ->event.all_day())
+    {
+      gtk_statusbar_push(cal.statusbar, statusbar_ctx_id, summary.c_str());
+    }
+    else
+    {
+      tm t;
+      char buf[256];
+      time_t dtstart = occ->dtstart();
+      localtime_r(&dtstart,&t);
+      strftime(buf,sizeof(buf),FORMAT_TIME "  ",&t);
+      std::string s( buf + summary );
+      gtk_statusbar_push(cal.statusbar, statusbar_ctx_id, s.c_str());
+    }
+  }
+  statusbar_occ = occ;
 }
 
 
@@ -746,6 +772,34 @@ MonthView::draw_occurrence(cairo_t* cr, PangoLayout* pl, int cell, int slot)
     pango_layout_set_text(pl,pango_text.c_str(),pango_text.size());
     pango_cairo_show_layout(cr,pl);
   }
+}
+
+
+bool
+MonthView::xy(
+    double x, double y,
+    int& out_cell, size_t& out_slot, Occurrence*& out_occ
+  ) const
+{
+  out_cell = NULL_CELL;
+  out_slot = 0;
+  out_occ  = NULL;
+
+  if(x<0.0 || x>=width)
+      return false;
+  if(y<header_height || y>=height)
+      return false;
+
+  // Find the cell, slot and (possibly) occurrence that we've moved over.
+  size_t row = int((y-header_height)/cell_height);
+  out_cell = row * 7 + int(x/cell_width);
+  if(out_cell>=month_cells)
+      return false;
+  out_slot = int(y - header_height - cell_height*row) / slot_height;
+
+  if(out_slot < day[out_cell].slot.size())
+      out_occ = day[out_cell].slot[out_slot];
+  return true;
 }
 
 
