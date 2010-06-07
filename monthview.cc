@@ -234,6 +234,17 @@ MonthView::motion(double x, double y)
 
 
 void
+MonthView::leave(void)
+{
+  if(statusbar_occ)
+  {
+    gtk_statusbar_pop(cal.statusbar,statusbar_ctx_id);
+    statusbar_occ = NULL;
+  }
+}
+
+
+void
 MonthView::select(Occurrence* occ)
 {
   if(!occ)

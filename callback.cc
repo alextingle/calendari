@@ -78,12 +78,24 @@ cali_drawingarea_button_press_event_cb(
 
 G_MODULE_EXPORT gboolean
 cali_drawingarea_motion_notify_event_cb(
-    GtkWidget*             widget,
+    GtkWidget*,
     GdkEventMotion*        event,
     calendari::Calendari*  cal
   )
 {
   cal->main_view->motion(event->x, event->y);
+  return false;
+}
+
+
+G_MODULE_EXPORT gboolean
+cali_drawingarea_leave_notify_event_cb(
+    GtkWidget*,
+    GdkEventCrossing*,
+    calendari::Calendari*  cal
+  )
+{
+  cal->main_view->leave();
   return false;
 }
 

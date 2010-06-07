@@ -29,7 +29,8 @@ public:
   virtual void set(time_t self_time) =0;
   virtual void draw(GtkWidget* widget, cairo_t* cr) =0;
   virtual void click(GdkEventType type, double x, double y) =0;
-  virtual void motion(double x, double y) =0;
+  virtual void motion(double x, double y) =0; ///< Pointer motion
+  virtual void leave(void) =0; ///< Pointer has left the widget.
   virtual void select(Occurrence* occ) =0;
   virtual void moved(Occurrence* occ) =0;
   virtual void erase(Occurrence* occ) =0;
@@ -57,6 +58,7 @@ public:
   virtual void draw(GtkWidget* widget, cairo_t* cr);
   virtual void click(GdkEventType type, double x, double y);
   virtual void motion(double x, double y);
+  virtual void leave(void);
   virtual void select(Occurrence* occ);
   virtual void moved(Occurrence* occ);
   virtual void erase(Occurrence* occ);

@@ -54,6 +54,13 @@ extern "C"
     );
 
   G_MODULE_EXPORT gboolean
+  cali_drawingarea_leave_notify_event_cb(
+      GtkWidget*             widget,
+      GdkEventCrossing*      event,
+      calendari::Calendari*  cal
+    );
+
+  G_MODULE_EXPORT gboolean
   cali_drawingarea_expose_event_cb(
       GtkWidget*             widget,
       GdkEventExpose*        event,
