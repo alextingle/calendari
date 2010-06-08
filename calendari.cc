@@ -3,6 +3,7 @@
 #include "calendarlist.h"
 #include "db.h"
 #include "detailview.h"
+#include "dragdrop.h"
 #include "err.h"
 #include "ics.h"
 #include "monthview.h"
@@ -46,6 +47,14 @@ Calendari::build(GtkBuilder* builder)
   statusbar =
     GTK_STATUSBAR(gtk_builder_get_object(builder,"cali_statusbar"));
   about = GTK_DIALOG(gtk_builder_get_object(builder,"cali_aboutdialog"));
+
+  gtk_drag_dest_set(
+      main_drawingarea,
+      (GtkDestDefaults)(GTK_DEST_DEFAULT_MOTION),//|GTK_DEST_DEFAULT_HIGHLIGHT),
+      DragDrop::target_list_dest,
+      DragDrop::target_list_dest_len,
+      GDK_ACTION_COPY
+    );
 
   main_drawingarea_redraw_queued = false;
 

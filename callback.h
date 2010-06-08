@@ -86,6 +86,38 @@ extern "C"
   G_MODULE_EXPORT void
   zoom_out_button_clicked_cb(GtkWidget* widget, calendari::Calendari* cal);
 
+  G_MODULE_EXPORT gboolean
+  cali_drawingarea_drag_drop_cb(
+      GtkWidget*      widget,
+      GdkDragContext* drag_context,
+      gint            x,
+      gint            y,
+      guint           time,
+      calendari::Calendari*  cal
+    );
+
+  G_MODULE_EXPORT void
+  cali_drawingarea_drag_data_get_cb(
+      GtkWidget*        widget,
+      GdkDragContext*   drag_context,
+      GtkSelectionData* data,
+      guint             info,
+      guint             time,
+      calendari::Calendari*  cal
+    );
+
+  G_MODULE_EXPORT void
+  cali_drawingarea_drag_data_received_cb(
+      GtkWidget*        widget,
+      GdkDragContext*   drag_context,
+      gint              x,
+      gint              y,
+      GtkSelectionData* data,
+      guint             info,
+      guint             time,
+      calendari::Calendari*  cal
+    );
+
   // -- calendar list --
 
   G_MODULE_EXPORT void

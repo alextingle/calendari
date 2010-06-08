@@ -1,6 +1,7 @@
 #include "monthview.h"
 
 #include "calendari.h"
+#include "dragdrop.h"
 #include "setting.h"
 #include "util.h"
 
@@ -15,7 +16,8 @@ namespace calendari {
 MonthView::MonthView(Calendari& c)
   : cal(c), current_cell(NULL_CELL), current_slot(0),
     statusbar_occ(NULL),
-    statusbar_ctx_id(gtk_statusbar_get_context_id(cal.statusbar,"Month View"))
+    statusbar_ctx_id(gtk_statusbar_get_context_id(cal.statusbar,"Month View")),
+    drag_x(0.0), drag_y(0.0)
 {
   head_pfont = pango_font_description_new();
   pango_font_description_set_absolute_size(
@@ -69,6 +71,7 @@ MonthView::set(time_t self_time)
   {
     time_t itime = normalise_local_tm(i);
     day[cell].start = itime;
+    day[cell].year  = i.tm_year;
     day[cell].mon   = i.tm_mon;
     day[cell].mday  = i.tm_mday;
     day[cell].wday  = i.tm_wday;
@@ -183,9 +186,15 @@ MonthView::click(GdkEventType type, double x, double y)
         }
         break;
     case GDK_BUTTON_PRESS:
+        // Start considering a drag/drop event.
+        if(occ && !occ->event.readonly())
+        {
+          drag_x = x;
+          drag_y = y;
+        }
+        // Select an occurrence.
         if(occ != cal.selected())
         {
-          // Select an occurrence.
           cal.select( occ );
           cal.queue_main_redraw();
           return;
@@ -200,8 +209,23 @@ MonthView::click(GdkEventType type, double x, double y)
 
 
 void
-MonthView::motion(double x, double y)
+MonthView::motion(GtkWidget* widget, double x, double y)
 {
+  // Check drag/drop.
+  if(drag_y)
+  {
+    if( gtk_drag_check_threshold(widget, drag_x, drag_y, x,y) )
+    {
+      GtkTargetList* tl =gtk_target_list_new(
+          DragDrop::target_list_src,
+          DragDrop::target_list_src_len
+        );
+      (void)gtk_drag_begin(widget,tl,GDK_ACTION_COPY,1,NULL);
+      gtk_target_list_unref(tl);
+      return;
+    }
+  }
+
   int cell;
   size_t slot;
   Occurrence* occ;
@@ -241,6 +265,130 @@ MonthView::leave(void)
     gtk_statusbar_pop(cal.statusbar,statusbar_ctx_id);
     statusbar_occ = NULL;
   }
+  release();
+}
+
+
+void
+MonthView::release(void)
+{
+  // Cancel the possibility of drag/drop.
+  drag_x = drag_y = 0.0; // zero is never a valid drag source.
+}
+
+
+bool
+MonthView::drag_drop(
+    GtkWidget*       widget,
+    GdkDragContext*  ctx,
+    int              x,
+    int              y,
+    guint            time)
+{
+  int cell;
+  size_t slot;
+  Occurrence* occ;
+  if(!xy(x,y,cell,slot,occ))
+      return false;
+  printf("Drop in cell %d\n",cell);
+  // ?? Check context for best data type here.
+  GdkAtom target_type =
+    GDK_POINTER_TO_ATOM(g_list_nth_data(ctx->targets,DragDrop::DD_OCCURRENCE));
+  gtk_drag_get_data(widget,ctx,target_type,time);
+  return true;
+}
+
+
+void
+MonthView::drag_data_get(GtkSelectionData* data, guint info)
+{
+  if(!cal.selected() || cal.selected()->event.readonly())
+      return;
+  switch(static_cast<DragDrop::type>(info))
+  {
+  case DragDrop::DD_OCCURRENCE:
+      {
+        // Dummy data to pass back.
+        static const int dd_occurrence_ok = 1;
+        gtk_selection_data_set(
+          data,
+          data->target,
+          8,                         // number of bits per 'unit'
+          (guchar*)&dd_occurrence_ok,// pointer to data to be sent
+          sizeof(dd_occurrence_ok)   // length of data in units
+        );
+      }
+      break;
+  case DragDrop::DD_STRING:
+      {
+        const std::string& summary( cal.selected()->event.summary().c_str() );
+        gtk_selection_data_set(
+          data,
+          data->target,
+          8,                       // number of bits per 'unit'
+          (guchar*)summary.c_str(),// pointer to data to be sent
+          summary.size()           // length of data in units
+        );
+      }
+      break;
+  }
+}
+
+
+void
+MonthView::drag_data_received(
+    GdkDragContext*    ctx,
+    int                x,
+    int                y,
+    GtkSelectionData*  data,
+    guint              info,
+    guint              time
+  )
+{
+  bool success = false;
+  bool delete_data = false;
+
+  int cell;
+  size_t slot;
+  Occurrence* occ;
+
+  if(data && data->length>0 && xy(x,y,cell,slot,occ) && cell!=current_cell)
+  {
+    if(ctx-> action == GDK_ACTION_MOVE)
+        delete_data = true;
+    Occurrence* selected = cal.selected();
+    switch(info)
+    {
+    case DragDrop::DD_OCCURRENCE:
+        if( *(int*)data->data && selected )
+        {
+          tm start_local;
+          time_t dtstart = selected->dtstart();
+          ::localtime_r(&dtstart,&start_local);
+          start_local.tm_mday = day[cell].mday;
+          start_local.tm_mon  = day[cell].mon;
+          start_local.tm_year = day[cell].year;
+          start_local.tm_isdst= -1;
+          if(selected->set_start( ::mktime(&start_local) ))
+          {
+            cal.moved(selected);
+            success = true;
+          }
+        }
+        break;
+    case DragDrop::DD_STRING:
+        {
+          const char* sdata = (char*)data->data;
+          printf("drag received string: %s\n", sdata);
+          // ?? Parse a VEVENT here?
+          success = true;
+        }
+        break;
+    default:
+        printf("drag received bad data type.\n");
+    }
+  }
+  gtk_drag_finish(ctx, success, delete_data, time);
 }
 
 

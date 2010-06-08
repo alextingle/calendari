@@ -15,6 +15,7 @@ class Calendari;
 struct Day
 {
   time_t start;
+  int    year;
   int    mon;
   int    mday;
   int    wday;
@@ -29,8 +30,12 @@ public:
   virtual void set(time_t self_time) =0;
   virtual void draw(GtkWidget* widget, cairo_t* cr) =0;
   virtual void click(GdkEventType type, double x, double y) =0;
-  virtual void motion(double x, double y) =0; ///< Pointer motion
+  virtual void motion(GtkWidget* widget, double x, double y) =0; ///< Pointer
   virtual void leave(void) =0; ///< Pointer has left the widget.
+  virtual void release(void) =0; ///< Mouse button released.
+  virtual bool drag_drop(GtkWidget*,GdkDragContext*,int x,int y,guint time) =0;
+  virtual void drag_data_get(GtkSelectionData*,guint info) =0;
+  virtual void drag_data_received(GdkDragContext*, int x, int y, GtkSelectionData*,guint info,guint time) =0;
   virtual void select(Occurrence* occ) =0;
   virtual void moved(Occurrence* occ) =0;
   virtual void erase(Occurrence* occ) =0;
@@ -57,8 +62,12 @@ public:
   virtual void set(time_t self_time);
   virtual void draw(GtkWidget* widget, cairo_t* cr);
   virtual void click(GdkEventType type, double x, double y);
-  virtual void motion(double x, double y);
+  virtual void motion(GtkWidget* widget, double x, double y);
   virtual void leave(void);
+  virtual void release(void);
+  virtual bool drag_drop(GtkWidget*,GdkDragContext*,int x,int y,guint time);
+  virtual void drag_data_get(GtkSelectionData*,guint info);
+  virtual void drag_data_received(GdkDragContext*, int x, int y, GtkSelectionData*,guint info,guint time);
   virtual void select(Occurrence* occ);
   virtual void moved(Occurrence* occ);
   virtual void erase(Occurrence* occ);
@@ -100,6 +109,9 @@ private:
   // Statusbar
   Occurrence*   statusbar_occ;
   unsigned int  statusbar_ctx_id;
+  // Drag & Drop
+  double drag_x;
+  double drag_y;
 
   void init_dimensions(GtkWidget* widget, cairo_t* cr);
   void arrange_slots(void);

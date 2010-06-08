@@ -70,20 +70,27 @@ cali_drawingarea_button_press_event_cb(
     calendari::Calendari*  cal
   )
 {
-  gtk_widget_grab_focus(widget);
-  cal->main_view->click(event->type, event->x, event->y);
+  if(event->type == GDK_BUTTON_RELEASE)
+  {
+    cal->main_view->release();
+  }
+  else
+  {
+    gtk_widget_grab_focus(widget);
+    cal->main_view->click(event->type, event->x, event->y);
+  }
   return true;
 }
 
 
 G_MODULE_EXPORT gboolean
 cali_drawingarea_motion_notify_event_cb(
-    GtkWidget*,
+    GtkWidget*             widget,
     GdkEventMotion*        event,
     calendari::Calendari*  cal
   )
 {
-  cal->main_view->motion(event->x, event->y);
+  cal->main_view->motion(widget, event->x, event->y);
   return false;
 }
 
@@ -198,6 +205,50 @@ G_MODULE_EXPORT void
 zoom_out_button_clicked_cb(GtkWidget*, calendari::Calendari* cal)
 {
   cal->main_view = cal->main_view->zoom_out();
+}
+
+G_MODULE_EXPORT gboolean
+cali_drawingarea_drag_drop_cb(
+    GtkWidget*      widget,
+    GdkDragContext* drag_context,
+    gint            x,
+    gint            y,
+    guint           time,
+    calendari::Calendari*  cal
+  )
+{
+  // We are the destination of a drag/drop.
+  return cal->main_view->drag_drop(widget,drag_context,x,y,time);
+}
+
+G_MODULE_EXPORT void
+cali_drawingarea_drag_data_get_cb(
+    GtkWidget*        widget,
+    GdkDragContext*   drag_context,
+    GtkSelectionData* data,
+    guint             info,
+    guint             time,
+    calendari::Calendari*  cal
+  )
+{
+  // We are the source of a drag/drop.
+  cal->main_view->drag_data_get(data,info);
+}
+
+G_MODULE_EXPORT void
+cali_drawingarea_drag_data_received_cb(
+    GtkWidget*        widget,
+    GdkDragContext*   drag_context,
+    gint              x,
+    gint              y,
+    GtkSelectionData* data,
+    guint             info,
+    guint             time,
+    calendari::Calendari*  cal
+  )
+{
+  // We are the destination of a drag/drop.
+  cal->main_view->drag_data_received(drag_context,x,y,data,info,time);
 }
 
 
