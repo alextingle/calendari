@@ -13,6 +13,8 @@ class View;
 class CalendarList;
 class DetailView;
 class Occurrence;
+class PrefView;
+class Setting;
 
 
 /** Main application data store. */
@@ -21,6 +23,7 @@ struct Calendari
   // Settings
   bool        debug;
   Db*         db;
+  Setting*    setting;
 
   // Widgets
   GtkWidget*     window;            ///< Application window
@@ -35,6 +38,7 @@ struct Calendari
   View*          main_view;
   CalendarList*  calendar_list;
   DetailView*    detail_view;
+  PrefView*      pref_view;
 
   /** Load database. */
   void load(const char* dbname);

@@ -4,6 +4,7 @@
 #include "calendarlist.h"
 #include "detailview.h"
 #include "monthview.h"
+#include "prefview.h"
 
 #include <cstdio>
 #include <gdk/gdkkeysyms.h>
@@ -43,21 +44,28 @@ cali_menu_delete_cb(
 
 
 G_MODULE_EXPORT void
-cali_menu_about_cb(
-    GtkMenuItem*,
-    calendari::Calendari*  cal
+cali_menu_dialogue_cb(
+    // GtkMenuItem* menuitem, // ?? Eliminated by Glade?
+    GtkDialog* dialog
   )
 {
-  int response = gtk_dialog_run( cal->about );
+  int response = gtk_dialog_run(dialog);
   switch(response)
   {
     case GTK_RESPONSE_DELETE_EVENT:
     case GTK_RESPONSE_CANCEL:
-      gtk_widget_hide(GTK_WIDGET(cal->about));
+      gtk_widget_hide(GTK_WIDGET(dialog));
       break;
     default:
       break;
   }
+}
+
+
+G_MODULE_EXPORT void
+cali_dialog_response_cancel_cb(GtkDialog* dialog)
+{
+  gtk_dialog_response(dialog,GTK_RESPONSE_CANCEL);
 }
 
 
@@ -327,4 +335,16 @@ detail_text_focus_event_cb(
 {
   cal->detail_view->textview_cb(tv,cal);
   return false;
+}
+
+
+// -- Preferences dialogue box --
+
+G_MODULE_EXPORT void
+prefs_adj_value_changed_cb(
+    GtkAdjustment*         adjustment,
+    calendari::Calendari*  cal
+  )
+{
+  cal->pref_view->adj_value_changed_cb(adjustment);
 }

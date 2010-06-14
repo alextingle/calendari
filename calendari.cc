@@ -7,6 +7,8 @@
 #include "err.h"
 #include "ics.h"
 #include "monthview.h"
+#include "prefview.h"
+#include "setting.h"
 
 #include <cassert>
 #include <cstdio>
@@ -24,14 +26,15 @@ namespace calendari {
 void
 Calendari::load(const char* dbname)
 {
+  _occurrence = NULL;
   if(db)
   {
     CALI_ERRO(1,0,"Database already loaded");
     return;
   }
   db = new Db(dbname);
+  setting = new Setting(*this);
   db->load_calendars();
-  _occurrence = NULL;
 }
 
 
@@ -67,6 +70,9 @@ Calendari::build(GtkBuilder* builder)
   main_view = new MonthView(*this);
   main_view->set(::time(NULL));
   gtk_widget_grab_focus(main_drawingarea);
+
+  pref_view = new PrefView(*this);
+  pref_view->build(builder);
 
   // Connect signals
   gtk_builder_connect_signals(builder,this);
@@ -221,13 +227,6 @@ main(int argc, char* argv[])
 
   // Show window. All other widgets are automatically shown by GtkBuilder
   gtk_widget_show( app->window );
-
-  // Hook-in periodic refresh_all.
-  (void)g_timeout_add(
-      10 * 60 * 1000, // 10 minutes, in milliseconds.
-      (GSourceFunc)calendari::CalendarList::timeout_refresh_all,
-      (gpointer)app.get()
-    );
 
   // Start main loop
   gtk_main();

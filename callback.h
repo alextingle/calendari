@@ -31,11 +31,15 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  /** General callback that summons an arbitrary dialogue. */
   G_MODULE_EXPORT void
-  cali_menu_about_cb(
-      GtkMenuItem*           menuitem,
-      calendari::Calendari*  cal
+  cali_menu_dialogue_cb(
+      // GtkMenuItem*, // ?? Eliminated by Glade?
+      GtkDialog* dialog
     );
+
+  G_MODULE_EXPORT void
+  cali_dialog_response_cancel_cb(GtkDialog* dialog);
 
   // -- cali_main_drawingarea --
 
@@ -161,6 +165,13 @@ extern "C"
   G_MODULE_EXPORT gboolean
   detail_text_focus_event_cb(GtkTextView*,GdkEventFocus*,calendari::Calendari*);
 
+  // -- Preferences dialogue box --
+
+  G_MODULE_EXPORT void
+  prefs_adj_value_changed_cb(
+      GtkAdjustment*         adjustment,
+      calendari::Calendari*  cal
+    );
 
 } // end extern "C"
 
