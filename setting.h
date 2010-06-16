@@ -27,7 +27,7 @@ private:
   // -- Non-setting data --
 
   Calendari& app;
-  guint _timeout_source_tag;///< ID of timeout source.
+  guint _timeout_source_tag; ///< ID of timeout source.
 
   // -- Settings --
 

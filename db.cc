@@ -142,6 +142,13 @@ Db::create_db(void)
     order by desc SEQUENCE
     group by UID;
   */
+  sql::exec(CALI_HERE,_sdb,
+      "create table if not exists SETTING ("
+      "  KEY      string,"
+      "  VALUE    string,"
+      "  primary key(KEY)"
+      ")"
+    );
 }
 
 
@@ -396,7 +403,8 @@ Db::erase(Occurrence* occ, int version)
 
 // -- private: --
 
-Occurrence* Db::make_occurrence(
+Occurrence*
+Db::make_occurrence(
     int          calnum,
     const char*  uid,
     const char*  summary,
@@ -435,6 +443,60 @@ Occurrence* Db::make_occurrence(
       return o->second;
   else
       return ver._occurrence[key] = new Occurrence(*event,dtstart,dtend);
+}
+
+
+bool
+Db::_setting(const char* key, std::string& val) const
+{
+  bool result = false;
+  sqlite3_stmt* select_stg;
+  const char* sql = "select VALUE from SETTING where KEY=?";
+  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stg,NULL) );
+  sql::bind_text(CALI_HERE,_sdb,select_stg,1,key,-1);
+
+  int return_code = ::sqlite3_step(select_stg);
+  if(return_code==SQLITE_ROW)
+  {
+    val = safestr(::sqlite3_column_text(select_stg,0));
+    result = true;
+  }
+  else if(return_code!=SQLITE_DONE)
+  {
+    calendari::sql::error(CALI_HERE,_sdb);
+  }
+  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_stg) );
+  return result;
+}
+
+
+void
+Db::_set_setting(const char* key, const char* val) const
+{
+  CALI_SQLCHK(_sdb, ::sqlite3_exec(_sdb, "begin", 0, 0, 0) );
+
+  std::string oldval;
+  if(!_setting(key,oldval))
+  {
+    sqlite3_stmt*  insert_stg;
+    const char* sql = "insert into SETTING (KEY,VALUE) values (?,?)";
+    CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&insert_stg,NULL) );
+    sql::bind_text(CALI_HERE,_sdb,insert_stg,1,key,-1);
+    sql::bind_text(CALI_HERE,_sdb,insert_stg,2,val,-1);
+    sql::step_reset(CALI_HERE,_sdb,insert_stg);
+    CALI_SQLCHK(_sdb, ::sqlite3_finalize(insert_stg) );
+  }
+  else if(oldval!=val)
+  {
+    sqlite3_stmt*  update_stg;
+    const char* sql = "update SETTING set VALUE=? where KEY=?";
+    CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&update_stg,NULL) );
+    sql::bind_text(CALI_HERE,_sdb,update_stg,1,val,-1);
+    sql::bind_text(CALI_HERE,_sdb,update_stg,2,key,-1);
+    sql::step_reset(CALI_HERE,_sdb,update_stg);
+    CALI_SQLCHK(_sdb, ::sqlite3_finalize(update_stg) );
+  }
+  CALI_SQLCHK(_sdb, ::sqlite3_exec(_sdb, "commit", 0, 0, 0) );
 }
 
 

@@ -13,32 +13,34 @@ namespace calendari {
 Setting::Setting(Calendari& app_)
   : app(app_),
     _timeout_source_tag(0),
-    _auto_refresh_minutes(0)
+    _auto_refresh_minutes(-1)
 {
-  // ?? This would be intialised from the DB...
-  set_auto_refresh_minutes(10);
+  set_auto_refresh_minutes( app.db->setting("auto_refresh_minutes",10) );
 }
 
 
 void
-Setting::set_auto_refresh_minutes(int v)
+Setting::set_auto_refresh_minutes(int new_val)
 {
-  if(_auto_refresh_minutes==v)
+  if(_auto_refresh_minutes == new_val)
       return;
-  printf("set_auto_refresh_minutes: %d\n",v);
+  if(_auto_refresh_minutes>=0)
+      app.db->set_setting("auto_refresh_minutes",new_val);
   if(_timeout_source_tag!=0)
   {
-    printf("Removing existing timeout.\n");
     bool done = g_source_remove(_timeout_source_tag);
-    assert(done);
-    (void)done;
+    assert(done); (void)done;
+    _timeout_source_tag = 0;
   }
-  _auto_refresh_minutes = v;
-  _timeout_source_tag = g_timeout_add(
-      _auto_refresh_minutes * 60 * 1000, // in milliseconds.
-      (GSourceFunc)calendari::CalendarList::timeout_refresh_all,
-      (gpointer)(&app)
-    );
+  _auto_refresh_minutes = new_val;
+  if(new_val>0) // If 0, then auto refresh is OFF.
+  {
+    _timeout_source_tag = g_timeout_add(
+        new_val * 60 * 1000, // in milliseconds.
+        (GSourceFunc)calendari::CalendarList::timeout_refresh_all,
+        (gpointer)(&app)
+      );
+  }
 }
 
 

@@ -6,6 +6,7 @@
 #include <map>
 #include <sqlite3.h>
 #include <string>
+#include <sstream>
 
 struct icalcomponent_impl;
 typedef struct icalcomponent_impl icalcomponent;
@@ -38,7 +39,10 @@ public:
 
   void refresh_cal(int calnum, int from_version, int to_version=1);
 
+  /** Initial load of all calendar information. */
   void load_calendars(int version=1);
+
+  /** Find all occurrences between the specified (begin,end] times. */
   std::multimap<time_t,Occurrence*> find(time_t begin,time_t end,int version=1);
 
   /** Look up the calnum of the given calid, or generate a new unique number. */
@@ -70,6 +74,12 @@ public:
   void moved(Occurrence* occ, int version=1);
   void erase(Occurrence* occ, int version=1);
 
+  template<class T>
+  T setting(const char* key, const T& dflt) const;
+
+  template<class T>
+  void set_setting(const char* key, const T& val) const;
+
   operator sqlite3* (void) const
     { return _sdb; }
 
@@ -88,7 +98,38 @@ private:
       time_t       dtend,
       int          version
     );
+
+  /** Returns TRUE and sets value if key exists, else returns FALSE.  */
+  bool _setting(const char* key, std::string& val) const;
+  void _set_setting(const char* key, const char* val) const;
 };
+
+
+template<class T>
+T Db::setting(const char* key, const T& dflt) const
+{
+  std::string valstr;
+  if(_setting(key,valstr))
+  {
+    T result;
+    std::istringstream is(valstr);
+    is>>result;
+    return result;
+  }
+  else
+  {
+    return dflt;
+  }
+}
+
+
+template<class T>
+void Db::set_setting(const char* key, const T& val) const
+{
+  std::ostringstream os;
+  os<<val;
+  _set_setting(key,os.str().c_str());
+}
 
 
 } // end namespace
