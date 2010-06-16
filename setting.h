@@ -11,7 +11,6 @@ class Calendari;
 class Setting
 {
 public:
-  static const int week_starts = 0;
   static const int head_font_size = 12;
   static const int body_font_size = 11;
 
@@ -19,6 +18,9 @@ public:
 
   int auto_refresh_minutes(void) const {return _auto_refresh_minutes;}
   void set_auto_refresh_minutes(int);
+
+  int week_starts(void) const {return _week_starts;}
+  void set_week_starts(int);
 
 private:
   Setting(const Setting&);              ///< Not copyable
@@ -32,6 +34,7 @@ private:
   // -- Settings --
 
   int _auto_refresh_minutes;
+  int _week_starts;
 };
 
 

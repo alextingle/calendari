@@ -80,8 +80,12 @@ Calendari::build(GtkBuilder* builder)
 
 
 void
-Calendari::queue_main_redraw(void)
+Calendari::queue_main_redraw(bool reload)
 {
+  if(reload)
+  {
+    main_view->reload();
+  }
   if(!main_drawingarea_redraw_queued)
   {
     main_drawingarea_redraw_queued = true;

@@ -47,7 +47,7 @@ struct Calendari
   void build(GtkBuilder* builder);
 
   /** Requests a redraw of main_drawingarea. */
-  void queue_main_redraw(void);
+  void queue_main_redraw(bool reload=false);
 
   /** Set the currently selected occurrence. */
   void select(Occurrence* occ);

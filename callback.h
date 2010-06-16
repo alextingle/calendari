@@ -173,6 +173,9 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT void
+  prefs_combobox_changed_cb(GtkComboBox* cb, calendari::Calendari* app);
+
 } // end extern "C"
 
 #endif // CALENDARI__CALLBACK_H

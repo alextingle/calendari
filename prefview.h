@@ -12,17 +12,19 @@ class Occurrence;
 /** Preferences dialogue box. */
 struct PrefView
 {
-  Calendari& cal;
+  Calendari& app;
 
   GtkDialog*     prefs;             ///< Preferences dialogue.
   GtkAdjustment* auto_refresh_adjust;
+  GtkComboBox*   weekday_combobox;
 
-  PrefView(Calendari& c): cal(c) {}
+  PrefView(Calendari& c): app(c) {}
 
   /** Populate members. */
   void build(GtkBuilder* builder);
 
   void adj_value_changed_cb(GtkAdjustment* adj);
+  void combobox_cb(GtkComboBox* cb);
 };
 
 

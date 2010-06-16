@@ -348,3 +348,10 @@ prefs_adj_value_changed_cb(
 {
   cal->pref_view->adj_value_changed_cb(adjustment);
 }
+
+
+G_MODULE_EXPORT void
+prefs_combobox_changed_cb(GtkComboBox* cb, calendari::Calendari* app)
+{
+  app->pref_view->combobox_cb(cb);
+}

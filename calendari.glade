@@ -18,6 +18,24 @@
     <signal name="row_inserted" handler="calendar_inserted_cb"/>
     <signal name="row_deleted" handler="calendar_deleted_cb"/>
   </object>
+  <object class="GtkListStore" id="cali_weekday_liststore">
+    <columns>
+      <!-- column-name daynum -->
+      <column type="gint"/>
+      <!-- column-name dayname -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Sunday</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">Monday</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="cali_window">
     <property name="title" translatable="yes">Calendari</property>
     <property name="default_width">600</property>
@@ -741,7 +759,42 @@
           </packing>
         </child>
         <child>
-          <placeholder/>
+          <object class="GtkHBox" id="hbox8">
+            <property name="visible">True</property>
+            <child>
+              <object class="GtkLabel" id="label7">
+                <property name="visible">True</property>
+                <property name="xalign">0</property>
+                <property name="label" translatable="yes">Week starts on:</property>
+                <property name="width_chars">18</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="cali_weekday_combobox">
+                <property name="visible">True</property>
+                <property name="model">cali_weekday_liststore</property>
+                <signal name="changed" handler="prefs_combobox_changed_cb"/>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext3"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">2</property>
+          </packing>
         </child>
         <child internal-child="action_area">
           <object class="GtkHButtonBox" id="dialog-action_area2">
