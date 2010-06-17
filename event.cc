@@ -36,6 +36,19 @@ Calendar::Calendar(
 
 
 void
+Calendar::set_name(const std::string& s)
+{
+  _name = s;
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update CALENDAR set CALNAME='%s' where VERSION=%d and CALNUM=%d",
+      sql::quote(s).c_str(), version, calnum
+    );
+}
+
+
+void
 Calendar::set_position(int p)
 {
   if(p==_position)

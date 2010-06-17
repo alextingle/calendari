@@ -58,6 +58,11 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
         -1
       );
   }
+
+  // -- cal_dialog --
+
+  cal_dialog = GTK_DIALOG(gtk_builder_get_object(builder,"cali_cal_dialog"));
+  name_entry = GTK_ENTRY(gtk_builder_get_object(builder,"cal_name_entry"));
 }
 
 
@@ -83,23 +88,62 @@ CalendarList::reorder(void)
 }
 
 
+void
+CalendarList::row_activated(GtkTreePath* tp)
+{
+  GtkTreeIter iter;
+  bool ret = gtk_tree_model_get_iter(GTK_TREE_MODEL(liststore_cal),&iter,tp);
+  if(!ret)
+      return;
+
+  Calendar* calendar;
+  gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal),&iter,0,&calendar,-1);
+
+  // set-up cal_dialog from calendar.
+  gtk_entry_set_text(name_entry,calendar->name().c_str());
+  const bool sensitive = !calendar->readonly();
+  gtk_widget_set_sensitive(GTK_WIDGET(name_entry),true);
+
+  // Show dialogue box.
+  int response = gtk_dialog_run(cal_dialog);
+  switch(response)
+  {
+    case GTK_RESPONSE_DELETE_EVENT:
+    case GTK_RESPONSE_CANCEL:
+      gtk_widget_hide(GTK_WIDGET(cal_dialog));
+      break;
+    default:
+      break;
+  }
+}
+
+
+Calendar*
+CalendarList::iter2cal(GtkTreeIter& iter) const
+{
+  Calendar* result;
+  gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal) ,&iter, 0, &result, -1);
+  return result;
+}
+
+
+bool
+CalendarList::get_selected_iter(GtkTreeIter& iter) const
+{
+  GtkTreeSelection* s = gtk_tree_view_get_selection(treeview);
+  return gtk_tree_selection_get_selected(s,NULL,&iter);
+}
+
+
 Calendar*
 CalendarList::current(void) const
 {
-  GtkTreeSelection* s = gtk_tree_view_get_selection(treeview);
   GtkTreeModel* m = GTK_TREE_MODEL(liststore_cal);
   GtkTreeIter iter;
-  if(gtk_tree_selection_get_selected(s,NULL,&iter) ||
-     gtk_tree_model_get_iter_first(m,&iter))
-  {
-    Calendar* result;
-    gtk_tree_model_get(m,&iter, 0,&result, -1);
-    return result;
-  }
+  if(get_selected_iter(iter) || gtk_tree_model_get_iter_first(m,&iter))
+      return iter2cal(iter);
   else
-  {
-    return NULL;
-  }
+      return NULL;
 }
 
 
@@ -223,6 +267,31 @@ CalendarList::select(Occurrence* occ)
       false // start_editing
     );
   gtk_tree_path_free(path);
+}
+
+
+// -- cal_dialog --
+
+void
+CalendarList::entry_cb(GtkEntry* entry, calendari::Calendari*)
+{
+  GtkTreeIter iter;
+  if(!get_selected_iter(iter))
+    return;
+  Calendar* calendar = iter2cal(iter);
+
+  const char* newval = gtk_entry_get_text(entry);
+  if(entry==name_entry)
+  {
+    if(calendar->name()!=newval && ::strlen(newval))
+    {
+      calendar->set_name( newval );
+      GValue gv = {0};
+      g_value_init(&gv,G_TYPE_STRING);
+      g_value_set_string(&gv,newval);
+      gtk_list_store_set_value(liststore_cal,&iter,2,&gv);
+    }
+  }
 }
 
 

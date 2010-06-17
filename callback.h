@@ -146,6 +146,21 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT void
+  cali_cals_treeview_row_activated_cb(
+      GtkTreeView*       tree_view,
+      GtkTreePath*       path,
+      GtkTreeViewColumn* column,
+      calendari::Calendari*
+    );
+
+  G_MODULE_EXPORT gboolean
+  cal_entry_focus_event_cb(
+      GtkWidget*             e,
+      GdkEventFocus*         event,
+      calendari::Calendari*  cal
+    );
+
   // -- detail view --
 
   G_MODULE_EXPORT gboolean

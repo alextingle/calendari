@@ -297,6 +297,30 @@ calendar_inserted_cb(
 }
 
 
+G_MODULE_EXPORT void
+cali_cals_treeview_row_activated_cb(
+    GtkTreeView*,
+    GtkTreePath*           path,
+    GtkTreeViewColumn*,
+    calendari::Calendari*  app
+  )
+{
+  app->calendar_list->row_activated(path);
+}
+
+
+G_MODULE_EXPORT gboolean
+cal_entry_focus_event_cb(
+    GtkWidget*             e,
+    GdkEventFocus*,
+    calendari::Calendari*  app
+  )
+{
+  app->calendar_list->entry_cb(GTK_ENTRY(e),app);
+  return false;
+}
+
+
 // -- detail view --
 
 G_MODULE_EXPORT gboolean

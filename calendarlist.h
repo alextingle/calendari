@@ -30,6 +30,11 @@ struct CalendarList
   *   model accordingly. */
   void reorder(void);
 
+  /** The user has double-clicked on a row - show the cal_dialog. */
+  void row_activated(GtkTreePath* path);
+
+  Calendar* iter2cal(GtkTreeIter& iter) const;
+  bool get_selected_iter(GtkTreeIter& iter) const;
   Calendar* current(void) const;
   void toggle(gchar* path, Calendari* app);
   void add(void);
@@ -46,6 +51,13 @@ struct CalendarList
   void refresh_all(Calendari* app);
   bool refresh_next(Calendari* app);
   void select(Occurrence* occ);
+
+  // -- cal_dialog --
+
+  GtkDialog*    cal_dialog;
+  GtkEntry*     name_entry;
+
+  void entry_cb(GtkEntry* entry, calendari::Calendari* app);
 
 private:
   /** Queue of calendars (CALNUMs) to refresh. */
