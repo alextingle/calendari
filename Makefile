@@ -1,8 +1,8 @@
 OBJDIR := obj
 
 CPPFLAGS += $(TESTFLAGS)
-CXXFLAGS += -g $(shell pkg-config --cflags gtk+-2.0 gmodule-2.0) -Wall -Wextra
-LDFLAGS += $(shell pkg-config --libs gtk+-2.0 gmodule-2.0) -lsqlite3 -lical
+CXXFLAGS += -g $$(pkg-config --cflags gtk+-2.0 gmodule-2.0) -Wall -Wextra
+LDFLAGS += $$(pkg-config --libs gtk+-2.0 gmodule-2.0) -lsqlite3 -lical
 
 CC_FILES := $(wildcard *.cc)
 OBJECTS := $(patsubst %.cc,$(OBJDIR)/%.o,$(CC_FILES))
