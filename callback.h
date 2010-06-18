@@ -161,6 +161,19 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT void
+  cal_file_set_cb(
+      GtkFileChooserButton*  fc,
+      calendari::Calendari*  app
+    );
+
+  G_MODULE_EXPORT void
+  cal_color_set_cb(
+      GtkColorButton*        cb,
+      calendari::Calendari*  app
+    );
+
+
   // -- detail view --
 
   G_MODULE_EXPORT gboolean

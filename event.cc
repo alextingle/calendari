@@ -49,6 +49,19 @@ Calendar::set_name(const std::string& s)
 
 
 void
+Calendar::set_path(const std::string& s)
+{
+  _path = s;
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update CALENDAR set PATH='%s' where VERSION=%d and CALNUM=%d",
+      sql::quote(s).c_str(), version, calnum
+    );
+}
+
+
+void
 Calendar::set_position(int p)
 {
   if(p==_position)
@@ -60,6 +73,19 @@ Calendar::set_position(int p)
       _position, version, calnum
     );
 }
+
+void
+Calendar::set_colour(const std::string& s)
+{
+  _colour = s;
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update CALENDAR set COLOUR='%s' where VERSION=%d and CALNUM=%d",
+      sql::quote(s).c_str(), version, calnum
+    );
+}
+
 
 
 void

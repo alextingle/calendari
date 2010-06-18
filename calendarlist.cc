@@ -6,7 +6,9 @@
 #include "event.h"
 #include "ics.h"
 #include "monthview.h"
+#include "util.h"
 
+#include <cassert>
 #include <map>
 #include <string>
 #include <vector>
@@ -63,6 +65,10 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
 
   cal_dialog = GTK_DIALOG(gtk_builder_get_object(builder,"cali_cal_dialog"));
   name_entry = GTK_ENTRY(gtk_builder_get_object(builder,"cal_name_entry"));
+  cal_filechooserbutton = GTK_FILE_CHOOSER_BUTTON(
+      gtk_builder_get_object(builder,"cal_filechooserbutton"));
+  cal_colorbutton = GTK_COLOR_BUTTON(
+      gtk_builder_get_object(builder,"cal_colorbutton"));
 }
 
 
@@ -101,8 +107,17 @@ CalendarList::row_activated(GtkTreePath* tp)
 
   // set-up cal_dialog from calendar.
   gtk_entry_set_text(name_entry,calendar->name().c_str());
+  (void)gtk_file_chooser_set_filename(
+      GTK_FILE_CHOOSER(cal_filechooserbutton),
+      calendar->path().c_str()
+    );
+  GdkColor col;
+  gdk_color_parse(calendar->colour().c_str(),&col);
+  gtk_color_button_set_color(cal_colorbutton,&col);
+
   const bool sensitive = !calendar->readonly();
   gtk_widget_set_sensitive(GTK_WIDGET(name_entry),true);
+  gtk_widget_set_sensitive(GTK_WIDGET(cal_filechooserbutton),sensitive);
 
   // Show dialogue box.
   int response = gtk_dialog_run(cal_dialog);
@@ -279,6 +294,7 @@ CalendarList::entry_cb(GtkEntry* entry, calendari::Calendari*)
   if(!get_selected_iter(iter))
     return;
   Calendar* calendar = iter2cal(iter);
+  assert(calendar);
 
   const char* newval = gtk_entry_get_text(entry);
   if(entry==name_entry)
@@ -286,11 +302,54 @@ CalendarList::entry_cb(GtkEntry* entry, calendari::Calendari*)
     if(calendar->name()!=newval && ::strlen(newval))
     {
       calendar->set_name( newval );
-      GValue gv = {0};
+      GValue gv;
+      ::memset(&gv,0,sizeof(GValue));
       g_value_init(&gv,G_TYPE_STRING);
       g_value_set_string(&gv,newval);
       gtk_list_store_set_value(liststore_cal,&iter,2,&gv);
     }
+  }
+}
+
+
+void
+CalendarList::file_set_cb(GtkFileChooserButton* fc, calendari::Calendari* app)
+{
+  GtkTreeIter iter;
+  if(!get_selected_iter(iter))
+    return;
+  Calendar* calendar = iter2cal(iter);
+  assert(calendar);
+
+  g_scoped<gchar> p( gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc)) );
+  if(calendar->path()!=p.get() && ::strlen(p.get()))
+      calendar->set_path(p.get());
+}
+
+
+void
+CalendarList::color_set_cb(GtkColorButton* cb, calendari::Calendari* app)
+{
+  GtkTreeIter iter;
+  if(!get_selected_iter(iter))
+    return;
+  Calendar* calendar = iter2cal(iter);
+  assert(calendar);
+
+  GdkColor col;
+  gtk_color_button_get_color(cb,&col);
+  g_scoped<gchar> c( gdk_color_to_string(&col) );
+  if(calendar->colour()!=c.get() && ::strlen(c.get()))
+  {
+    calendar->set_colour(c.get());
+
+    GValue gv;
+    ::memset(&gv,0,sizeof(GValue));
+    g_value_init(&gv,G_TYPE_STRING);
+    g_value_set_string(&gv, c.get());
+    gtk_list_store_set_value(liststore_cal,&iter,3,&gv);
+
+    app->queue_main_redraw();
   }
 }
 

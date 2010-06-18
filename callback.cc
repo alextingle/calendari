@@ -321,6 +321,26 @@ cal_entry_focus_event_cb(
 }
 
 
+G_MODULE_EXPORT void
+cal_file_set_cb(
+    GtkFileChooserButton*  fc,
+    calendari::Calendari*  app
+  )
+{
+  app->calendar_list->file_set_cb(fc,app);
+}
+
+
+G_MODULE_EXPORT void
+cal_color_set_cb(
+    GtkColorButton*        cb,
+    calendari::Calendari*  app
+  )
+{
+  app->calendar_list->color_set_cb(cb,app);
+}
+
+
 // -- detail view --
 
 G_MODULE_EXPORT gboolean

@@ -54,10 +54,14 @@ struct CalendarList
 
   // -- cal_dialog --
 
-  GtkDialog*    cal_dialog;
-  GtkEntry*     name_entry;
+  GtkDialog*             cal_dialog;
+  GtkEntry*              name_entry;
+  GtkFileChooserButton*  cal_filechooserbutton;
+  GtkColorButton*        cal_colorbutton;
 
   void entry_cb(GtkEntry* entry, calendari::Calendari* app);
+  void file_set_cb(GtkFileChooserButton* fc, calendari::Calendari* app);
+  void color_set_cb(GtkColorButton* cb, calendari::Calendari* app);
 
 private:
   /** Queue of calendars (CALNUMs) to refresh. */

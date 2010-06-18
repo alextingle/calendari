@@ -3,6 +3,8 @@
 
 #include <time.h>
 
+extern "C" { void g_free(void*); }
+
 namespace calendari {
 
 
@@ -59,6 +61,37 @@ public:
 private:
   scoped(const scoped&);              ///< Not copyable
   scoped& operator = (const scoped&); ///< Not assignable
+
+  ptr_type _v;
+};
+
+
+/** A scoped pointer type that wraps g_free(void*). */
+template<typename T>
+class g_scoped
+{
+public:
+  typedef T  value_type;
+  typedef T* ptr_type;
+  typedef T& ref_type;
+  g_scoped(ptr_type ptr): _v(ptr)
+    {}
+  ~g_scoped(void)
+    {
+      if(_v)
+          g_free(static_cast<void*>(_v));
+    }
+  ref_type operator * (void) const
+    { return *_v; }
+  operator bool (void) const
+    { return _v? true: false; }
+  ptr_type operator -> (void) const
+    { return _v; }
+  ptr_type get(void) const
+    { return _v; }
+private:
+  g_scoped(const g_scoped&);              ///< Not copyable
+  g_scoped& operator = (const g_scoped&); ///< Not assignable
 
   ptr_type _v;
 };

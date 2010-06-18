@@ -960,9 +960,10 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkFileChooserButton" id="filechooserbutton1">
+                          <object class="GtkFileChooserButton" id="cal_filechooserbutton">
                             <property name="visible">True</property>
                             <property name="create_folders">False</property>
+                            <signal name="file_set" handler="cal_file_set_cb"/>
                           </object>
                           <packing>
                             <property name="position">1</property>
@@ -976,7 +977,40 @@
                       </packing>
                     </child>
                     <child>
-                      <placeholder/>
+                      <object class="GtkHBox" id="hbox11">
+                        <property name="visible">True</property>
+                        <property name="spacing">10</property>
+                        <child>
+                          <object class="GtkLabel" id="label12">
+                            <property name="visible">True</property>
+                            <property name="xalign">0</property>
+                            <property name="label" translatable="yes">Colour:</property>
+                            <property name="width_chars">7</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkColorButton" id="cal_colorbutton">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="color">#000000000000</property>
+                            <signal name="color_set" handler="cal_color_set_cb"/>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">2</property>
+                      </packing>
                     </child>
                   </object>
                 </child>
