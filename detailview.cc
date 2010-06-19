@@ -29,6 +29,7 @@ DetailView::clear(void)
   gtk_entry_set_text(title_entry,"");
   gtk_entry_set_text(start_entry,"");
   gtk_entry_set_text(end_entry,"");
+  gtk_combo_box_set_active(calendar_combobox,-1);
 
   GtkTextBuffer* buffer = gtk_text_view_get_buffer(textview);
   gtk_text_buffer_set_text (buffer,"",0);
