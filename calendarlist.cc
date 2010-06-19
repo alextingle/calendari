@@ -16,6 +16,18 @@
 namespace calendari {
 
 
+namespace {
+  GdkPixbuf* new_pixbuf_from_col(GdkColor& col, int width, int height)
+  {
+    guint32 rgba = 0xFF |
+      (0xFF00 & col.red)<<16 | (0xFF00 & col.green)<<8 | (0xFF00 & col.blue);
+    GdkPixbuf* pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,false,8,width,height);
+    gdk_pixbuf_fill(pixbuf,rgba);
+    return pixbuf;
+  }
+}
+
+
 bool
 CalendarList::timeout_refresh_all(void* param)
 {
@@ -47,8 +59,12 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
   for(CalMap::const_iterator c=cc.begin(); c!=cc.end() ; ++c)
       vec[c->second->position()] = c->second;
 
+  GdkColor col;
   for(std::vector<Calendar*>::const_iterator v=vec.begin(); v!=vec.end() ; ++v)
   {
+    gdk_color_parse( (*v)->colour().c_str(), &col );
+    GdkPixbuf* pixbuf = new_pixbuf_from_col(col,12,12);
+
     GtkTreeIter* iter =NULL;
     gtk_list_store_insert_with_values(
         this->liststore_cal, iter, 99999,
@@ -57,8 +73,10 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
         2,(*v)->name().c_str(),
         3,(*v)->colour().c_str(),
         4,!(*v)->readonly(),
+        5,pixbuf,
         -1
       );
+    g_object_unref(G_OBJECT(pixbuf));
   }
 
   // -- cal_dialog --
@@ -342,13 +360,9 @@ CalendarList::color_set_cb(GtkColorButton* cb, calendari::Calendari* app)
   if(calendar->colour()!=c.get() && ::strlen(c.get()))
   {
     calendar->set_colour(c.get());
-
-    GValue gv;
-    ::memset(&gv,0,sizeof(GValue));
-    g_value_init(&gv,G_TYPE_STRING);
-    g_value_set_string(&gv, c.get());
-    gtk_list_store_set_value(liststore_cal,&iter,3,&gv);
-
+    GdkPixbuf* pixbuf = new_pixbuf_from_col(col,12,12);
+    gtk_list_store_set(liststore_cal,&iter, 3,c.get(), 5,pixbuf, -1);
+    g_object_unref(G_OBJECT(pixbuf));
     app->queue_main_redraw();
   }
 }

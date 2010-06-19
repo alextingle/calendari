@@ -2,22 +2,6 @@
 <interface>
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
-  <object class="GtkListStore" id="liststore_cal">
-    <columns>
-      <!-- column-name obj -->
-      <column type="gpointer"/>
-      <!-- column-name show -->
-      <column type="gboolean"/>
-      <!-- column-name calendars -->
-      <column type="gchararray"/>
-      <!-- column-name colour -->
-      <column type="gchararray"/>
-      <!-- column-name writeable -->
-      <column type="gboolean"/>
-    </columns>
-    <signal name="row_inserted" handler="calendar_inserted_cb"/>
-    <signal name="row_deleted" handler="calendar_deleted_cb"/>
-  </object>
   <object class="GtkListStore" id="cali_weekday_liststore">
     <columns>
       <!-- column-name daynum -->
@@ -35,6 +19,24 @@
         <col id="1" translatable="yes">Monday</col>
       </row>
     </data>
+  </object>
+  <object class="GtkListStore" id="liststore_cal">
+    <columns>
+      <!-- column-name obj -->
+      <column type="gpointer"/>
+      <!-- column-name show -->
+      <column type="gboolean"/>
+      <!-- column-name calendars -->
+      <column type="gchararray"/>
+      <!-- column-name colour -->
+      <column type="gchararray"/>
+      <!-- column-name writeable -->
+      <column type="gboolean"/>
+      <!-- column-name pixbuf -->
+      <column type="GdkPixbuf"/>
+    </columns>
+    <signal name="row_inserted" handler="calendar_inserted_cb"/>
+    <signal name="row_deleted" handler="calendar_deleted_cb"/>
   </object>
   <object class="GtkWindow" id="cali_window">
     <property name="title" translatable="yes">Calendari</property>
@@ -394,17 +396,11 @@
                         <property name="reorderable">True</property>
                         <signal name="row_activated" handler="cali_cals_treeview_row_activated_cb"/>
                         <child>
-                          <object class="GtkTreeViewColumn" id="Show">
-                            <property name="sizing">fixed</property>
-                            <property name="min_width">20</property>
-                            <property name="alignment">0.5</property>
+                          <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                             <child>
-                              <object class="GtkCellRendererToggle" id="cellrenderertoggle1">
-                                <signal name="toggled" handler="calendar_toggle_cb"/>
-                              </object>
+                              <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf1"/>
                               <attributes>
-                                <attribute name="cell-background">3</attribute>
-                                <attribute name="active">1</attribute>
+                                <attribute name="pixbuf">5</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -418,6 +414,21 @@
                               <object class="GtkCellRendererText" id="cellrenderertext1"/>
                               <attributes>
                                 <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="Show">
+                            <property name="sizing">fixed</property>
+                            <property name="min_width">20</property>
+                            <property name="alignment">0.5</property>
+                            <child>
+                              <object class="GtkCellRendererToggle" id="cellrenderertoggle1">
+                                <signal name="toggled" handler="calendar_toggle_cb"/>
+                              </object>
+                              <attributes>
+                                <attribute name="active">1</attribute>
                               </attributes>
                             </child>
                           </object>
