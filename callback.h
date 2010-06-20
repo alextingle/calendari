@@ -31,6 +31,12 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT void
+  cali_menu_today_cb(
+      GtkMenuItem*           menuitem,
+      calendari::Calendari*  cal
+    );
+
   /** General callback that summons an arbitrary dialogue. */
   G_MODULE_EXPORT void
   cali_menu_dialogue_cb(

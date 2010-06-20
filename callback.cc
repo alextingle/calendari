@@ -44,6 +44,16 @@ cali_menu_delete_cb(
 
 
 G_MODULE_EXPORT void
+cali_menu_today_cb(
+    GtkMenuItem*,
+    calendari::Calendari*  app
+  )
+{
+  app->main_view->go_today();
+}
+
+
+G_MODULE_EXPORT void
 cali_menu_dialogue_cb(
     // GtkMenuItem* menuitem, // ?? Eliminated by Glade?
     GtkDialog* dialog

@@ -43,6 +43,7 @@ public:
   virtual void create_event(void) =0;
   virtual void ok(void) {} ///< Called when user hits ENTER
   virtual void cancel(void) {} ///< Called when user hits ESC
+  virtual View* go_today(void) { return this; }
   virtual View* go_up(void)    { return this; }
   virtual View* go_right(void) { return this; }
   virtual View* go_down(void)  { return this; }
@@ -75,6 +76,7 @@ public:
   virtual void create_event(void);
   virtual void ok(void);
   virtual void cancel(void);
+  virtual View* go_today(void);
   virtual View* go_up(void);
   virtual View* go_right(void);
   virtual View* go_down(void);

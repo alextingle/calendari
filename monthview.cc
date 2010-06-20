@@ -512,6 +512,20 @@ MonthView::cancel(void)
 
 
 View*
+MonthView::go_today(void)
+{
+  now = ::time(NULL);
+  assert(current_cell != NULL_CELL);
+  if(now>=day[current_cell].start && now<day[current_cell+1].start)
+      return this;
+  current_cell = NULL_CELL;
+  set(now);
+  cal.queue_main_redraw();
+  return this;
+}
+
+
+View*
 MonthView::go_up(void)
 {
   int prev_slot = current_slot? current_slot-1: 0;
