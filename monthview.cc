@@ -522,6 +522,7 @@ MonthView::cancel(void)
 View*
 MonthView::go_today(void)
 {
+  gtk_widget_grab_focus(cal.main_drawingarea);
   now = ::time(NULL);
   assert(current_cell != NULL_CELL);
   if(now>=day[current_cell].start && now<day[current_cell+1].start)
