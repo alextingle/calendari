@@ -208,6 +208,33 @@
                   <object class="GtkMenu" id="menu2">
                     <property name="visible">True</property>
                     <child>
+                      <object class="GtkImageMenuItem" id="go-next">
+                        <property name="label" translatable="yes">_Next</property>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
+                        <property name="image">image9</property>
+                        <property name="use_stock">False</property>
+                        <accelerator key="Page_Down" signal="activate"/>
+                        <signal name="activate" handler="next_button_clicked_cb"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="go-prev">
+                        <property name="label" translatable="yes">_Previous</property>
+                        <property name="visible">True</property>
+                        <property name="use_underline">True</property>
+                        <property name="image">image10</property>
+                        <property name="use_stock">False</property>
+                        <accelerator key="Page_Up" signal="activate"/>
+                        <signal name="activate" handler="prev_button_clicked_cb"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem" id="menuitem6">
+                        <property name="visible">True</property>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkImageMenuItem" id="go-to-today">
                         <property name="label" translatable="yes">Go to _Today</property>
                         <property name="visible">True</property>
@@ -1100,12 +1127,20 @@
       <action-widget response="0">cal_close_button</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkImage" id="image7">
-    <property name="visible">True</property>
-    <property name="stock">gtk-home</property>
-  </object>
   <object class="GtkImage" id="image8">
     <property name="visible">True</property>
     <property name="stock">gtk-preferences</property>
+  </object>
+  <object class="GtkImage" id="image9">
+    <property name="visible">True</property>
+    <property name="stock">gtk-go-forward</property>
+  </object>
+  <object class="GtkImage" id="image10">
+    <property name="visible">True</property>
+    <property name="stock">gtk-go-back</property>
+  </object>
+  <object class="GtkImage" id="image7">
+    <property name="visible">True</property>
+    <property name="stock">gtk-home</property>
   </object>
 </interface>
