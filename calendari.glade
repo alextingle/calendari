@@ -463,7 +463,7 @@
                   <object class="GtkScrolledWindow" id="cali_detail_scrolledwindow">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="hscrollbar_policy">never</property>
+                    <property name="hscrollbar_policy">automatic</property>
                     <property name="vscrollbar_policy">automatic</property>
                     <property name="shadow_type">etched-in</property>
                     <child>
@@ -605,10 +605,18 @@
                                     <property name="model">liststore_cal</property>
                                     <signal name="changed" handler="detail_combobox_changed_cb"/>
                                     <child>
+                                      <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf4">
+                                        <property name="xpad">3</property>
+                                      </object>
+                                      <attributes>
+                                        <attribute name="sensitive">4</attribute>
+                                        <attribute name="pixbuf">5</attribute>
+                                      </attributes>
+                                    </child>
+                                    <child>
                                       <object class="GtkCellRendererText" id="cellrenderertext2"/>
                                       <attributes>
                                         <attribute name="sensitive">4</attribute>
-                                        <attribute name="background">3</attribute>
                                         <attribute name="text">2</attribute>
                                       </attributes>
                                     </child>
