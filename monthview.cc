@@ -492,9 +492,17 @@ MonthView::create_event(void)
 void
 MonthView::ok(void)
 {
+  // If the current_cell has any events, then cycle through them.
   if(!day[current_cell].slot.empty())
   {
-    cal.select( day[current_cell].slot[1] );
+    int next_slot = current_slot+1;
+    if(current_slot)
+    {
+      const int num_slots = static_cast<int>( day[current_cell].slot.size() );
+      if(next_slot >= num_slots || !day[current_cell].slot[next_slot])
+          next_slot = 1;
+    }
+    cal.select( day[current_cell].slot[next_slot] );
     cal.queue_main_redraw();
   }
 }
@@ -799,7 +807,7 @@ MonthView::draw_cell(cairo_t* cr, PangoLayout* pl, int cell)
   cairo_save(cr);
 
   // Highlight the current_cell.
-  if(cell == current_cell)
+  if(cell == current_cell && gtk_widget_is_focus(cal.main_drawingarea))
   {
     cairo_set_source_rgb(cr,0,0,0);
     cairo_rectangle(cr, cellx+0.2,celly+0.2, cell_width-0.4,cell_height-0.4);

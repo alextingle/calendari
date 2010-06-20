@@ -171,6 +171,7 @@ cali_drawingarea_key_press_event_cb(
           break;
       case GDK_Return:
       case GDK_KP_Enter:
+      case GDK_space:
           cal->main_view->ok();
           break;
       case GDK_Escape:
@@ -191,7 +192,7 @@ cali_drawingarea_key_press_event_cb(
           cal->main_view = cal->main_view->next();
           break;
       default:
-          break;
+          return false; // Propagate on.
     }
   }
   return true;
