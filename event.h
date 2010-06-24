@@ -82,6 +82,9 @@ private:
   /** Read _vevent from database, if it is not already loaded. Creates
   *   a new VEVENT if there is none in the database. */
   void load_vevent(void) const;
+
+  friend class Occurrence; // Allows _ref_count to be set.
+  size_t  _ref_count; ///< Number of Occurrences that refer to this.
 };
 
 
@@ -92,9 +95,8 @@ public:
 
   Event&      event;
   
-  Occurrence(Event& e, time_t t0, time_t t1):
-    event(e), _dtstart(t0), _dtend(t1), _key(e.uid,t0)
-    {}
+  Occurrence(Event& e, time_t t0, time_t t1);
+  ~Occurrence(void);
   /** Write this to a new row in the database. */
   void create(void);
 

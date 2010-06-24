@@ -178,7 +178,7 @@ Calendari::erase_selected(void)
     std::swap(old_selected_occ,_selected_occurrence);
     if(_clipboard_occurrence == old_selected_occ)
     {
-      printf("forget clipboard\n");
+      // forget clipboard
       _clipboard_occurrence = NULL;
       if(_clipboard_cut)
           queue_main_redraw();

@@ -117,7 +117,8 @@ Event::Event(
     _sequence(q),
     _all_day(a),
     _recurs(r),
-    _vevent(NULL)
+    _vevent(NULL),
+    _ref_count(0)
 {}
 
 
@@ -300,6 +301,19 @@ Event::load_vevent(void) const
 
 // -- Occurrence --
 
+Occurrence::Occurrence(Event& e, time_t t0, time_t t1):
+  event(e), _dtstart(t0), _dtend(t1), _key(e.uid,t0)
+{
+  ++event._ref_count;
+}
+
+
+Occurrence::~Occurrence(void)
+{
+  --event._ref_count;
+}
+
+
 void
 Occurrence::create(void)
 {
@@ -386,13 +400,25 @@ void
 Occurrence::destroy(void)
 {
   static Queue& q( Queue::inst() );
+  std::string uid_sql = sql::quote(event.uid);
   q.pushf(
       "delete from OCCURRENCE "
         "where VERSION=%d and UID='%s' and DTSTART=%d and DTEND=%d",
       event.calendar().version,
-      sql::quote(event.uid).c_str(),
+      uid_sql.c_str(),
       _dtstart,_dtend
     );
+  if(event._ref_count == 1)
+  {
+    q.pushf(
+      "delete from EVENT "
+        "where VERSION=%d and UID='%s' and 0=("
+          "select count(0) from OCCURRENCE O where VERSION=%d and UID='%s'"
+        ")",
+      event.calendar().version, uid_sql.c_str(),
+      event.calendar().version, uid_sql.c_str()
+    );
+  }
 }
 
 
