@@ -33,6 +33,76 @@ cali_menu_refreshall_cb(
 
 
 G_MODULE_EXPORT void
+cali_menu_cut_cb(GtkMenuItem*, calendari::Calendari* app)
+{
+  if(gtk_widget_has_focus(app->main_drawingarea))
+      app->cut_clipboard();
+  GtkWidget* widget = app->window;
+  while(GTK_IS_CONTAINER(widget))
+  {
+    widget = gtk_container_get_focus_child(GTK_CONTAINER(widget));
+    if(widget)
+    {
+      if(GTK_IS_TEXT_VIEW(widget))
+          g_signal_emit_by_name(widget, "cut-clipboard", NULL);
+      else if(GTK_IS_EDITABLE(widget))
+          gtk_editable_cut_clipboard(GTK_EDITABLE(widget));
+      else
+          continue;
+    }
+    return;
+  }
+}
+
+
+G_MODULE_EXPORT void
+cali_menu_copy_cb(GtkMenuItem*, calendari::Calendari* app)
+{
+  if(gtk_widget_has_focus(app->main_drawingarea))
+      app->copy_clipboard();
+  GtkWidget* widget = app->window;
+  while(GTK_IS_CONTAINER(widget))
+  {
+    widget = gtk_container_get_focus_child(GTK_CONTAINER(widget));
+    if(widget)
+    {
+      if(GTK_IS_TEXT_VIEW(widget))
+          g_signal_emit_by_name(widget, "copy-clipboard", NULL);
+      else if(GTK_IS_EDITABLE(widget))
+          gtk_editable_copy_clipboard(GTK_EDITABLE(widget));
+      else
+          continue;
+    }
+    return;
+  }
+}
+
+
+G_MODULE_EXPORT void
+cali_menu_paste_cb(GtkMenuItem*, calendari::Calendari* app)
+{
+  // ?? Need to clear clipboard
+  if(gtk_widget_has_focus(app->main_drawingarea))
+      app->paste_clipboard();
+  GtkWidget* widget = app->window;
+  while(GTK_IS_CONTAINER(widget))
+  {
+    widget = gtk_container_get_focus_child(GTK_CONTAINER(widget));
+    if(widget)
+    {
+      if(GTK_IS_TEXT_VIEW(widget))
+          g_signal_emit_by_name(widget, "paste-clipboard", NULL);
+      else if(GTK_IS_EDITABLE(widget))
+          gtk_editable_paste_clipboard(GTK_EDITABLE(widget));
+      else
+          continue;
+    }
+    return;
+  }
+}
+
+
+G_MODULE_EXPORT void
 cali_menu_delete_cb(
     GtkMenuItem*,
     calendari::Calendari*  cal

@@ -52,6 +52,8 @@ public:
   virtual View* next(void)     { return this; }
   virtual View* zoom_in(void)  { return this; }
   virtual View* zoom_out(void) { return this; }
+  virtual void move_here(Occurrence*) =0; ///< Moves Occurrence to current posn.
+  virtual void copy_here(Occurrence*) =0; ///< Copies Occurrence to current posn
 };
 
 
@@ -83,6 +85,8 @@ public:
   virtual View* go_left(void);
   virtual View* prev(void);
   virtual View* next(void);
+  virtual void move_here(Occurrence*);
+  virtual void copy_here(Occurrence*);
 private:
   Calendari& cal;
   // Time

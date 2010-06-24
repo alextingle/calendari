@@ -26,6 +26,15 @@ extern "C"
     );
 
   G_MODULE_EXPORT void
+  cali_menu_cut_cb(GtkMenuItem*, calendari::Calendari* cal);
+
+  G_MODULE_EXPORT void
+  cali_menu_copy_cb(GtkMenuItem*, calendari::Calendari* cal);
+
+  G_MODULE_EXPORT void
+  cali_menu_paste_cb(GtkMenuItem*, calendari::Calendari* cal);
+
+  G_MODULE_EXPORT void
   cali_menu_delete_cb(
       GtkMenuItem*           menuitem,
       calendari::Calendari*  cal

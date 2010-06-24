@@ -12,6 +12,7 @@ class Db;
 class View;
 class CalendarList;
 class DetailView;
+class Event;
 class Occurrence;
 class PrefView;
 class Setting;
@@ -31,6 +32,7 @@ struct Calendari
   GtkLabel*      main_label;        ///< Label for the main view.
   GtkStatusbar*  statusbar;         ///< Status bar.
   GtkDialog*     about;             ///< About box.
+  GtkClipboard*  clipboard;         ///< 'CLIPBOARD' 
 
   bool main_drawingarea_redraw_queued;
 
@@ -54,19 +56,45 @@ struct Calendari
 
   /** Get the selected occurrence, if any. */
   Occurrence* selected(void) const
-    { return _occurrence; }
+    { return _selected_occurrence; }
+
+  /** Get the cut occurrence, if any. */
+  Occurrence* cut(void) const
+    { return _clipboard_cut? _clipboard_occurrence: NULL; }
 
   /** An occurrence moved. */
   void moved(Occurrence* occ);
 
-  /** Create a new event - triggered by UI. */
-  void create_event(time_t dtstart, time_t dtend);
+  /** Create a new event - triggered by UI. Copy details from 'old', if set. */
+  Occurrence* create_event(time_t dtstart, time_t dtend, Event* old=NULL);
 
   /** Erase the selected occurrence, if any. */
   void erase_selected(void);
 
+  /** Cut the selected occurrence, if any, and place it in the clipboard. */
+  void cut_clipboard(void);
+
+  /** Copy the selected occurrence, if any, and place it in the clipboard. */
+  void copy_clipboard(void);
+  void paste_clipboard(void);
+
+  // -- call-backs --
+
+  /** GtkClipboardGetFunc */
+  static void clipboard_get(
+      GtkClipboard*      cb,
+      GtkSelectionData*  selection_data,
+      guint              info,
+      gpointer
+    );
+
+  /** GtkClipboardClearFunc */
+  static void clipboard_clear(GtkClipboard* cb, gpointer);
+
 private:
-  Occurrence*    _occurrence;
+  Occurrence* _selected_occurrence;
+  Occurrence* _clipboard_occurrence; ///< Contents of the clipboard.
+  bool        _clipboard_cut; ///< TRUE if _clipboard_occurrence has been cut.
 };
 
 

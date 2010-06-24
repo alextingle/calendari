@@ -23,10 +23,18 @@
 namespace calendari {
 
 
+/** Helper for callbacks from GTK. */
+inline Calendari& ptr2app(void* ptr)
+{
+  assert(ptr);
+  return *static_cast<Calendari*>(ptr);
+}
+
+
 void
 Calendari::load(const char* dbname)
 {
-  _occurrence = NULL;
+  _selected_occurrence = NULL;
   if(db)
   {
     CALI_ERRO(1,0,"Database already loaded");
@@ -69,6 +77,10 @@ Calendari::build(GtkBuilder* builder)
       GDK_ACTION_COPY
     );
 
+  // Set up clipboard.
+  GdkAtom atom = gdk_atom_intern_static_string("CLIPBOARD");
+  clipboard = gtk_clipboard_get(atom);
+
   main_drawingarea_redraw_queued = false;
 
   calendar_list = new CalendarList();
@@ -107,7 +119,9 @@ Calendari::queue_main_redraw(bool reload)
 void
 Calendari::select(Occurrence* occ)
 {
-  _occurrence = occ;
+  if(occ == cut()) // Can't select a cut occurrence.
+      occ = NULL;
+  _selected_occurrence = occ;
   main_view->select( occ );
   detail_view->select( occ );
   calendar_list->select( occ );
@@ -119,13 +133,13 @@ Calendari::moved(Occurrence* occ)
 {
   db->moved( occ );
   main_view->moved( occ );
-  if(occ==this->_occurrence) // selected?
+  if(occ==this->_selected_occurrence) // selected?
       detail_view->moved( occ );
 }
 
 
-void
-Calendari::create_event(time_t dtstart, time_t dtend)
+Occurrence*
+Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
 {
   Calendar* calendar = calendar_list->current();
   if(calendar && !calendar->readonly())
@@ -137,26 +151,175 @@ Calendari::create_event(time_t dtstart, time_t dtend)
         buf, //  uid,
         dtstart,
         dtend,
-        "New Event", // summary,
-        false, // all_day,
+        (old? old->summary().c_str(): "New Event"), // summary,
+        (old? old->all_day(): false), // all_day,
         calendar->calnum
       );
     moved(occ);
     select(occ);
-    gtk_window_set_focus(GTK_WINDOW(window),GTK_WIDGET(detail_view->title_entry));
+    return occ;
   }
+  return NULL;
 }
 
 
 void
 Calendari::erase_selected(void)
 {
-  if(_occurrence && !_occurrence->event.readonly())
+  if(_selected_occurrence && !_selected_occurrence->event.readonly())
   {
-    main_view->erase(_occurrence);
-    db->erase(_occurrence);
-    _occurrence = NULL;
+    Occurrence* old_selected_occ = NULL;
+    std::swap(old_selected_occ,_selected_occurrence);
+    if(_clipboard_occurrence == old_selected_occ)
+    {
+      printf("forget clipboard\n");
+      _clipboard_occurrence = NULL;
+      if(_clipboard_cut)
+          queue_main_redraw();
+    }
+    main_view->erase(old_selected_occ);
+    db->erase(old_selected_occ);
     detail_view->select( NULL );
+  }
+}
+
+
+void
+Calendari::cut_clipboard(void)
+{
+  if(_selected_occurrence && !_selected_occurrence->event.readonly())
+  {
+    bool ok =
+      gtk_clipboard_set_with_data(
+          clipboard,
+          DragDrop::target_list_src, // const GtkTargetEntry *targets,
+          DragDrop::target_list_src_len, // guint n_targets,
+          (GtkClipboardGetFunc)clipboard_get, // GtkClipboardGetFunc,
+          (GtkClipboardClearFunc)clipboard_clear, // GtkClipboardClearFunc,
+          static_cast<gpointer>(this) // user_data
+        );
+    if(ok)
+    {
+      _clipboard_occurrence = _selected_occurrence;
+      _clipboard_cut = true;
+      select(NULL);
+      queue_main_redraw();
+    }
+  }
+}
+
+
+void
+Calendari::copy_clipboard(void)
+{
+  if(_selected_occurrence && !_selected_occurrence->event.readonly())
+  {
+    bool ok =
+      gtk_clipboard_set_with_data(
+          clipboard,
+          DragDrop::target_list_src, // const GtkTargetEntry *targets,
+          DragDrop::target_list_src_len, // guint n_targets,
+          (GtkClipboardGetFunc)clipboard_get, // GtkClipboardGetFunc,
+          (GtkClipboardClearFunc)clipboard_clear, // GtkClipboardClearFunc,
+          static_cast<gpointer>(this) // user_data
+        );
+    if(ok)
+    {
+      _clipboard_occurrence = _selected_occurrence;
+      _clipboard_cut = false;
+    }
+  }
+}
+
+
+void
+Calendari::paste_clipboard(void)
+{
+  // ?? Support additional target types.
+  if(_clipboard_occurrence)
+  {
+    GdkAtom target_type = gdk_atom_intern_static_string("OCCURRENCE");
+    GtkSelectionData* data =
+        gtk_clipboard_wait_for_contents(clipboard,target_type);
+    if(data)
+    {
+      // Just check that we have the data
+      if( *(int*)data->data )
+      {
+        if(_clipboard_cut)
+        {
+          // Move it.
+          _clipboard_cut = false;
+          main_view->move_here(_clipboard_occurrence);
+        }
+        else
+        {
+          // Copy it.
+          main_view->copy_here(_clipboard_occurrence);
+        }
+        queue_main_redraw();
+      }
+      gtk_selection_data_free(data);
+    }
+  }
+}
+
+
+void
+Calendari::clipboard_get(
+    GtkClipboard*      cb,
+    GtkSelectionData*  data,
+    guint              info,
+    gpointer           user_data
+  )
+{
+  Calendari& app( ptr2app(user_data) );
+  if(cb!=app.clipboard || !app._clipboard_occurrence)
+      return;
+  switch(static_cast<DragDrop::type>(info))
+  {
+  case DragDrop::DD_OCCURRENCE:
+      {
+        // Dummy data to pass back.
+        static const int dd_occurrence_ok = 1;
+        gtk_selection_data_set(
+          data,
+          data->target,
+          8,                         // number of bits per 'unit'
+          (guchar*)&dd_occurrence_ok,// pointer to data to be sent
+          sizeof(dd_occurrence_ok)   // length of data in units
+        );
+      }
+      break;
+  case DragDrop::DD_STRING:
+      {
+        const std::string& summary( app._clipboard_occurrence->event.summary() );
+        gtk_selection_data_set(
+          data,
+          data->target,
+          8,                       // number of bits per 'unit'
+          (guchar*)summary.c_str(),// pointer to data to be sent
+          summary.size()           // length of data in units
+        );
+      }
+      break;
+  }
+}
+
+
+void
+Calendari::clipboard_clear(GtkClipboard* cb, gpointer user_data)
+{
+  printf("%s\n",__PRETTY_FUNCTION__);
+  Calendari& app( ptr2app(user_data) );
+  if(cb==app.clipboard)
+  {
+    if(app._clipboard_cut)
+    {
+      // The cut occurrence has not been pasted anywhere, so replace it.
+      app.queue_main_redraw();
+    }
+    app._clipboard_occurrence = NULL;
   }
 }
 

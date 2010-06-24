@@ -1,6 +1,7 @@
 #include "monthview.h"
 
 #include "calendari.h"
+#include "detailview.h"
 #include "dragdrop.h"
 #include "setting.h"
 #include "util.h"
@@ -321,7 +322,7 @@ MonthView::drag_data_get(GtkSelectionData* data, guint info)
       break;
   case DragDrop::DD_STRING:
       {
-        const std::string& summary( cal.selected()->event.summary().c_str() );
+        const std::string& summary( cal.selected()->event.summary() );
         gtk_selection_data_set(
           data,
           data->target,
@@ -485,7 +486,14 @@ MonthView::create_event(void)
   localtime_r(&now,&now_tm);
   slot_tm.tm_hour = now_tm.tm_hour;
   time_t dtstart = ::mktime(&slot_tm);
-  cal.create_event( dtstart, dtstart+3600 );
+  Occurrence* new_occ = cal.create_event( dtstart, dtstart+3600 );
+  if(new_occ)
+  {
+    gtk_window_set_focus(
+        GTK_WINDOW(cal.window),
+        GTK_WIDGET(cal.detail_view->title_entry)
+      );
+  }
 }
 
 
@@ -632,6 +640,43 @@ MonthView::next(void)
   set( normalise_local_tm(self_local) );
   cal.queue_main_redraw();
   return this;
+}
+
+
+void
+MonthView::move_here(Occurrence* occ)
+{
+  assert(occ);
+  assert(current_cell!=NULL_CELL);
+  tm start_local;
+  time_t dtstart = occ->dtstart();
+  ::localtime_r(&dtstart,&start_local);
+  start_local.tm_mday = day[current_cell].mday;
+  start_local.tm_mon  = day[current_cell].mon;
+  start_local.tm_year = day[current_cell].year;
+  start_local.tm_isdst= -1;
+  if(occ->set_start( ::mktime(&start_local) ))
+      cal.moved(occ);
+  cal.select(occ);
+}
+
+
+void
+MonthView::copy_here(Occurrence* occ)
+{
+  assert(occ);
+  assert(current_cell!=NULL_CELL);
+  tm start_local;
+  time_t old_dtstart = occ->dtstart();
+  ::localtime_r(&old_dtstart,&start_local);
+  start_local.tm_mday = day[current_cell].mday;
+  start_local.tm_mon  = day[current_cell].mon;
+  start_local.tm_year = day[current_cell].year;
+  start_local.tm_isdst= -1;
+
+  time_t new_dtstart = ::mktime(&start_local);
+  time_t new_dtend   = new_dtstart + (occ->dtend() - old_dtstart);
+  (void)cal.create_event( new_dtstart, new_dtend, &occ->event );
 }
 
 
@@ -916,7 +961,7 @@ MonthView::draw_occurrence(cairo_t* cr, PangoLayout* pl, int cell, int slot)
           col.red/65536.0,
           col.green/65536.0,
           col.blue/65536.0,
-          0.5
+          (&occ == cal.cut()? 0.15: 0.50)
         );
     }
     cairo_fill(cr);
@@ -936,7 +981,12 @@ MonthView::draw_occurrence(cairo_t* cr, PangoLayout* pl, int cell, int slot)
   }
   else // not all day
   {
-    gdk_cairo_set_source_color(cr,&col);
+    cairo_set_source_rgba(cr,
+        col.red/65536.0,
+        col.green/65536.0,
+        col.blue/65536.0,
+        (&occ == cal.cut()? 0.30: 1.00)
+      );
     if(&occ == cal.selected())
     {
       // Selected - fill slot.

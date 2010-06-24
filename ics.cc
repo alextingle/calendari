@@ -495,7 +495,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   icalproperty_set_x_name(prop,"X-WR-CALNAME");
   icalcomponent_add_property(ical.get(),prop);
   // ?? => X-WR-TIMEZONE
-  prop = icalproperty_new_x("Europe/London"); // ??
+  prop = icalproperty_new_x( tzid );
   icalproperty_set_x_name(prop,"X-WR-TIMEZONE");
   icalcomponent_add_property(ical.get(),prop);
 
