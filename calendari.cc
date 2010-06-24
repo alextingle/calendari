@@ -19,6 +19,7 @@
 #include <iostream>
 #include <memory>
 #include <sysexits.h>
+#include <uuid/uuid.h>
 
 namespace calendari {
 
@@ -144,9 +145,14 @@ Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
   Calendar* calendar = calendar_list->current();
   if(calendar && !calendar->readonly())
   {
+    // Format buf as <UUID>-cali@<hostname>
     char buf[256];
-    int len =::snprintf(buf,sizeof(buf),"%ld-cali-%d@",::time(NULL),::getpid());
-    ::gethostname(buf+len, sizeof(buf)-len);
+    uuid_t uu;
+    uuid_generate(uu);
+    uuid_unparse(uu,buf);
+    char* s = ::stpcpy(buf+sizeof(uu),"-cali@");
+    ::gethostname(s, sizeof(buf) - (s-buf));
+    // Make the new occurrence.
     Occurrence* occ = db->create_event(
         buf, //  uid,
         dtstart,
