@@ -446,9 +446,8 @@ MonthView::moved(Occurrence* occ)
 
 
 void
-MonthView::erase(Occurrence* occ)
+MonthView::erase(Occurrence* doomed_occ)
 {
-  Occurrence* del = occ;
   typedef std::vector<Occurrence*> OV;
   for(int c=0; c<month_cells; ++c)
   {
@@ -456,14 +455,28 @@ MonthView::erase(Occurrence* occ)
     OV& ov( day[cell].occurrence );
     for(OV::iterator o=ov.begin(); o!=ov.end(); ++o)
     {
-      if(*o == del)
+      if(*o == doomed_occ)
       {
         ov.erase( o );
-        cal.queue_main_redraw();
-        return;
+        goto found;
       }
     }
   }
+  return;
+
+found:
+  if(day[current_cell].slot[current_slot] == doomed_occ)
+  {
+    // Automatically select the next event on this day.
+    int prev_slot = current_slot-1;
+    int next_slot = current_slot+1;
+    const int num_slots = static_cast<int>( day[current_cell].slot.size() );
+    if(next_slot < num_slots && day[current_cell].slot[next_slot])
+        cal.select( day[current_cell].slot[next_slot] );
+    else if(prev_slot>0 && day[current_cell].slot[prev_slot] )
+        cal.select( day[current_cell].slot[prev_slot] );
+  }
+  cal.queue_main_redraw();
 }
 
 

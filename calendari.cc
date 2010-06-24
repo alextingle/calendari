@@ -184,8 +184,9 @@ Calendari::erase_selected(void)
           queue_main_redraw();
     }
     main_view->erase(old_selected_occ);
+    if(!_selected_occurrence) // main_view->erase() may have moved the selection.
+        detail_view->select(NULL);
     db->erase(old_selected_occ);
-    detail_view->select( NULL );
   }
 }
 
