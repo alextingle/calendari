@@ -15,6 +15,7 @@
 #include <set>
 #include <sqlite3.h>
 #include <string>
+#include <sysexits.h>
 #include <unistd.h>
 
 namespace
@@ -467,7 +468,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   const char* calname  = safestr(::sqlite3_column_text(select_cal,1));
   const char* path     = safestr(::sqlite3_column_text(select_cal,2));
   bool        readonly =         ::sqlite3_column_int( select_cal,3);
-  const char* tzid     = "Europe/London"; // ??
+  const char* tzid     = system_timezone();
 
   // Check that we are allowed to write this calendar.
   // ?? Also check destination file mode.
@@ -494,7 +495,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   prop = icalproperty_new_x( calname );
   icalproperty_set_x_name(prop,"X-WR-CALNAME");
   icalcomponent_add_property(ical.get(),prop);
-  // ?? => X-WR-TIMEZONE
+  // system timezone => X-WR-TIMEZONE
   prop = icalproperty_new_x( tzid );
   icalproperty_set_x_name(prop,"X-WR-TIMEZONE");
   icalcomponent_add_property(ical.get(),prop);
@@ -503,7 +504,8 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 
   // VTIMEZONE component
   icaltimezone* zone =icaltimezone_get_builtin_timezone(tzid);
-  assert(zone);
+  if(!zone)
+      ::error(EX_OSFILE,0,"System timezone is unrecognised: %s",tzid);
   icalcomponent* vtimezone =
       icalcomponent_new_clone( icaltimezone_get_component(zone) );
   // Replace the libical TZID with the Olsen location.

@@ -8,6 +8,8 @@ extern "C" { void g_free(void*); }
 namespace calendari {
 
 
+const char* system_timezone(void);
+
 inline time_t normalise_local_tm(struct tm& v)
 {
   v.tm_isdst = -1;
