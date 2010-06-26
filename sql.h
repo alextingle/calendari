@@ -177,6 +177,25 @@ query_val(
 }
 
 
+/** Scoped class that wraps sqlite3_prepare_v2()..sqlite3_finalize().
+ *  The constructor takes the same parameters as sqlite3_prepare_v2().
+ *  The object bevahves as a sqlite3_stmt*. sqlite3_finalize() is called
+ *  upon destruction. */
+class Statement
+{
+public:
+  Statement(const util::Here& here,
+      sqlite3* db, const char* zSql, int nByte=-1, const char** pzTail=NULL);
+  ~Statement(void);
+  operator sqlite3_stmt* (void) const;
+  sqlite3* db(void) const;
+
+private:
+  sqlite3*      _db;
+  sqlite3_stmt* _stmt;
+};
+
+
 } } // end namespace calendari::sql
 
 #endif // CALENDARI__UTIL__SQL_H

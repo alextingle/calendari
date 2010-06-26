@@ -32,6 +32,7 @@ public:
   void set_position(int p);
   void set_colour(const std::string& s);
   void toggle_show(void);
+  void touch(void); ///< Touch the calendar's datestamp (in the database).
 
   bool operator == (const Calendar& right) const
     { return version==right.version && calnum==right.calnum; }

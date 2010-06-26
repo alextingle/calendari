@@ -45,6 +45,7 @@ Calendar::set_name(const std::string& s)
       "update CALENDAR set CALNAME='%s' where VERSION=%d and CALNUM=%d",
       sql::quote(s).c_str(), version, calnum
     );
+  touch();
 }
 
 
@@ -99,6 +100,17 @@ Calendar::toggle_show(void)
       _show, version, calnum
     );
 }
+
+void
+Calendar::touch(void)
+{
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update CALENDAR set DTSTAMP=%lu where VERSION=%d and CALNUM=%d",
+      ::time(NULL), version, calnum
+    );
+}
+
 
 
 // -- Event --
@@ -164,6 +176,7 @@ Event::create(void)
       (_all_day? 1: 0),
       (_recurs? 1: 0)
     );
+  _calendar->touch();
 }
 
 
@@ -300,6 +313,7 @@ Event::increment_sequence(void)
       _calendar->version,
       sql::quote(uid).c_str()
     );
+  _calendar->touch();
 }
 
 

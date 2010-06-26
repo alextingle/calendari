@@ -232,7 +232,6 @@ CalendarList::refresh(calendari::Calendari* app, Calendar* calendar)
     }
     else
     {
-      printf("write %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
       ics::write(calendar->path().c_str(), *app->db, calendar->calid.c_str());
     }
   }

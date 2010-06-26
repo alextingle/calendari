@@ -16,6 +16,8 @@
 #include <set>
 #include <sqlite3.h>
 #include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sysexits.h>
 #include <unistd.h>
 
@@ -447,12 +449,11 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   q.flush();
 
   // Load calendar from database.
-  sqlite3_stmt* select_cal;
   const char* sql =
-      "select CALNUM,CALNAME,PATH,READONLY "
+      "select CALNUM,CALNAME,DTSTAMP,PATH,READONLY "
       "from CALENDAR "
       "where VERSION=? and CALID=? ";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&select_cal,NULL) );
+  sql::Statement select_cal(CALI_HERE,db,sql);
   sql::bind_int( CALI_HERE,db,select_cal,1,version);
   sql::bind_text(CALI_HERE,db,select_cal,2,calid);
 
@@ -471,17 +472,42 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 
   int         calnum   =         ::sqlite3_column_int( select_cal,0);
   const char* calname  = safestr(::sqlite3_column_text(select_cal,1));
-  const char* path     = safestr(::sqlite3_column_text(select_cal,2));
-  bool        readonly =         ::sqlite3_column_int( select_cal,3);
+  time_t      dtstamp  =         ::sqlite3_column_int( select_cal,2);
+  const char* path     = safestr(::sqlite3_column_text(select_cal,3));
+  bool        readonly =         ::sqlite3_column_int( select_cal,4);
   const char* tzid     = system_timezone();
 
   // Check that we are allowed to write this calendar.
-  // ?? Also check destination file mode.
   if(readonly && 0==::strcmp(ical_filename,path)) // ?? use proper path compare
   {
     util::error(CALI_HERE,0,0,"Calendar is read only: %s",path);
     return;
   }
+  if(dtstamp==0)
+  {
+      q.pushf(
+          "update CALENDAR set DTSTAMP=%lu where VERSION=%d and CALNUM=%d",
+          ::time(NULL),version,calnum
+        );
+  }
+  else
+  {
+    struct stat st;
+    if(0==::stat(ical_filename,&st))
+    {
+      // Don't overwrite a file that's newer than the calendar's date stamp.
+      // Allow a margin for files on badly synced NFS shares.
+      if(st.st_mtime > (dtstamp+10))
+          return; // ?? Does this leak?
+    }
+    else if(errno!=ENOENT)
+    {
+      ::error(0,errno,"Failed to stat output iCalendar file %s",ical_filename);
+      return;
+    }
+  }
+
+  printf("write %s at %s\n",calname,ical_filename);
 
   SComponent ical(
       icalcomponent_vanew(
@@ -505,8 +531,6 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
   icalproperty_set_x_name(prop,"X-WR-TIMEZONE");
   icalcomponent_add_property(ical.get(),prop);
 
-  CALI_SQLCHK(db, ::sqlite3_finalize(select_cal) );
-
   // VTIMEZONE component
   icaltimezone* zone =icaltimezone_get_builtin_timezone(tzid);
   if(!zone)
@@ -521,7 +545,6 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 
   // Read in VEVENTS from the database...
   // Load calendar from database.
-  sqlite3_stmt* select_evt;
   // Eek! a self-join to find the *first* occurrence for each event.
   sql = "select E.UID,SUMMARY,SEQUENCE,ALLDAY,VEVENT,O.DTSTART,O.DTEND "
         "from (select UID,min(DTSTART) as S from "
@@ -530,7 +553,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
         "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
         "where E.VERSION=? and E.CALNUM=? "
         "order by O.DTSTART";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&select_evt,NULL) );
+  sql::Statement select_evt(CALI_HERE,db,sql);
   sql::bind_int(CALI_HERE,db,select_evt,1,version);
   sql::bind_int(CALI_HERE,db,select_evt,2,calnum);
   sql::bind_int(CALI_HERE,db,select_evt,3,version);
@@ -632,7 +655,6 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
         );
     }
   }
-  CALI_SQLCHK(db, ::sqlite3_finalize(select_evt) );
   
   // Flush any changes to the database.
   q.flush();

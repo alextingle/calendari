@@ -87,6 +87,7 @@ Db::create_db(void)
       "  CALNUM   integer,"
       "  CALID    string,"
       "  CALNAME  string,"
+      "  DTSTAMP  integer," // Last time this calendar was modified.
       "  PATH     string,"
       "  READONLY boolean,"
       "  POSITION integer," // ordering within the UI's calendar list.
