@@ -119,7 +119,7 @@ cali_menu_today_cb(
     calendari::Calendari*  app
   )
 {
-  app->main_view->go_today();
+  app->main_view = app->main_view->go_today();
 }
 
 
@@ -254,6 +254,9 @@ cali_drawingarea_key_press_event_cb(
       case GDK_Delete:
       case GDK_KP_Delete:
           cal->erase_selected();
+          break;
+      case GDK_Home:
+          cal->main_view = cal->main_view->go_today();
           break;
       case GDK_Page_Up:
           cal->main_view = cal->main_view->prev();
