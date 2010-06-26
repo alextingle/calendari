@@ -57,6 +57,25 @@ quote(const std::string& s)
 }
 
 
+/** Scoped class that wraps sqlite3_prepare_v2()..sqlite3_finalize().
+ *  The constructor takes the same parameters as sqlite3_prepare_v2().
+ *  The object behaves as a sqlite3_stmt*. sqlite3_finalize() is called
+ *  upon destruction. */
+class Statement
+{
+public:
+  Statement(const util::Here& here,
+      sqlite3* db, const char* zSql, int nByte=-1, const char** pzTail=NULL);
+  ~Statement(void);
+  operator sqlite3_stmt* (void) const;
+  sqlite3* db(void) const;
+
+private:
+  sqlite3*      _db;
+  sqlite3_stmt* _stmt;
+};
+
+
 inline void
 bind_int(
     const util::Here&  here,
@@ -155,8 +174,7 @@ query_val(
       util::error(here,1,0,"SQL too large for buffer."); //??
   va_end(args);
   // Query
-  sqlite3_stmt* select_stmt;
-  check_error(here,sdb, ::sqlite3_prepare_v2(sdb,sql,-1,&select_stmt,NULL) );
+  Statement select_stmt(here,sdb,sql);
   int return_code = ::sqlite3_step(select_stmt);
   switch(return_code)
   {
@@ -171,29 +189,8 @@ query_val(
         // Error
         sql::error(here,sdb);
   }
-  // Clean up.
-  check_error(here,sdb, ::sqlite3_finalize(select_stmt) );
   return result;
 }
-
-
-/** Scoped class that wraps sqlite3_prepare_v2()..sqlite3_finalize().
- *  The constructor takes the same parameters as sqlite3_prepare_v2().
- *  The object bevahves as a sqlite3_stmt*. sqlite3_finalize() is called
- *  upon destruction. */
-class Statement
-{
-public:
-  Statement(const util::Here& here,
-      sqlite3* db, const char* zSql, int nByte=-1, const char** pzTail=NULL);
-  ~Statement(void);
-  operator sqlite3_stmt* (void) const;
-  sqlite3* db(void) const;
-
-private:
-  sqlite3*      _db;
-  sqlite3_stmt* _stmt;
-};
 
 
 } } // end namespace calendari::sql

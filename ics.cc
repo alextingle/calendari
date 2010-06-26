@@ -260,23 +260,20 @@ void read(Calendari* app, const char* ical_filename, Db& db, int version)
   }
 
   // Prepare the insert statements.
-  sqlite3_stmt*  insert_cal;
   const char* sql =
       "insert into CALENDAR "
         "(VERSION,CALNUM,CALID,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW) "
         "values (?,?,?,?,?,?,?,?,1)";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_cal,NULL) );
+  sql::Statement insert_cal(CALI_HERE,db,sql);
 
-  sqlite3_stmt*  insert_evt;
   sql="insert into EVENT "
         "(VERSION,CALNUM,UID,SUMMARY,SEQUENCE,ALLDAY,RECURS,VEVENT) "
         "values (?,?,?,?,?,?,?,?)";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_evt,NULL) );
+  sql::Statement insert_evt(CALI_HERE,db,sql);
 
-  sqlite3_stmt*  insert_occ;
   sql="insert into OCCURRENCE "
         "(VERSION,CALNUM,UID,DTSTART,DTEND) values (?,?,?,?,?)";
-  CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&insert_occ,NULL) );
+  sql::Statement insert_occ(CALI_HERE,db,sql);
 
   CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
 
@@ -430,9 +427,6 @@ void read(Calendari* app, const char* ical_filename, Db& db, int version)
     process_rrule(ievt,dtstart,dtend,db,insert_occ);
   }
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
-  CALI_SQLCHK(db, ::sqlite3_finalize(insert_evt) );
-  CALI_SQLCHK(db, ::sqlite3_finalize(insert_occ) );
-  CALI_SQLCHK(db, ::sqlite3_finalize(insert_cal) );
 }
 
 
@@ -498,7 +492,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
       // Don't overwrite a file that's newer than the calendar's date stamp.
       // Allow a margin for files on badly synced NFS shares.
       if(st.st_mtime > (dtstamp+10))
-          return; // ?? Does this leak?
+          return;
     }
     else if(errno!=ENOENT)
     {

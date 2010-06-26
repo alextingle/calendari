@@ -192,13 +192,12 @@ void
 Db::load_calendars(int version)
 {
   Version& ver = _ver[version];
-  sqlite3_stmt* select_stmt;
   const char* sql =
       "select CALID,CALNUM,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW "
       "from CALENDAR "
       "where VERSION=? "
       "order by POSITION";
-  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
+  sql::Statement select_stmt(CALI_HERE,_sdb,sql);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,1,version);
 
   int position = 0;
@@ -230,7 +229,6 @@ Db::load_calendars(int version)
       break;
     }
   }
-  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_stmt) );
 }
 
   
@@ -239,14 +237,13 @@ Db::find(time_t begin, time_t end, int version)
 {
   std::multimap<time_t,Occurrence*> result;
 
-  sqlite3_stmt* select_stmt;
   const char* sql =
       "select O.CALNUM,O.UID,SUMMARY,SEQUENCE,ALLDAY,RECURS,DTSTART,DTEND "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
       "where DTEND>=? and DTSTART<? and O.VERSION=? "
       "order by DTSTART";
-  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stmt,NULL) );
+  sql::Statement select_stmt(CALI_HERE,_sdb,sql);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,1,begin);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,2,end);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,3,version);
@@ -279,7 +276,6 @@ Db::find(time_t begin, time_t end, int version)
       break;
     }
   }
-  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_stmt) );
   return result;
 }
 
@@ -352,9 +348,8 @@ icalcomponent*
 Db::vevent(const char* uid, int version)
 {
   // Read in VEVENTS from the database...
-  sqlite3_stmt* select_evt;
   const char* sql = "select VEVENT from EVENT where VERSION=? and UID=?";
-  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_evt,NULL) );
+  sql::Statement select_evt(CALI_HERE,_sdb,sql);
   sql::bind_int( CALI_HERE,_sdb,select_evt,1,version);
   sql::bind_text(CALI_HERE,_sdb,select_evt,2,uid,-1);
 
@@ -379,7 +374,6 @@ Db::vevent(const char* uid, int version)
   {
     vevent = ics::make_new_vevent(uid);
   }
-  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_evt) );
   return vevent;
 }
 
@@ -451,9 +445,8 @@ bool
 Db::_setting(const char* key, std::string& val) const
 {
   bool result = false;
-  sqlite3_stmt* select_stg;
   const char* sql = "select VALUE from SETTING where KEY=?";
-  CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&select_stg,NULL) );
+  sql::Statement select_stg(CALI_HERE,_sdb,sql);
   sql::bind_text(CALI_HERE,_sdb,select_stg,1,key,-1);
 
   int return_code = ::sqlite3_step(select_stg);
@@ -466,7 +459,6 @@ Db::_setting(const char* key, std::string& val) const
   {
     calendari::sql::error(CALI_HERE,_sdb);
   }
-  CALI_SQLCHK(_sdb, ::sqlite3_finalize(select_stg) );
   return result;
 }
 
@@ -479,23 +471,19 @@ Db::_set_setting(const char* key, const char* val) const
   std::string oldval;
   if(!_setting(key,oldval))
   {
-    sqlite3_stmt*  insert_stg;
     const char* sql = "insert into SETTING (KEY,VALUE) values (?,?)";
-    CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&insert_stg,NULL) );
+    sql::Statement insert_stg(CALI_HERE,_sdb,sql);
     sql::bind_text(CALI_HERE,_sdb,insert_stg,1,key,-1);
     sql::bind_text(CALI_HERE,_sdb,insert_stg,2,val,-1);
     sql::step_reset(CALI_HERE,_sdb,insert_stg);
-    CALI_SQLCHK(_sdb, ::sqlite3_finalize(insert_stg) );
   }
   else if(oldval!=val)
   {
-    sqlite3_stmt*  update_stg;
     const char* sql = "update SETTING set VALUE=? where KEY=?";
-    CALI_SQLCHK(_sdb, ::sqlite3_prepare_v2(_sdb,sql,-1,&update_stg,NULL) );
+    sql::Statement update_stg(CALI_HERE,_sdb,sql);
     sql::bind_text(CALI_HERE,_sdb,update_stg,1,val,-1);
     sql::bind_text(CALI_HERE,_sdb,update_stg,2,key,-1);
     sql::step_reset(CALI_HERE,_sdb,update_stg);
-    CALI_SQLCHK(_sdb, ::sqlite3_finalize(update_stg) );
   }
   CALI_SQLCHK(_sdb, ::sqlite3_exec(_sdb, "commit", 0, 0, 0) );
 }
