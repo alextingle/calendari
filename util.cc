@@ -20,27 +20,25 @@ const char* system_timezone(void)
       return tzid.c_str();
 
   // Look for /etc/timezone
-  if(0==::access("/etc/timezone",R_OK))
+  int fd = ::open("/etc/timezone",O_RDONLY);
+  if(fd<0)
   {
-    int fd = ::open("/etc/timezone",O_RDONLY);
-    if(fd<0)
+    ::error(0,errno,"Failed to open /etc/timezone");
+  }
+  else
+  {
+    char buf[64];
+    if(::read(fd,buf,sizeof(buf)))
     {
-      ::error(0,errno,"Failed to open /etc/timezone");
-    }
-    else
-    {
-      char buf[64];
-      if(::read(fd,buf,sizeof(buf)))
+      buf[ sizeof(buf)-1 ] = '\0';
+      char* pos = ::strchrnul(buf,'\n');
+      if(pos>buf)
       {
-        buf[ sizeof(buf)-1 ] = '\0';
-        char* pos = ::strchrnul(buf,'\n');
-        if(pos>buf)
-        {
-          *pos = '\0';
-          tzid = buf;
-        }
+        *pos = '\0';
+        tzid = buf;
       }
     }
+    ::close(fd);
   }
   // ?? Add in other ways to find timezone - /etc/localtime, Gnome Oop, etc.
   if(tzid.empty())
