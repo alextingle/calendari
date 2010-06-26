@@ -251,17 +251,29 @@ Event::set_description(const char* s)
   load_vevent();
   icalproperty* iprop =
       icalcomponent_get_first_property(_vevent,ICAL_DESCRIPTION_PROPERTY);
-  if(iprop)
+  if(s[0])
   {
-    const char* old_desc = icalproperty_get_description(iprop);
-    if(old_desc && 0==::strcmp(s,old_desc))
-        return; // No change.
-    icalproperty_set_description(iprop,s);
+      // Set / change the description.
+      if(iprop)
+      {
+        const char* old_desc = icalproperty_get_description(iprop);
+        if(old_desc && 0==::strcmp(s,old_desc))
+            return; // No change.
+        icalproperty_set_description(iprop,s);
+      }
+      else
+      {
+        iprop = icalproperty_new_description(s);
+        icalcomponent_add_property(_vevent,iprop);
+      }
   }
   else
   {
-    iprop = icalproperty_new_description(s);
-    icalcomponent_add_property(_vevent,iprop);
+      // Erase the description.
+      if(iprop)
+          icalcomponent_remove_property(_vevent,iprop);
+      else
+          return; // No change.
   }
   // --
   static Queue& q( Queue::inst() );

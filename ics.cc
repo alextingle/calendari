@@ -5,6 +5,7 @@
 #include "err.h"
 #include "event.h"
 #include "util.h"
+#include "queue.h"
 #include "sql.h"
 
 #include <cstring>
@@ -440,6 +441,10 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 
   icalproperty* prop;
   icalparameter* param;
+  Queue& q( Queue::inst() );
+
+  // Make sure the database is up-to-date before we start.
+  q.flush();
 
   // Load calendar from database.
   sqlite3_stmt* select_cal;
@@ -524,7 +529,7 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
         "left join OCCURRENCE O on K.UID=O.UID and K.S=O.DTSTART "
         "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
         "where E.VERSION=? and E.CALNUM=? "
-        "order by SUMMARY";
+        "order by O.DTSTART";
   CALI_SQLCHK(db, ::sqlite3_prepare_v2(db,sql,-1,&select_evt,NULL) );
   sql::bind_int(CALI_HERE,db,select_evt,1,version);
   sql::bind_int(CALI_HERE,db,select_evt,2,calnum);
@@ -553,10 +558,17 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 
     // ...and populate them with any modifications.
 
+    int old_sequence = -1;
     icalcomponent* vevent;
     if(veventz && veventz[0])
     {
       vevent = icalparser_parse_string(veventz);
+
+      // Find the old sequence number (if any).
+      prop = icalcomponent_get_first_property(vevent,ICAL_SEQUENCE_PROPERTY);
+      if(prop)
+          old_sequence = icalproperty_get_sequence(prop);
+
       // Eliminate parts that we already have.
       prop = icalcomponent_get_first_property(vevent,ICAL_ANY_PROPERTY);
       while(prop)
@@ -566,9 +578,10 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
         const char* name = icalproperty_get_property_name(prop);
         if( 0==::strcmp(name,"DTSTART") ||
             0==::strcmp(name,"DTEND") ||
-            0==::strcmp(name,"DTSTAMP") ||
+           (0==::strcmp(name,"DTSTAMP") && sequence>old_sequence) ||
             0==::strcmp(name,"SUMMARY") ||
-            0==::strcmp(name,"SEQUENCE") )
+            0==::strcmp(name,"SEQUENCE") ||
+            0==::strcmp(name,"X-LIC-ERROR") )
         {
           icalcomponent_remove_property(vevent,prop);
           icalproperty_free(prop);
@@ -587,8 +600,11 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
     icalcomponent_add_property(vevent,
         icalproperty_new_sequence( sequence )
       );
-    prop = icalproperty_new_dtstamp( timet2ical(::time(NULL),false) );
-    icalcomponent_add_property(vevent,prop);
+    if(sequence>old_sequence)
+    {
+      prop = icalproperty_new_dtstamp( timet2ical(::time(NULL),false) );
+      icalcomponent_add_property(vevent,prop);
+    }
 
     prop = icalproperty_new_dtstart( timet2ical(dtstart,allday,tzid) );
     param = icalparameter_new_tzid(tzid);
@@ -604,8 +620,22 @@ void write(const char* ical_filename, Db& db, const char* calid, int version)
 
     // Add this VEVENT to our calendar
     icalcomponent_add_component(ical.get(),vevent);
+
+    // If it's changed, write it back out to the database too.
+    if(sequence>old_sequence)
+    {
+      q.pushf(
+          "update EVENT set VEVENT='%s' where VERSION=%d and UID='%s'",
+          sql::quote(icalcomponent_as_ical_string(vevent)).c_str(),
+          version,
+          sql::quote(uid).c_str()
+        );
+    }
   }
   CALI_SQLCHK(db, ::sqlite3_finalize(select_evt) );
+  
+  // Flush any changes to the database.
+  q.flush();
 
   // Write out the iCalendar file.
   std::ofstream ofile(ical_filename);
