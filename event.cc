@@ -59,6 +59,7 @@ Calendar::set_path(const std::string& s)
       "update CALENDAR set PATH='%s' where VERSION=%d and CALNUM=%d",
       sql::quote(s).c_str(), version, calnum
     );
+  touch();
 }
 
 
@@ -176,7 +177,6 @@ Event::create(void)
       (_all_day? 1: 0),
       (_recurs? 1: 0)
     );
-  _calendar->touch();
 }
 
 
@@ -365,6 +365,7 @@ Occurrence::create(void)
       _dtstart,
       _dtend
     );
+  event.calendar().touch();
 }
 
 
@@ -445,6 +446,7 @@ Occurrence::destroy(void)
       event.calendar().version, uid_sql.c_str()
     );
   }
+  event.calendar().touch();
 }
 
 
