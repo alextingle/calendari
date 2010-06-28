@@ -391,6 +391,30 @@ calendar_inserted_cb(
 }
 
 
+G_MODULE_EXPORT gboolean
+cali_cals_treeview_key_press_event_cb(
+    GtkWidget*,
+    GdkEventKey*           event,
+    calendari::Calendari*  app
+  )
+{
+  if(event->type==GDK_KEY_PRESS)
+  {
+    switch(event->keyval)
+    {
+      case GDK_BackSpace:
+      case GDK_Delete:
+      case GDK_KP_Delete:
+          app->delete_selected_calendar();
+          break;
+      default:
+          return false; // Propagate on.
+    }
+  }
+  return true;
+}
+
+
 G_MODULE_EXPORT void
 cali_cals_treeview_row_activated_cb(
     GtkTreeView*,

@@ -67,6 +67,7 @@ struct Calendari
 
   /** Create a new calendar - triggered by UI. */
   void create_calendar(void);
+  void delete_selected_calendar(void);
 
   /** Create a new event - triggered by UI. Copy details from 'old', if set. */
   Occurrence* create_event(time_t dtstart, time_t dtend, Event* old=NULL);

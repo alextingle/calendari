@@ -38,9 +38,12 @@ struct CalendarList
   Calendar* current(void) const;
   void toggle(gchar* path, Calendari* app);
 
-  /** Append cal to the *end* of the calendar list. It must not be already
+  /** Append 'cal' to the *end* of the calendar list. It must not be already
   *   in the list. */
   void add_calendar(Calendar& cal);
+
+  /** Remove selected calendar from the list. Returns the removed calendar. */
+  bool remove_selected_calendar(void);
 
   /** Synchronise the calendar with its .ics file.
   *   Readonly calendars are re-read from the .ics file. Other calendars are

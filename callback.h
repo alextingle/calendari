@@ -167,6 +167,13 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT gboolean
+  cali_cals_treeview_key_press_event_cb(
+      GtkWidget*             widget,
+      GdkEventKey*           event,
+      calendari::Calendari*  cal
+    );
+
   G_MODULE_EXPORT void
   cali_cals_treeview_row_activated_cb(
       GtkTreeView*       tree_view,

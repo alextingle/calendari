@@ -207,6 +207,17 @@ CalendarList::add_calendar(Calendar& cal)
 }
 
 
+bool
+CalendarList::remove_selected_calendar(void)
+{
+  GtkTreeIter iter;
+  if( !get_selected_iter(iter) )
+      return false;
+  gtk_list_store_remove(liststore_cal,&iter);
+  return true;
+}
+
+
 void
 CalendarList::refresh(calendari::Calendari* app, Calendar* calendar)
 {

@@ -166,6 +166,59 @@ Calendari::create_calendar(void)
 }
 
 
+void
+Calendari::delete_selected_calendar(void)
+{
+  Calendar* cal = calendar_list->current();
+  if(!cal)
+      return;
+
+  // First confirm that the use really wants to delete the whole calendar.
+  GtkDialog* dialog =
+    GTK_DIALOG(gtk_message_dialog_new(
+        GTK_WINDOW(window),
+        GTK_DIALOG_DESTROY_WITH_PARENT,
+        GTK_MESSAGE_QUESTION,
+        GTK_BUTTONS_NONE,
+        "Delete calendar '%s' and all of its events?",cal->name().c_str()
+      ));
+  // Add "Keep" button.
+  GtkButton* keep_btn = GTK_BUTTON(gtk_button_new_with_label("_Keep"));
+  gtk_button_set_use_underline(keep_btn,true);
+  gtk_button_set_image(keep_btn,
+      gtk_image_new_from_stock("gtk-ok",GTK_ICON_SIZE_MENU));
+  gtk_dialog_add_action_widget(dialog,GTK_WIDGET(keep_btn),GTK_RESPONSE_CANCEL);
+  gtk_widget_show(GTK_WIDGET(keep_btn));
+  // Add "Delete" button
+  gtk_dialog_add_button(dialog,"gtk-delete",GTK_RESPONSE_ACCEPT);
+  // Run the dialogue.
+  int response = gtk_dialog_run(dialog);
+  gtk_widget_destroy(GTK_WIDGET(dialog));
+  if(GTK_RESPONSE_ACCEPT != response)
+      return;
+
+  // OK, let the blood flow...
+  // Start by clearing the selection, if necessary.
+  if(_clipboard_occurrence &&
+     _clipboard_occurrence->event.calendar().calid == cal->calid)
+  {
+    _clipboard_occurrence = NULL;
+  }
+  if(_selected_occurrence &&
+     _selected_occurrence->event.calendar().calid == cal->calid)
+  {
+    select(NULL);
+  }
+  // Remove the Calendar from the cal-list GUI.
+  if( !calendar_list->remove_selected_calendar() )
+      return; // Bail out if it's somehow not there.
+  // Clear the database and destroy the Calendar/Event/Occurrence objects.
+  db->erase_calendar(cal);
+  main_view->reload();
+  queue_main_redraw();
+}
+
+
 Occurrence*
 Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
 {

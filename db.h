@@ -67,6 +67,7 @@ public:
       bool         show,
       int          version=1
     );
+  void erase_calendar(Calendar* cal);
 
   Occurrence* create_event(
       const char*  uid,

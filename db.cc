@@ -354,7 +354,36 @@ Db::create_calendar(
 }
 
 
-Occurrence* Db::create_event(
+void
+Db::erase_calendar(Calendar* cal)
+{
+  assert(cal);
+  sql::exec(CALI_HERE,_sdb,"begin");
+  try
+  {
+    sql::execf(CALI_HERE,_sdb,
+        "delete from OCCURRENCE where VERSION=%d and CALNUM=%d",
+        cal->version,cal->calnum);
+    sql::execf(CALI_HERE,_sdb,
+        "delete from EVENT where VERSION=%d and CALNUM=%d",
+        cal->version,cal->calnum);
+    sql::execf(CALI_HERE,_sdb,
+        "delete from CALENDAR where VERSION=%d and CALNUM=%d",
+        cal->version,cal->calnum);
+    sql::exec(CALI_HERE,_sdb,"commit");
+    _ver[cal->version].purge(cal->calnum);
+    delete cal;
+  }
+  catch(...)
+  {
+    try{ sql::exec(CALI_HERE,_sdb,"rollback"); } catch(...) {}
+    throw;
+  }
+}
+
+
+Occurrence*
+Db::create_event(
     const char*  uid,
     time_t       dtstart,
     time_t       dtend,
