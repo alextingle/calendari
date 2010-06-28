@@ -55,29 +55,13 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
   const CalMap& cc = app->db->calendars();
 
   // Sort by position.
-  std::vector<Calendar*> vec(cc.size(),NULL);
+  typedef std::multimap<int,Calendar*> Pos_t;
+  Pos_t pos;
   for(CalMap::const_iterator c=cc.begin(); c!=cc.end() ; ++c)
-      vec[c->second->position()] = c->second;
+      pos.insert( std::make_pair(c->second->position(),c->second) );
 
-  GdkColor col;
-  for(std::vector<Calendar*>::const_iterator v=vec.begin(); v!=vec.end() ; ++v)
-  {
-    gdk_color_parse( (*v)->colour().c_str(), &col );
-    GdkPixbuf* pixbuf = new_pixbuf_from_col(col,12,12);
-
-    GtkTreeIter* iter =NULL;
-    gtk_list_store_insert_with_values(
-        this->liststore_cal, iter, 99999,
-        0,*v,
-        1,(*v)->show(),
-        2,(*v)->name().c_str(),
-        3,(*v)->colour().c_str(),
-        4,!(*v)->readonly(),
-        5,pixbuf,
-        -1
-      );
-    g_object_unref(G_OBJECT(pixbuf));
-  }
+  for(Pos_t::const_iterator i=pos.begin(); i!=pos.end() ; ++i)
+      add_calendar( *i->second );
 
   // -- cal_dialog --
 
@@ -199,19 +183,27 @@ CalendarList::toggle(gchar* path, calendari::Calendari* app)
 
 
 void
-CalendarList::add(void)
+CalendarList::add_calendar(Calendar& cal)
 {
-  // ?? Unused method?
+  int len = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(liststore_cal),NULL);
+  cal.set_position(len);
+
+  GdkColor col;
+  gdk_color_parse( cal.colour().c_str(), &col );
+  GdkPixbuf* pixbuf = new_pixbuf_from_col(col,12,12);
+
   GtkTreeIter* iter =NULL;
   gtk_list_store_insert_with_values(
       this->liststore_cal, iter, 99999,
-      0,NULL,
-      1,TRUE, // show
-      2,"Foobar",
-      3,"#0000bb",
-      4,TRUE, // writeable
+      0,&cal,
+      1,cal.show(),
+      2,cal.name().c_str(),
+      3,cal.colour().c_str(),
+      4,!cal.readonly(),
+      5,pixbuf,
       -1
     );
+  g_object_unref(G_OBJECT(pixbuf));
 }
 
 
@@ -288,10 +280,19 @@ CalendarList::refresh_next(Calendari* app)
 void
 CalendarList::select(Occurrence* occ)
 {
-  if(!occ)
-      return;
-  int pos = occ->event.calendar().position();
-  GtkTreePath* path = gtk_tree_path_new_from_indices(pos,-1);
+  if(occ)
+      select( occ->event.calendar().position() );
+}
+
+
+void
+CalendarList::select(int position)
+{
+#ifndef NDEBUG
+  int len = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(liststore_cal),NULL);
+  assert(position < len);
+#endif
+  GtkTreePath* path = gtk_tree_path_new_from_indices(position,-1);
   gtk_tree_view_set_cursor(
       treeview,
       path,

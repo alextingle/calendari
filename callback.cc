@@ -13,6 +13,16 @@
 // -- menus --
 
 G_MODULE_EXPORT void
+cali_menu_new_cb(
+    GtkMenuItem*,
+    calendari::Calendari*  app
+  )
+{
+  app->create_calendar();
+}
+
+
+G_MODULE_EXPORT void
 cali_menu_refresh_cb(
     GtkMenuItem*,
     calendari::Calendari*  cal

@@ -139,6 +139,33 @@ Calendari::moved(Occurrence* occ)
 }
 
 
+void
+Calendari::create_calendar(void)
+{
+  if(_selected_occurrence)
+  {
+    select(NULL);
+    queue_main_redraw();
+  }
+  char calid[64];
+  uuid_t uu;
+  uuid_generate(uu);
+  uuid_unparse(uu,calid);
+
+  Calendar* new_cal =
+    db->create_calendar(
+      calid,
+      "New Calendar", // calname
+      "",        // path
+      false,     // readonly
+      "#0000aa", // colour ?? choose a different colour here.
+      true       // show
+    );
+  calendar_list->add_calendar(*new_cal);
+  calendar_list->select( new_cal->position() );
+}
+
+
 Occurrence*
 Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
 {
@@ -146,11 +173,12 @@ Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
   if(calendar && !calendar->readonly())
   {
     // Format buf as <UUID>-cali@<hostname>
+    const size_t uuid_strlen = 36;
     char buf[256];
     uuid_t uu;
     uuid_generate(uu);
     uuid_unparse(uu,buf);
-    char* s = ::stpcpy(buf+sizeof(uu),"-cali@");
+    char* s = ::stpcpy(buf+uuid_strlen,"-cali@");
     ::gethostname(s, sizeof(buf) - (s-buf));
     // Make the new occurrence.
     Occurrence* occ = db->create_event(

@@ -19,6 +19,8 @@ public:
   
   Calendar(int v, const char* id, int cn, const char* nm, const char* pa,
       int rp, int ps, const char* cl, int sh);
+  /** Write this to a new row in the database. */
+  void create(void);
 
   const std::string& name(void)     const { return _name; }
   const std::string& path(void)     const { return _path; }

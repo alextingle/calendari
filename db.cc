@@ -200,7 +200,6 @@ Db::load_calendars(int version)
   sql::Statement select_stmt(CALI_HERE,_sdb,sql);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,1,version);
 
-  int position = 0;
   while(true)
   {
     int return_code = ::sqlite3_step(select_stmt);
@@ -212,8 +211,7 @@ Db::load_calendars(int version)
           safestr(::sqlite3_column_text(select_stmt,2)), // name
           safestr(::sqlite3_column_text(select_stmt,3)), // path
                   ::sqlite3_column_int( select_stmt,4),  // readonly
-          position++,
-//??              ::sqlite3_column_int( select_stmt,5),  // position
+                  ::sqlite3_column_int( select_stmt,5),  // position
           safestr(::sqlite3_column_text(select_stmt,6)), // colour
                   ::sqlite3_column_int( select_stmt,7)   // show
         );
@@ -313,6 +311,46 @@ Db::calnum(const char* calid)
       "select 1 + coalesce(max(CALNUM),0) from CALENDAR"
     );
   return calnum;
+}
+
+
+Calendar*
+Db::create_calendar(
+    const char*  calid,
+    const char*  calname,
+    const char*  path,
+    bool         readonly,
+    const char*  colour,
+    bool         show,
+    int          version
+  )
+{
+  // ?? Potential race here - we don't get new calnum and write new calendar in
+  // a single transaction.
+  int new_calnum;
+  sql::query_val(CALI_HERE, _sdb, new_calnum,
+      "select 1 + coalesce(max(CALNUM),0) from CALENDAR"
+    );
+  int new_position;
+  sql::query_val(CALI_HERE, _sdb, new_position,
+      "select 1 + coalesce(max(POSITION),0) from CALENDAR"
+    );
+  assert(_ver[version]._calendar.count(new_calnum)==0);
+  Calendar* cal = new Calendar(
+      version,
+      calid,
+      new_calnum,
+      calname,
+      (path? path: ""),
+      readonly,
+      new_position,
+      colour,
+      show
+    );
+  cal->create();
+  Queue::inst().flush();
+  _ver[version]._calendar.insert(std::make_pair(new_calnum,cal));
+  return cal;
 }
 
 

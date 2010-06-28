@@ -58,6 +58,16 @@ public:
   const std::map<int,Calendar*>& calendars(int version=1)
     { return _ver[version]._calendar; }
 
+  Calendar* create_calendar(
+      const char*  calid,
+      const char*  calname,
+      const char*  path,
+      bool         readonly,
+      const char*  colour,
+      bool         show,
+      int          version=1
+    );
+
   Occurrence* create_event(
       const char*  uid,
       time_t       dtstart,

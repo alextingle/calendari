@@ -37,7 +37,10 @@ struct CalendarList
   bool get_selected_iter(GtkTreeIter& iter) const;
   Calendar* current(void) const;
   void toggle(gchar* path, Calendari* app);
-  void add(void);
+
+  /** Append cal to the *end* of the calendar list. It must not be already
+  *   in the list. */
+  void add_calendar(Calendar& cal);
 
   /** Synchronise the calendar with its .ics file.
   *   Readonly calendars are re-read from the .ics file. Other calendars are
@@ -51,6 +54,7 @@ struct CalendarList
   void refresh_all(Calendari* app);
   bool refresh_next(Calendari* app);
   void select(Occurrence* occ);
+  void select(int position);
 
   // -- cal_dialog --
 

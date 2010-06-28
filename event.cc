@@ -36,6 +36,48 @@ Calendar::Calendar(
 
 
 void
+Calendar::create(void)
+{
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "insert into CALENDAR ("
+          "VERSION,"
+          "CALNUM,"
+          "CALID,"
+          "CALNAME,"
+          "DTSTAMP,"
+          "PATH,"
+          "READONLY,"
+          "POSITION,"
+          "COLOUR,"
+          "SHOW"
+      ") values ("
+          "%d,"   // VERSION
+          "%d,"   // CALNUM
+          "'%s'," // CALID
+          "'%s'," // CALNAME
+          "%d,"   // DTSTAMP
+          "'%s'," // PATH
+          "%d,"   // READONLY
+          "%d,"   // POSITION
+          "'%s'," // COLOUR
+          "%d"    // SHOW
+      ");",
+      version,
+      calnum,
+      sql::quote(calid).c_str(),
+      sql::quote(_name).c_str(),
+      ::time(NULL),
+      sql::quote(_path).c_str(),
+      (_readonly? 1: 0),
+      _position,
+      sql::quote(_colour).c_str(),
+      (_show? 1: 0)
+    );
+}
+
+
+void
 Calendar::set_name(const std::string& s)
 {
   _name = s;
