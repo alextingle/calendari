@@ -5,6 +5,7 @@
 #include "sql.h"
 
 #include <cassert>
+#include <cstring>
 #include <libical/ical.h>
 
 namespace calendari {

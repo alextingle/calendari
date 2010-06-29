@@ -23,6 +23,16 @@ cali_menu_new_cb(
 
 
 G_MODULE_EXPORT void
+cali_menu_subscribe_cb(
+    GtkMenuItem*,
+    calendari::Calendari*  app
+  )
+{
+  app->subscribe_calendar();
+}
+
+
+G_MODULE_EXPORT void
 cali_menu_refresh_cb(
     GtkMenuItem*,
     calendari::Calendari*  cal

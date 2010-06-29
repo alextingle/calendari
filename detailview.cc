@@ -6,6 +6,7 @@
 #include "event.h"
 
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 
 namespace calendari {

@@ -20,6 +20,12 @@ extern "C"
     );
 
   G_MODULE_EXPORT void
+  cali_menu_subscribe_cb(
+      GtkMenuItem*           menuitem,
+      calendari::Calendari*  app
+    );
+
+  G_MODULE_EXPORT void
   cali_menu_refresh_cb(
       GtkMenuItem*           menuitem,
       calendari::Calendari*  cal

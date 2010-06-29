@@ -13,6 +13,9 @@ typedef struct icalcomponent_impl icalcomponent;
 
 namespace calendari {
 
+// Forward reference
+namespace sql { class Statement; }
+
 
 struct Version
 {
@@ -41,6 +44,9 @@ public:
 
   /** Initial load of all calendar information. */
   void load_calendars(int version=1);
+
+  /** Initial load of one calendar's information. */
+  Calendar* load_calendar(int calnum, int version=1);
 
   /** Find all occurrences between the specified (begin,end] times. */
   std::multimap<time_t,Occurrence*> find(time_t begin,time_t end,int version=1);
@@ -97,6 +103,9 @@ public:
 private:
   sqlite3*               _sdb;
   std::map<int,Version>  _ver;
+
+  /** Helper, loads calendars from 'select_stmt'. */
+  void _load_calendars(sql::Statement& select_stmt, int version);
 
   Occurrence* make_occurrence(
       int          calnum,

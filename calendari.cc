@@ -13,6 +13,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <getopt.h>
 #include <gmodule.h>
 #include <gtk/gtk.h>
@@ -162,6 +163,55 @@ Calendari::create_calendar(void)
       true       // show
     );
   calendar_list->add_calendar(*new_cal);
+  calendar_list->select( new_cal->position(), true );
+}
+
+
+void
+Calendari::subscribe_calendar(void)
+{
+  std::string filename = "";
+  // Pop up a file chooser dialogue -> sets filename.
+  {
+    GtkWidget* dialog =
+      gtk_file_chooser_dialog_new ("Subscribe",
+          GTK_WINDOW(window),
+          GTK_FILE_CHOOSER_ACTION_OPEN,
+          GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,
+          GTK_STOCK_OPEN,  GTK_RESPONSE_ACCEPT,
+          NULL
+        );
+    GtkFileFilter* filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter,"Calendars");
+    gtk_file_filter_add_mime_type(filter,"text/calendar");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),filter);
+
+    filter = gtk_file_filter_new();
+    gtk_file_filter_set_name(filter,"All files");
+    gtk_file_filter_add_pattern(filter,"*");
+    gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(dialog),filter);
+
+    if(gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT)
+    {
+      char* f = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+      filename = f;
+      g_free(f);
+    }
+    gtk_widget_destroy(dialog);
+  }
+  if(filename.empty())
+      return;
+  printf("Subscribe to %s\n",filename.c_str());
+  int calnum = ics::read(this,filename.c_str(),*db);
+  if(calnum<0)
+      return;
+  Calendar* new_cal = db->load_calendar(calnum);
+  assert(new_cal);
+  if(_selected_occurrence)
+      select(NULL);
+  calendar_list->add_calendar(*new_cal);
+  main_view->reload();
+  queue_main_redraw();
   calendar_list->select( new_cal->position(), true );
 }
 

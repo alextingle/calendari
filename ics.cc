@@ -8,8 +8,10 @@
 #include "queue.h"
 #include "sql.h"
 
+#include <cstdlib>
 #include <cstring>
 #include <errno.h>
+#include <error.h>
 #include <fstream>
 #include <iostream>
 #include <libical/ical.h>
@@ -238,7 +240,7 @@ void process_rrule(
 
 // -- public --
 
-void read(Calendari* app, const char* ical_filename, Db& db, int version)
+int read(Calendari* app, const char* ical_filename, Db& db, int version)
 {
   assert(ical_filename);
   assert(ical_filename[0]);
@@ -248,7 +250,7 @@ void read(Calendari* app, const char* ical_filename, Db& db, int version)
   if(!stream)
   {
     CALI_ERRO(0,errno,"failed to open calendar file %s",ical_filename);
-    return;
+    return -1;
   }
   ::icalparser_set_gen_data(iparser.get(),stream);
   SComponent ical( ::icalparser_parse(iparser.get(),read_stream) );
@@ -256,7 +258,7 @@ void read(Calendari* app, const char* ical_filename, Db& db, int version)
   if(!ical)
   {
     CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
-    return;
+    return -1;
   }
 
   // Prepare the insert statements.
@@ -427,6 +429,7 @@ void read(Calendari* app, const char* ical_filename, Db& db, int version)
     process_rrule(ievt,dtstart,dtend,db,insert_occ);
   }
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
+  return calnum;
 }
 
 

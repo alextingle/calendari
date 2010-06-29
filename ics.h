@@ -14,8 +14,10 @@ namespace calendari {
 namespace ics {
 
 
-/** Parse ical_filename and write the result to db. */
-void read(Calendari* app, const char* ical_filename, Db& db, int version=1);
+/** Parse ical_filename and write the result to db.
+*   Return the 'calnum' of the calendar we read in, or -1 in the case of
+*   failure. */
+int read(Calendari* app, const char* ical_filename, Db& db, int version=1);
 
 /** Write from the db to ical_filename. */
 void write(const char* ical_filename, Db& db, const char* calid, int version=1);

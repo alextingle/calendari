@@ -191,7 +191,6 @@ Db::refresh_cal(int calnum, int from_version, int to_version)
 void
 Db::load_calendars(int version)
 {
-  Version& ver = _ver[version];
   const char* sql =
       "select CALID,CALNUM,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW "
       "from CALENDAR "
@@ -199,7 +198,30 @@ Db::load_calendars(int version)
       "order by POSITION";
   sql::Statement select_stmt(CALI_HERE,_sdb,sql);
   sql::bind_int(CALI_HERE,_sdb,select_stmt,1,version);
+  _load_calendars(select_stmt,version);
+}
 
+
+Calendar*
+Db::load_calendar(int calnum, int version)
+{
+  const char* sql =
+      "select CALID,CALNUM,CALNAME,PATH,READONLY,POSITION,COLOUR,SHOW "
+      "from CALENDAR "
+      "where VERSION=? and CALNUM=? "
+      "order by POSITION";
+  sql::Statement select_stmt(CALI_HERE,_sdb,sql);
+  sql::bind_int(CALI_HERE,_sdb,select_stmt,1,version);
+  sql::bind_int(CALI_HERE,_sdb,select_stmt,2,calnum);
+  _load_calendars(select_stmt,version);
+  return calendar(calnum);
+}
+
+
+void
+Db::_load_calendars(sql::Statement& select_stmt, int version)
+{
+  Version& ver = _ver[version];
   while(true)
   {
     int return_code = ::sqlite3_step(select_stmt);
@@ -229,7 +251,7 @@ Db::load_calendars(int version)
   }
 }
 
-  
+
 std::multimap<time_t,Occurrence*>
 Db::find(time_t begin, time_t end, int version)
 {
@@ -372,6 +394,7 @@ Db::erase_calendar(Calendar* cal)
         cal->version,cal->calnum);
     sql::exec(CALI_HERE,_sdb,"commit");
     _ver[cal->version].purge(cal->calnum);
+    _ver[cal->version]._calendar.erase(cal->calnum);
     delete cal;
   }
   catch(...)
