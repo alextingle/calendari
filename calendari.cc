@@ -178,7 +178,7 @@ Calendari::delete_selected_calendar(void)
     GTK_DIALOG(gtk_message_dialog_new(
         GTK_WINDOW(window),
         GTK_DIALOG_DESTROY_WITH_PARENT,
-        GTK_MESSAGE_QUESTION,
+        GTK_MESSAGE_WARNING,
         GTK_BUTTONS_NONE,
         "Delete calendar '%s' and all of its events?",cal->name().c_str()
       ));
