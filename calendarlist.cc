@@ -297,7 +297,7 @@ CalendarList::select(Occurrence* occ)
 
 
 void
-CalendarList::select(int position)
+CalendarList::select(int position, bool activate)
 {
 #ifndef NDEBUG
   int len = gtk_tree_model_iter_n_children(GTK_TREE_MODEL(liststore_cal),NULL);
@@ -310,6 +310,8 @@ CalendarList::select(int position)
       NULL, // focus_column,
       false // start_editing
     );
+  if(activate)
+      row_activated(path);
   gtk_tree_path_free(path);
 }
 

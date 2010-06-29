@@ -162,7 +162,7 @@ Calendari::create_calendar(void)
       true       // show
     );
   calendar_list->add_calendar(*new_cal);
-  calendar_list->select( new_cal->position() );
+  calendar_list->select( new_cal->position(), true );
 }
 
 

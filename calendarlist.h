@@ -57,7 +57,7 @@ struct CalendarList
   void refresh_all(Calendari* app);
   bool refresh_next(Calendari* app);
   void select(Occurrence* occ);
-  void select(int position);
+  void select(int position, bool activate=false);
 
   // -- cal_dialog --
 
