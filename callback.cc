@@ -115,11 +115,13 @@ cali_menu_paste_cb(GtkMenuItem*, calendari::Calendari* app)
 G_MODULE_EXPORT void
 cali_menu_delete_cb(
     GtkMenuItem*,
-    calendari::Calendari*  cal
+    calendari::Calendari*  app
   )
 {
-  if(gtk_widget_has_focus(cal->main_drawingarea))
-      cal->erase_selected();
+  if(gtk_widget_has_focus(app->main_drawingarea))
+      app->erase_selected();
+  else if(gtk_widget_has_focus(GTK_WIDGET(app->calendar_list->treeview)))
+      app->delete_selected_calendar();
 }
 
 
