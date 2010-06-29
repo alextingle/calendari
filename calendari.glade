@@ -460,7 +460,7 @@
                         <child>
                           <object class="GtkTreeViewColumn" id="treeviewcolumn2">
                             <child>
-                              <object class="GtkCellRendererPixbuf" id="cellrendererpixbuf1"/>
+                              <object class="GtkCellRendererPixbuf" id="colour"/>
                               <attributes>
                                 <attribute name="pixbuf">5</attribute>
                               </attributes>
@@ -473,9 +473,21 @@
                             <property name="title">Calendars</property>
                             <property name="expand">True</property>
                             <child>
-                              <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                              <object class="GtkCellRendererText" id="name"/>
                               <attributes>
                                 <attribute name="text">2</attribute>
+                              </attributes>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkTreeViewColumn" id="Writeable">
+                            <child>
+                              <object class="GtkCellRendererPixbuf" id="writeable">
+                                <property name="stock_id">gtk-edit</property>
+                              </object>
+                              <attributes>
+                                <attribute name="visible">4</attribute>
                               </attributes>
                             </child>
                           </object>
@@ -486,7 +498,7 @@
                             <property name="min_width">20</property>
                             <property name="alignment">0.5</property>
                             <child>
-                              <object class="GtkCellRendererToggle" id="cellrenderertoggle1">
+                              <object class="GtkCellRendererToggle" id="show">
                                 <signal name="toggled" handler="calendar_toggle_cb"/>
                               </object>
                               <attributes>
