@@ -455,6 +455,7 @@
                         <property name="model">liststore_cal</property>
                         <property name="headers_clickable">False</property>
                         <property name="reorderable">True</property>
+                        <property name="search_column">2</property>
                         <signal name="key_press_event" handler="cali_cals_treeview_key_press_event_cb"/>
                         <signal name="row_activated" handler="cali_cals_treeview_row_activated_cb"/>
                         <child>
