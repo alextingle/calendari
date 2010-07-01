@@ -6,6 +6,7 @@
 
 namespace calendari {
 
+class CalDialog;
 class Calendar;
 class Calendari;
 class Occurrence;
@@ -30,7 +31,7 @@ struct CalendarList
   *   model accordingly. */
   void reorder(void);
 
-  /** The user has double-clicked on a row - show the cal_dialog. */
+  /** The user has double-clicked on a row - show the cal_XXX_dialog. */
   void row_activated(GtkTreePath* path);
 
   Calendar* iter2cal(GtkTreeIter& iter) const;
@@ -59,18 +60,12 @@ struct CalendarList
   void select(Occurrence* occ);
   void select(int position, bool activate=false);
 
-  // -- cal_dialog --
-
-  GtkDialog*             cal_dialog;
-  GtkEntry*              name_entry;
-  GtkFileChooserButton*  cal_filechooserbutton;
-  GtkColorButton*        cal_colorbutton;
-
-  void entry_cb(GtkEntry* entry, calendari::Calendari* app);
-  void file_set_cb(GtkFileChooserButton* fc, calendari::Calendari* app);
-  void color_set_cb(GtkColorButton* cb, calendari::Calendari* app);
+  CalDialog* dialog;
 
 private:
+  CalDialog* cal_sub_dialog;
+  CalDialog* cal_pub_dialog;
+
   /** Queue of calendars (CALNUMs) to refresh. */
   std::set<int> refresh_queue;
 };

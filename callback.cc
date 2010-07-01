@@ -1,5 +1,6 @@
 #include "callback.h"
 
+#include "caldialog.h"
 #include "calendari.h"
 #include "calendarlist.h"
 #include "detailview.h"
@@ -446,7 +447,8 @@ cal_entry_focus_event_cb(
     calendari::Calendari*  app
   )
 {
-  app->calendar_list->entry_cb(GTK_ENTRY(e),app);
+  if(app->calendar_list->dialog)
+      app->calendar_list->dialog->entry_cb(GTK_ENTRY(e));
   return false;
 }
 
@@ -457,7 +459,8 @@ cal_file_set_cb(
     calendari::Calendari*  app
   )
 {
-  app->calendar_list->file_set_cb(fc,app);
+  if(app->calendar_list->dialog)
+      app->calendar_list->dialog->file_set_cb(fc);
 }
 
 
@@ -467,7 +470,8 @@ cal_color_set_cb(
     calendari::Calendari*  app
   )
 {
-  app->calendar_list->color_set_cb(cb,app);
+  if(app->calendar_list->dialog)
+      app->calendar_list->dialog->color_set_cb(cb);
 }
 
 

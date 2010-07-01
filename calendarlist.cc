@@ -1,5 +1,6 @@
 #include "calendarlist.h"
 
+#include "caldialog.h"
 #include "calendari.h"
 #include "db.h"
 #include "err.h"
@@ -15,18 +16,6 @@
 #include <vector>
 
 namespace calendari {
-
-
-namespace {
-  GdkPixbuf* new_pixbuf_from_col(GdkColor& col, int width, int height)
-  {
-    guint32 rgba = 0xFF |
-      (0xFF00 & col.red)<<16 | (0xFF00 & col.green)<<8 | (0xFF00 & col.blue);
-    GdkPixbuf* pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,false,8,width,height);
-    gdk_pixbuf_fill(pixbuf,rgba);
-    return pixbuf;
-  }
-}
 
 
 bool
@@ -66,12 +55,8 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
 
   // -- cal_dialog --
 
-  cal_dialog = GTK_DIALOG(gtk_builder_get_object(builder,"cali_cal_dialog"));
-  name_entry = GTK_ENTRY(gtk_builder_get_object(builder,"cal_name_entry"));
-  cal_filechooserbutton = GTK_FILE_CHOOSER_BUTTON(
-      gtk_builder_get_object(builder,"cal_filechooserbutton"));
-  cal_colorbutton = GTK_COLOR_BUTTON(
-      gtk_builder_get_object(builder,"cal_colorbutton"));
+  cal_sub_dialog = new CalSubDialog(app,builder);
+  cal_pub_dialog = new CalDialog(app,builder,"cal_pub_");
 }
 
 
@@ -107,32 +92,14 @@ CalendarList::row_activated(GtkTreePath* tp)
 
   Calendar* calendar;
   gtk_tree_model_get(GTK_TREE_MODEL(liststore_cal),&iter,0,&calendar,-1);
+  assert(calendar);
 
-  // set-up cal_dialog from calendar.
-  gtk_entry_set_text(name_entry,calendar->name().c_str());
-  (void)gtk_file_chooser_set_filename(
-      GTK_FILE_CHOOSER(cal_filechooserbutton),
-      calendar->path().c_str()
-    );
-  GdkColor col;
-  gdk_color_parse(calendar->colour().c_str(),&col);
-  gtk_color_button_set_color(cal_colorbutton,&col);
-
-  const bool sensitive = !calendar->readonly();
-  gtk_widget_set_sensitive(GTK_WIDGET(name_entry),true);
-  gtk_widget_set_sensitive(GTK_WIDGET(cal_filechooserbutton),sensitive);
-
-  // Show dialogue box.
-  int response = gtk_dialog_run(cal_dialog);
-  switch(response)
-  {
-    case GTK_RESPONSE_DELETE_EVENT:
-    case GTK_RESPONSE_CANCEL:
-      gtk_widget_hide(GTK_WIDGET(cal_dialog));
-      break;
-    default:
-      break;
-  }
+  if(calendar->readonly())
+      dialog = cal_sub_dialog;
+  else
+      dialog = cal_pub_dialog;
+  dialog->run();
+  dialog = NULL;
 }
 
 
@@ -314,71 +281,6 @@ CalendarList::select(int position, bool activate)
   if(activate)
       row_activated(path);
   gtk_tree_path_free(path);
-}
-
-
-// -- cal_dialog --
-
-void
-CalendarList::entry_cb(GtkEntry* entry, calendari::Calendari*)
-{
-  GtkTreeIter iter;
-  if(!get_selected_iter(iter))
-    return;
-  Calendar* calendar = iter2cal(iter);
-  assert(calendar);
-
-  const char* newval = gtk_entry_get_text(entry);
-  if(entry==name_entry)
-  {
-    if(calendar->name()!=newval && ::strlen(newval))
-    {
-      calendar->set_name( newval );
-      GValue gv;
-      ::memset(&gv,0,sizeof(GValue));
-      g_value_init(&gv,G_TYPE_STRING);
-      g_value_set_string(&gv,newval);
-      gtk_list_store_set_value(liststore_cal,&iter,2,&gv);
-    }
-  }
-}
-
-
-void
-CalendarList::file_set_cb(GtkFileChooserButton* fc, calendari::Calendari* app)
-{
-  GtkTreeIter iter;
-  if(!get_selected_iter(iter))
-    return;
-  Calendar* calendar = iter2cal(iter);
-  assert(calendar);
-
-  g_scoped<gchar> p( gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fc)) );
-  if(calendar->path()!=p.get() && ::strlen(p.get()))
-      calendar->set_path(p.get());
-}
-
-
-void
-CalendarList::color_set_cb(GtkColorButton* cb, calendari::Calendari* app)
-{
-  GtkTreeIter iter;
-  if(!get_selected_iter(iter))
-    return;
-  Calendar* calendar = iter2cal(iter);
-  assert(calendar);
-
-  GdkColor col;
-  gtk_color_button_get_color(cb,&col);
-  g_scoped<gchar> c( gdk_color_to_string(&col) );
-  if(calendar->colour()!=c.get() && ::strlen(c.get()))
-  {
-    calendar->set_colour(c.get());
-    GdkPixbuf* pixbuf = new_pixbuf_from_col(col,12,12);
-    gtk_list_store_set(liststore_cal,&iter, 3,c.get(), 5,pixbuf, -1);
-    g_object_unref(G_OBJECT(pixbuf));
-    app->queue_main_redraw();
-  }
 }
 
 

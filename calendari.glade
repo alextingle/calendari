@@ -65,7 +65,7 @@
                         <property name="visible">True</property>
                         <property name="tooltip_text" translatable="yes">Add a new calendar</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image11</property>
+                        <property name="image">new_image</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="cali_menu_new_cb"/>
                       </object>
@@ -76,7 +76,7 @@
                         <property name="visible">True</property>
                         <property name="tooltip_text" translatable="yes">Subscibe to an external calendar</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image12</property>
+                        <property name="image">open_image</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="cali_menu_subscribe_cb"/>
                       </object>
@@ -125,7 +125,6 @@
                         <property name="visible">True</property>
                         <property name="tooltip_text" translatable="yes">Synchronise all calendars</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image6</property>
                         <property name="use_stock">False</property>
                         <accelerator key="r" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
                         <signal name="activate" handler="cali_menu_refreshall_cb"/>
@@ -207,7 +206,7 @@
                         <property name="label">_Preferences...</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image8</property>
+                        <property name="image">preferences_image</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="cali_menu_dialogue_cb" object="cali_prefs_dialog"/>
                       </object>
@@ -229,7 +228,7 @@
                         <property name="label" translatable="yes">_Next</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image9</property>
+                        <property name="image">go_forward_image</property>
                         <property name="use_stock">False</property>
                         <accelerator key="Page_Down" signal="activate"/>
                         <signal name="activate" handler="next_button_clicked_cb"/>
@@ -240,7 +239,7 @@
                         <property name="label" translatable="yes">_Previous</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image10</property>
+                        <property name="image">go_back_image</property>
                         <property name="use_stock">False</property>
                         <accelerator key="Page_Up" signal="activate"/>
                         <signal name="activate" handler="prev_button_clicked_cb"/>
@@ -256,7 +255,7 @@
                         <property name="label" translatable="yes">Go to _Today</property>
                         <property name="visible">True</property>
                         <property name="use_underline">True</property>
-                        <property name="image">image7</property>
+                        <property name="image">home_image</property>
                         <property name="use_stock">False</property>
                         <accelerator key="t" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                         <signal name="activate" handler="cali_menu_today_cb"/>
@@ -313,7 +312,7 @@
                         <property name="relief">none</property>
                         <signal name="clicked" handler="prev_button_clicked_cb"/>
                         <child>
-                          <object class="GtkImage" id="image1">
+                          <object class="GtkImage" id="go_back_image2">
                             <property name="visible">True</property>
                             <property name="stock">gtk-go-back</property>
                           </object>
@@ -334,7 +333,7 @@
                         <property name="relief">none</property>
                         <signal name="clicked" handler="next_button_clicked_cb"/>
                         <child>
-                          <object class="GtkImage" id="image2">
+                          <object class="GtkImage" id="go_forward_image2">
                             <property name="visible">True</property>
                             <property name="stock">gtk-go-forward</property>
                           </object>
@@ -366,7 +365,7 @@
                         <property name="focus_on_click">False</property>
                         <signal name="clicked" handler="zoom_in_button_clicked_cb"/>
                         <child>
-                          <object class="GtkImage" id="image3">
+                          <object class="GtkImage" id="zoom_in_image">
                             <property name="visible">True</property>
                             <property name="stock">gtk-zoom-in</property>
                           </object>
@@ -388,7 +387,7 @@
                         <property name="relief">none</property>
                         <signal name="clicked" handler="zoom_out_button_clicked_cb"/>
                         <child>
-                          <object class="GtkImage" id="image4">
+                          <object class="GtkImage" id="zoom_out_image">
                             <property name="visible">True</property>
                             <property name="stock">gtk-zoom-out</property>
                           </object>
@@ -761,7 +760,7 @@
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child>
-          <object class="GtkImage" id="image5">
+          <object class="GtkImage" id="office_calendar_image">
             <property name="visible">True</property>
             <property name="pixel_size">135</property>
             <property name="icon_name">x-office-calendar</property>
@@ -784,7 +783,7 @@
       </object>
     </child>
   </object>
-  <object class="GtkImage" id="image6">
+  <object class="GtkImage" id="refresh_image">
     <property name="visible">True</property>
     <property name="stock">gtk-refresh</property>
     <property name="icon-size">1</property>
@@ -972,7 +971,7 @@
     <property name="page_increment">15</property>
     <signal name="value_changed" handler="prefs_adj_value_changed_cb"/>
   </object>
-  <object class="GtkDialog" id="cali_cal_dialog">
+  <object class="GtkDialog" id="cal_sub_dialog">
     <property name="border_width">5</property>
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
@@ -1003,7 +1002,7 @@
                     <property name="orientation">vertical</property>
                     <property name="spacing">5</property>
                     <child>
-                      <object class="GtkHBox" id="hbox9">
+                      <object class="GtkHBox" id="calname_hbox">
                         <property name="visible">True</property>
                         <property name="spacing">10</property>
                         <child>
@@ -1011,7 +1010,7 @@
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
                             <property name="label" translatable="yes">Name:</property>
-                            <property name="width_chars">7</property>
+                            <property name="width_chars">10</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1020,7 +1019,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="cal_name_entry">
+                          <object class="GtkEntry" id="cal_sub_name_entry">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="invisible_char">&#x25CF;</property>
@@ -1038,15 +1037,15 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="hbox10">
+                      <object class="GtkHBox" id="colour_hbox">
                         <property name="visible">True</property>
                         <property name="spacing">10</property>
                         <child>
-                          <object class="GtkLabel" id="label11">
+                          <object class="GtkLabel" id="label12">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">File:</property>
-                            <property name="width_chars">7</property>
+                            <property name="label" translatable="yes">Colour:</property>
+                            <property name="width_chars">10</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1055,10 +1054,12 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkFileChooserButton" id="cal_filechooserbutton">
+                          <object class="GtkColorButton" id="cal_sub_colorbutton">
                             <property name="visible">True</property>
-                            <property name="create_folders">False</property>
-                            <signal name="file_set" handler="cal_file_set_cb"/>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="color">#000000000000</property>
+                            <signal name="color_set" handler="cal_color_set_cb"/>
                           </object>
                           <packing>
                             <property name="position">1</property>
@@ -1072,15 +1073,15 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkHBox" id="hbox11">
+                      <object class="GtkHBox" id="path_hbox">
                         <property name="visible">True</property>
                         <property name="spacing">10</property>
                         <child>
-                          <object class="GtkLabel" id="label12">
+                          <object class="GtkLabel" id="label11">
                             <property name="visible">True</property>
                             <property name="xalign">0</property>
-                            <property name="label" translatable="yes">Colour:</property>
-                            <property name="width_chars">7</property>
+                            <property name="label" translatable="yes">Read from:</property>
+                            <property name="width_chars">10</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1089,12 +1090,11 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkColorButton" id="cal_colorbutton">
+                          <object class="GtkFileChooserButton" id="cal_sub_filechooserbutton">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="receives_default">True</property>
-                            <property name="color">#000000000000</property>
-                            <signal name="color_set" handler="cal_color_set_cb"/>
+                            <property name="sensitive">False</property>
+                            <property name="create_folders">False</property>
+                            <signal name="file_set" handler="cal_file_set_cb"/>
                           </object>
                           <packing>
                             <property name="position">1</property>
@@ -1114,7 +1114,7 @@
             <child type="label">
               <object class="GtkLabel" id="label9">
                 <property name="visible">True</property>
-                <property name="label" translatable="yes">&lt;b&gt;Calendar Options&lt;/b&gt;</property>
+                <property name="label" translatable="yes">&lt;b&gt;Calendar Subscription&lt;/b&gt;</property>
                 <property name="use_markup">True</property>
               </object>
             </child>
@@ -1131,13 +1131,13 @@
               <placeholder/>
             </child>
             <child>
-              <object class="GtkButton" id="cal_close_button">
+              <object class="GtkButton" id="cal_sub_close_button">
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
-                <signal name="clicked" handler="cali_dialog_response_cancel_cb" object="cali_cal_dialog"/>
+                <signal name="clicked" handler="cali_dialog_response_cancel_cb" object="cal_sub_dialog"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -1155,37 +1155,268 @@
       </object>
     </child>
     <action-widgets>
-      <action-widget response="0">cal_close_button</action-widget>
+      <action-widget response="0">cal_sub_close_button</action-widget>
     </action-widgets>
   </object>
-  <object class="GtkImage" id="image8">
+  <object class="GtkImage" id="preferences_image">
     <property name="visible">True</property>
     <property name="stock">gtk-preferences</property>
     <property name="icon-size">1</property>
   </object>
-  <object class="GtkImage" id="image9">
+  <object class="GtkImage" id="go_forward_image">
     <property name="visible">True</property>
     <property name="stock">gtk-go-forward</property>
     <property name="icon-size">1</property>
   </object>
-  <object class="GtkImage" id="image10">
+  <object class="GtkImage" id="go_back_image">
     <property name="visible">True</property>
     <property name="stock">gtk-go-back</property>
     <property name="icon-size">1</property>
   </object>
-  <object class="GtkImage" id="image7">
+  <object class="GtkImage" id="home_image">
     <property name="visible">True</property>
     <property name="stock">gtk-home</property>
     <property name="icon-size">1</property>
   </object>
-  <object class="GtkImage" id="image11">
+  <object class="GtkImage" id="new_image">
     <property name="visible">True</property>
     <property name="stock">gtk-new</property>
     <property name="icon-size">1</property>
   </object>
-  <object class="GtkImage" id="image12">
+  <object class="GtkImage" id="open_image">
     <property name="visible">True</property>
     <property name="stock">gtk-open</property>
     <property name="icon-size">1</property>
+  </object>
+  <object class="GtkDialog" id="cal_pub_dialog">
+    <property name="border_width">5</property>
+    <property name="modal">True</property>
+    <property name="window_position">center-on-parent</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="type_hint">dialog</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
+    <property name="has_separator">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox6">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkFrame" id="frame2">
+            <property name="visible">True</property>
+            <property name="label_xalign">0</property>
+            <child>
+              <object class="GtkAlignment" id="alignment3">
+                <property name="visible">True</property>
+                <property name="top_padding">5</property>
+                <property name="bottom_padding">5</property>
+                <property name="left_padding">10</property>
+                <property name="right_padding">10</property>
+                <child>
+                  <object class="GtkVBox" id="vbox4">
+                    <property name="visible">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">6</property>
+                    <child>
+                      <object class="GtkHBox" id="calname_hbox1">
+                        <property name="visible">True</property>
+                        <property name="spacing">10</property>
+                        <child>
+                          <object class="GtkLabel" id="label13">
+                            <property name="visible">True</property>
+                            <property name="xalign">0</property>
+                            <property name="label" translatable="yes">Name:</property>
+                            <property name="width_chars">10</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEntry" id="cal_pub_name_entry">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="invisible_char">&#x25CF;</property>
+                            <signal name="focus_out_event" handler="cal_entry_focus_event_cb"/>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkHBox" id="colour_hbox1">
+                        <property name="visible">True</property>
+                        <property name="spacing">10</property>
+                        <child>
+                          <object class="GtkLabel" id="label14">
+                            <property name="visible">True</property>
+                            <property name="xalign">0</property>
+                            <property name="label" translatable="yes">Colour:</property>
+                            <property name="width_chars">10</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkColorButton" id="cal_pub_colorbutton">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="receives_default">True</property>
+                            <property name="color">#000000000000</property>
+                            <signal name="color_set" handler="cal_color_set_cb"/>
+                          </object>
+                          <packing>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="cal_private_radiobutton">
+                        <property name="label" translatable="yes">Private calendar</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRadioButton" id="cal_public_radiobutton">
+                        <property name="label" translatable="yes">Publish changes to:</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                        <property name="group">cal_private_radiobutton</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkAlignment" id="alignment4">
+                        <property name="visible">True</property>
+                        <property name="left_padding">22</property>
+                        <child>
+                          <object class="GtkHBox" id="hbox9">
+                            <property name="visible">True</property>
+                            <property name="spacing">6</property>
+                            <child>
+                              <object class="GtkEntry" id="path_entry">
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="invisible_char">&#x25CF;</property>
+                              </object>
+                              <packing>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="browse_button">
+                                <property name="label" translatable="yes">Browse...</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="image">save_image</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">4</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel" id="label16">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">&lt;b&gt;Calendar&lt;/b&gt;</property>
+                <property name="use_markup">True</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area6">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <placeholder/>
+            </child>
+            <child>
+              <object class="GtkButton" id="cal_pub_close_button">
+                <property name="label">gtk-close</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <signal name="clicked" handler="cali_dialog_response_cancel_cb" object="cal_pub_dialog"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">cal_pub_close_button</action-widget>
+    </action-widgets>
+  </object>
+  <object class="GtkImage" id="save_image">
+    <property name="visible">True</property>
+    <property name="stock">gtk-save</property>
   </object>
 </interface>

@@ -1,6 +1,7 @@
 #ifndef CALENDARI__UTIL_H
 #define CALENDARI__UTIL_H 1
 
+#include <gtk/gtk.h>
 #include <time.h>
 
 extern "C" { void g_free(void*); }
@@ -97,6 +98,11 @@ private:
 
   ptr_type _v;
 };
+
+
+/** Construct a new pixbuf with a solid colour.
+*   Needs to be freed by calling g_object_unref() */
+GdkPixbuf* new_pixbuf_from_col(GdkColor& col, int width, int height);
 
 
 } // end namespace calendari

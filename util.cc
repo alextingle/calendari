@@ -50,4 +50,14 @@ const char* system_timezone(void)
 }
 
 
+GdkPixbuf* new_pixbuf_from_col(GdkColor& col, int width, int height)
+{
+  guint32 rgba = 0xFF |
+    (0xFF00 & col.red)<<16 | (0xFF00 & col.green)<<8 | (0xFF00 & col.blue);
+  GdkPixbuf* pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB,false,8,width,height);
+  gdk_pixbuf_fill(pixbuf,rgba);
+  return pixbuf;
+}
+
+
 } // end namespace calendari
