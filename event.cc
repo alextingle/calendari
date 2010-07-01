@@ -81,6 +81,8 @@ Calendar::create(void)
 void
 Calendar::set_name(const std::string& s)
 {
+  if(s==_name)
+      return;
   _name = s;
   // --
   static Queue& q( Queue::inst() );
@@ -95,6 +97,8 @@ Calendar::set_name(const std::string& s)
 void
 Calendar::set_path(const std::string& s)
 {
+  if(s==_path)
+      return;
   _path = s;
   // --
   static Queue& q( Queue::inst() );
@@ -122,6 +126,8 @@ Calendar::set_position(int p)
 void
 Calendar::set_colour(const std::string& s)
 {
+  if(s==_colour)
+      return;
   _colour = s;
   // --
   static Queue& q( Queue::inst() );
@@ -269,6 +275,8 @@ Event::set_calendar(Calendar& c)
 void
 Event::set_summary(const std::string& s)
 {
+  if(s==_summary)
+      return;
   _summary = s;
   // --
   static Queue& q( Queue::inst() );

@@ -56,7 +56,7 @@ CalendarList::build(Calendari* app, GtkBuilder* builder)
   // -- cal_dialog --
 
   cal_sub_dialog = new CalSubDialog(app,builder);
-  cal_pub_dialog = new CalDialog(app,builder,"cal_pub_");
+  cal_pub_dialog = new CalPubDialog(app,builder);
 }
 
 

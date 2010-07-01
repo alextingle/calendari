@@ -843,6 +843,7 @@
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="invisible_char">&#x25CF;</property>
+                                <property name="activates_default">True</property>
                                 <property name="xalign">1</property>
                                 <property name="adjustment">cali_auto_refresh_adj</property>
                                 <property name="snap_to_ticks">True</property>
@@ -942,6 +943,8 @@
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="cali_dialog_response_cancel_cb" object="cali_prefs_dialog"/>
@@ -1023,6 +1026,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="invisible_char">&#x25CF;</property>
+                            <property name="activates_default">True</property>
                             <signal name="focus_out_event" handler="cal_entry_focus_event_cb"/>
                           </object>
                           <packing>
@@ -1135,6 +1139,8 @@
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="cali_dialog_response_cancel_cb" object="cal_sub_dialog"/>
@@ -1240,6 +1246,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="invisible_char">&#x25CF;</property>
+                            <property name="activates_default">True</property>
                             <signal name="focus_out_event" handler="cal_entry_focus_event_cb"/>
                           </object>
                           <packing>
@@ -1297,6 +1304,7 @@
                         <property name="receives_default">False</property>
                         <property name="active">True</property>
                         <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="cal_pub_radiobutton_toggled_cb"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1313,6 +1321,7 @@
                         <property name="active">True</property>
                         <property name="draw_indicator">True</property>
                         <property name="group">cal_private_radiobutton</property>
+                        <signal name="toggled" handler="cal_pub_radiobutton_toggled_cb"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -1329,22 +1338,27 @@
                             <property name="visible">True</property>
                             <property name="spacing">6</property>
                             <child>
-                              <object class="GtkEntry" id="path_entry">
+                              <object class="GtkEntry" id="cal_path_entry">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
+                                <property name="has_tooltip">True</property>
+                                <property name="tooltip_text" translatable="yes">The calendar is written into this file</property>
                                 <property name="invisible_char">&#x25CF;</property>
+                                <property name="activates_default">True</property>
+                                <signal name="focus_out_event" handler="cal_entry_focus_event_cb"/>
                               </object>
                               <packing>
                                 <property name="position">0</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="browse_button">
+                              <object class="GtkButton" id="cal_browse_button">
                                 <property name="label" translatable="yes">Browse...</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">True</property>
                                 <property name="image">save_image</property>
+                                <signal name="clicked" handler="cal_button_clicked_cb"/>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1392,6 +1406,8 @@
                 <property name="label">gtk-close</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
+                <property name="can_default">True</property>
+                <property name="has_default">True</property>
                 <property name="receives_default">True</property>
                 <property name="use_stock">True</property>
                 <signal name="clicked" handler="cali_dialog_response_cancel_cb" object="cal_pub_dialog"/>

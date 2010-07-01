@@ -475,6 +475,28 @@ cal_color_set_cb(
 }
 
 
+G_MODULE_EXPORT void
+cal_pub_radiobutton_toggled_cb(
+    GtkToggleButton*       tb,
+    calendari::Calendari*  app
+  )
+{
+  if(gtk_toggle_button_get_active(tb) && app->calendar_list->dialog)
+      app->calendar_list->dialog->activated(tb);
+}
+
+
+G_MODULE_EXPORT void
+cal_button_clicked_cb(
+    GtkButton*             b,
+    calendari::Calendari*  app
+  )
+{
+  if(app->calendar_list->dialog)
+      app->calendar_list->dialog->button_clicked_cb(b);
+}
+
+
 // -- detail view --
 
 G_MODULE_EXPORT gboolean
