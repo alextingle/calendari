@@ -27,12 +27,14 @@ struct Calendari
   Setting*    setting;
 
   // Widgets
-  GtkWidget*     window;            ///< Application window
-  GtkWidget*     main_drawingarea;  ///< Canvas for the main view.
-  GtkLabel*      main_label;        ///< Label for the main view.
-  GtkStatusbar*  statusbar;         ///< Status bar.
-  GtkDialog*     about;             ///< About box.
-  GtkClipboard*  clipboard;         ///< 'CLIPBOARD' 
+  GtkWidget*         window;            ///< Application window
+  GtkWidget*         main_drawingarea;  ///< Canvas for the main view.
+  GtkLabel*          main_label;        ///< Label for the main view.
+  GtkStatusbar*      statusbar;         ///< Status bar.
+  GtkVPaned*         sidebar_vpaned;
+  GtkCheckMenuItem*  view_cals_menuitem;///< Menu: View>Calendars
+  GtkDialog*         about;             ///< About box.
+  GtkClipboard*      clipboard;         ///< 'CLIPBOARD' 
 
   bool main_drawingarea_redraw_queued;
 

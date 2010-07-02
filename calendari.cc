@@ -59,15 +59,26 @@ Calendari::build(GtkBuilder* builder)
     GTK_LABEL(gtk_builder_get_object(builder,"main_label"));
   statusbar =
     GTK_STATUSBAR(gtk_builder_get_object(builder,"cali_statusbar"));
+  sidebar_vpaned =
+    GTK_VPANED(gtk_builder_get_object(builder,"cali_sidebar_vpaned"));
+  view_cals_menuitem = GTK_CHECK_MENU_ITEM(
+    gtk_builder_get_object(builder,"cali_view_cals_menuitem"));
   about = GTK_DIALOG(gtk_builder_get_object(builder,"cali_aboutdialog"));
 
+  // Menu status
+  gtk_check_menu_item_set_active(view_cals_menuitem,setting->view_calendars());
+
+  // View calendars?
+  gtk_paned_set_position(
+      GTK_PANED(sidebar_vpaned),
+      (setting->view_calendars()? setting->cal_vpaned_pos(): 0 )
+    );
+
   // Set-up focus order (exclude calendar list from focus chain).
-  GtkContainer* sidebar_vpaned =
-    GTK_CONTAINER(gtk_builder_get_object(builder,"cali_sidebar_vpaned"));
   GtkWidget* detail_scolledwindow =
     GTK_WIDGET(gtk_builder_get_object(builder,"cali_detail_scrolledwindow"));
   GList* list = g_list_append(NULL,detail_scolledwindow);
-  gtk_container_set_focus_chain(sidebar_vpaned,list);
+  gtk_container_set_focus_chain(GTK_CONTAINER(sidebar_vpaned),list);
   g_list_free(list);
 
   // Set up drag and drop.
@@ -545,6 +556,9 @@ main(int argc, char* argv[])
 
   // Start main loop
   gtk_main();
+  
+  // Save settings before we quit.
+  app->setting->save();
 
   return 0;
 }

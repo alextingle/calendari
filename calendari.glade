@@ -224,6 +224,20 @@
                   <object class="GtkMenu" id="menu2">
                     <property name="visible">True</property>
                     <child>
+                      <object class="GtkCheckMenuItem" id="cali_view_cals_menuitem">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">_Calendars</property>
+                        <property name="use_underline">True</property>
+                        <accelerator key="F5" signal="activate"/>
+                        <signal name="toggled" handler="cali_menu_view_cals_cb"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparatorMenuItem" id="menuitem7">
+                        <property name="visible">True</property>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkImageMenuItem" id="go-next">
                         <property name="label" translatable="yes">_Next</property>
                         <property name="visible">True</property>
@@ -439,6 +453,7 @@
                 <property name="width_request">300</property>
                 <property name="visible">True</property>
                 <property name="orientation">vertical</property>
+                <signal name="notify" handler="cali_paned_notify_cb"/>
                 <child>
                   <object class="GtkScrolledWindow" id="cali_cals_scrolledwindow">
                     <property name="height_request">150</property>

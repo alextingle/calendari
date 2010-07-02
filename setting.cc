@@ -14,10 +14,21 @@ Setting::Setting(Calendari& app_)
   : app(app_),
     _timeout_source_tag(0),
     _auto_refresh_minutes(-1),
-    _week_starts(-1)
+    _week_starts(-1),
+    _cal_vpaned_pos_db( app.db->setting("cal_vpaned_pos",150) )
 {
   set_auto_refresh_minutes( app.db->setting("auto_refresh_minutes",10) );
   set_week_starts( app.db->setting("week_starts",1) ); // 1=Monday
+  set_view_calendars( app.db->setting("view_calendars",true) );
+  set_cal_vpaned_pos( _cal_vpaned_pos_db );
+}
+
+
+void
+Setting::save(void)
+{
+  if(_cal_vpaned_pos != _cal_vpaned_pos_db)
+      app.db->set_setting("cal_vpaned_pos",_cal_vpaned_pos);
 }
 
 
@@ -58,6 +69,25 @@ Setting::set_week_starts(int val)
     app.db->set_setting("week_starts",_week_starts);
     app.queue_main_redraw(true);
   }
+}
+
+
+void
+Setting::set_view_calendars(bool val)
+{
+  if(_view_calendars == val)
+      return;
+  std::swap(_view_calendars,val);
+  app.db->set_setting("view_calendars",_view_calendars);
+}
+
+
+void
+Setting::set_cal_vpaned_pos(int val)
+{
+  if(_cal_vpaned_pos == val || val < 60)
+      return;
+  std::swap(_cal_vpaned_pos,val);
 }
 
 

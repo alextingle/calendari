@@ -6,6 +6,7 @@
 #include "detailview.h"
 #include "monthview.h"
 #include "prefview.h"
+#include "setting.h"
 
 #include <cstdio>
 #include <gdk/gdkkeysyms.h>
@@ -137,6 +138,24 @@ cali_menu_delete_cb(
 
 
 G_MODULE_EXPORT void
+cali_menu_view_cals_cb(
+    GtkCheckMenuItem*      checkmenuitem,
+    calendari::Calendari*  app
+  )
+{
+  assert(checkmenuitem == app->view_cals_menuitem);
+  bool val = gtk_check_menu_item_get_active(app->view_cals_menuitem);
+  if(val == app->setting->view_calendars())
+      return;
+  app->setting->set_view_calendars(val);
+  gtk_paned_set_position(
+      GTK_PANED(app->sidebar_vpaned),
+      (val? app->setting->cal_vpaned_pos(): 0 )
+    );
+}
+
+
+G_MODULE_EXPORT void
 cali_menu_today_cb(
     GtkMenuItem*,
     calendari::Calendari*  app
@@ -169,6 +188,20 @@ G_MODULE_EXPORT void
 cali_dialog_response_cancel_cb(GtkDialog* dialog)
 {
   gtk_dialog_response(dialog,GTK_RESPONSE_CANCEL);
+}
+
+
+// -- structural --
+
+G_MODULE_EXPORT void
+cali_paned_notify_cb(
+    GObject*               obj,
+    GParamSpec*            pspec,
+    calendari::Calendari*  app
+  )
+{
+  int newpos = gtk_paned_get_position(GTK_PANED(obj));
+  app->setting->set_cal_vpaned_pos(newpos);
 }
 
 

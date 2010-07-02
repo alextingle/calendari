@@ -53,6 +53,12 @@ extern "C"
     );
 
   G_MODULE_EXPORT void
+  cali_menu_view_cals_cb(
+      GtkCheckMenuItem*      checkmenuitem,
+      calendari::Calendari*  app
+    );
+
+  G_MODULE_EXPORT void
   cali_menu_today_cb(
       GtkMenuItem*           menuitem,
       calendari::Calendari*  cal
@@ -67,6 +73,15 @@ extern "C"
 
   G_MODULE_EXPORT void
   cali_dialog_response_cancel_cb(GtkDialog* dialog);
+
+  // -- structural
+
+  G_MODULE_EXPORT void
+  cali_paned_notify_cb(
+      GObject*               obj,
+      GParamSpec*            pspec,
+      calendari::Calendari*  cal
+    );
 
   // -- cali_main_drawingarea --
 
