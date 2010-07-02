@@ -202,6 +202,13 @@ cali_paned_notify_cb(
 {
   int newpos = gtk_paned_get_position(GTK_PANED(obj));
   app->setting->set_cal_vpaned_pos(newpos);
+  // Make "view_calendars" consistent.
+  bool view_calendars = app->setting->view_calendars();
+  if( (newpos>0) != view_calendars )
+  {
+    app->setting->set_view_calendars(!view_calendars);
+    gtk_check_menu_item_set_active(app->view_cals_menuitem,!view_calendars);
+  }
 }
 
 
