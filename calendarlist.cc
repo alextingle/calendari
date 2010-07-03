@@ -132,6 +132,30 @@ CalendarList::current(void) const
 }
 
 
+Calendar*
+CalendarList::find_writeable(void) const
+{
+  Calendar* cal = NULL;
+  GtkTreeModel* m = GTK_TREE_MODEL(liststore_cal);
+  GtkTreeIter iter;
+  if(get_selected_iter(iter))
+  {
+    cal = iter2cal(iter);
+    if(cal && !cal->readonly())
+        return cal;
+  }
+  bool ok = gtk_tree_model_get_iter_first(m,&iter);
+  while(ok)
+  {
+    cal = iter2cal(iter);
+    if(cal && !cal->readonly())
+        return cal;
+    ok = gtk_tree_model_iter_next(m,&iter);
+  }
+  return NULL;
+}
+
+
 void
 CalendarList::toggle(gchar* path, calendari::Calendari* app)
 {

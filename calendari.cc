@@ -283,31 +283,30 @@ Calendari::delete_selected_calendar(void)
 Occurrence*
 Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
 {
-  Calendar* calendar = calendar_list->current();
-  if(calendar && !calendar->readonly())
-  {
-    // Format buf as <UUID>-cali@<hostname>
-    const size_t uuid_strlen = 36;
-    char buf[256];
-    uuid_t uu;
-    uuid_generate(uu);
-    uuid_unparse(uu,buf);
-    char* s = ::stpcpy(buf+uuid_strlen,"-cali@");
-    ::gethostname(s, sizeof(buf) - (s-buf));
-    // Make the new occurrence.
-    Occurrence* occ = db->create_event(
-        buf, //  uid,
-        dtstart,
-        dtend,
-        (old? old->summary().c_str(): "New Event"), // summary,
-        (old? old->all_day(): false), // all_day,
-        calendar->calnum
-      );
-    moved(occ);
-    select(occ);
-    return occ;
-  }
-  return NULL;
+  Calendar* calendar = calendar_list->find_writeable();
+  if(!calendar)
+      return NULL;
+  assert(!calendar->readonly());
+  // Format buf as <UUID>-cali@<hostname>
+  const size_t uuid_strlen = 36;
+  char buf[256];
+  uuid_t uu;
+  uuid_generate(uu);
+  uuid_unparse(uu,buf);
+  char* s = ::stpcpy(buf+uuid_strlen,"-cali@");
+  ::gethostname(s, sizeof(buf) - (s-buf));
+  // Make the new occurrence.
+  Occurrence* occ = db->create_event(
+      buf, //  uid,
+      dtstart,
+      dtend,
+      (old? old->summary().c_str(): "New Event"), // summary,
+      (old? old->all_day(): false), // all_day,
+      calendar->calnum
+    );
+  moved(occ);
+  select(occ);
+  return occ;
 }
 
 

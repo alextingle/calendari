@@ -36,7 +36,16 @@ struct CalendarList
 
   Calendar* iter2cal(GtkTreeIter& iter) const;
   bool get_selected_iter(GtkTreeIter& iter) const;
+
+  /** Get the currently selected calendar, or NULL if none is selected. */
   Calendar* current(void) const;
+
+  /** Returns a writeable calendar. This will be the current calendar, if it
+  *   is writeable, or else the first writeable calendar, else NULL if there
+  *   are no writeable calendars. */
+  Calendar* find_writeable(void) const;
+
+  /** Toggle the 'show' property of the calendar at 'path'. */
   void toggle(gchar* path, Calendari* app);
 
   /** Append 'cal' to the *end* of the calendar list. It must not be already
@@ -57,7 +66,12 @@ struct CalendarList
   void refresh_selected(Calendari* app);
   void refresh_all(Calendari* app);
   bool refresh_next(Calendari* app);
+
+  /** Select the calendar to which 'occ' belongs. */
   void select(Occurrence* occ);
+
+  /** Select the calendar at 'position'. If 'activate' is set, then go on to
+  *   call row_activated() before returning. */
   void select(int position, bool activate=false);
 
   CalDialog* dialog;
