@@ -31,7 +31,6 @@ public:
 
   void set_name(const std::string& s);
   void set_path(const std::string& s);
-  void set_readonly(bool ro);
   void set_position(int p);
   void set_colour(const std::string& s);
   void toggle_show(void);

@@ -225,17 +225,7 @@ Calendari::import_calendar(bool readonly)
       return;
   Calendar* new_cal = db->load_calendar(calnum);
   assert(new_cal);
-
-  if(readonly)
-  {
-    new_cal->set_readonly(true);
-  }
-  else if(new_cal->readonly())
-  {
-    new_cal->set_path("");
-    new_cal->set_readonly(false);
-  }
-
+  assert(readonly == new_cal->readonly());
   if(_selected_occurrence)
       select(NULL);
   calendar_list->add_calendar(*new_cal);
