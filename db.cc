@@ -314,6 +314,7 @@ Db::calnum(const char* calid)
   }
 
   // Look it up in the database, then.
+  // ?? SQL begin..commit here - but it would sometimes be re-entrant :(
   int calnum =1;
   std::string sql_calid = sql::quote(calid);
   bool ok =
@@ -323,15 +324,15 @@ Db::calnum(const char* calid)
         "select CALNUM from CALENDAR where CALID='%s' order by VERSION",
         sql_calid.c_str()
       );
-  if(ok)
-      return calnum;
-
-  // OK, well find the next free number, then.  
-  sql::query_val(
-      CALI_HERE,_sdb,
-      calnum,                                  // <== output
-      "select 1 + coalesce(max(CALNUM),0) from CALENDAR"
-    );
+  if(!ok)
+  {
+    // ...well find the next free number, then.
+    sql::query_val(
+        CALI_HERE,_sdb,
+        calnum,                                  // <== output
+        "select 1 + coalesce(max(CALNUM),0) from CALENDAR"
+      );
+  }
   return calnum;
 }
 

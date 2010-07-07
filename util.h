@@ -3,6 +3,7 @@
 
 #include <gtk/gtk.h>
 #include <time.h>
+#include <string>
 
 extern "C" { void g_free(void*); }
 
@@ -38,6 +39,15 @@ inline const char* safestr(const unsigned char* s, const char* dflt="")
 }
 
 
+/** Write a new UUID to 'dest' buffer (size 'n'). Return the pointer to the next
+*   free byte, or NULL if there was an error. */
+char* uuidp(char* dest, size_t n);
+
+
+/** Get a new UUID string. */
+std::string uuids(void);
+
+
 /** A general scoped pointer type. */
 template<typename T, void F(T*)>
 class scoped
@@ -61,6 +71,12 @@ public:
     { return _v; }
   ptr_type get(void) const
     { return _v; }
+  ptr_type release(void)
+    {
+      ptr_type v = _v;
+      _v = NULL;
+      return v;
+    }
 private:
   scoped(const scoped&);              ///< Not copyable
   scoped& operator = (const scoped&); ///< Not assignable

@@ -211,23 +211,23 @@ CalendarList::remove_selected_calendar(void)
 
 
 void
-CalendarList::refresh(calendari::Calendari* app, Calendar* calendar)
+CalendarList::refresh(calendari::Calendari* app, Calendar* cal)
 {
-  if(calendar && !calendar->path().empty())
+  if(cal && !cal->path().empty())
   {
-    if(calendar->readonly())
+    if(cal->readonly())
     {
-      printf("read %s at %s\n",calendar->name().c_str(),calendar->path().c_str());
-      if(app->selected() && app->selected()->event.calendar()==*calendar)
+      printf("read %s at %s\n",cal->name().c_str(),cal->path().c_str());
+      if(app->selected() && app->selected()->event.calendar()==*cal)
           app->select(NULL);
-      ics::read(app, calendar->path().c_str(), *app->db, 2);
-      app->db->refresh_cal(calendar->calnum,2);
+      ics::reread(app, cal->path().c_str(), *app->db, cal->calid.c_str(), 2);
+      app->db->refresh_cal(cal->calnum,2);
       app->main_view->reload();
       app->queue_main_redraw();
     }
     else
     {
-      ics::write(calendar->path().c_str(), *app->db, calendar->calid.c_str());
+      ics::write(cal->path().c_str(), *app->db, cal->calid.c_str());
     }
   }
 }

@@ -70,8 +70,8 @@ struct Calendari
   /** Create a new calendar - triggered by UI. */
   void create_calendar(void);
 
-  /** Import a new readonly calendar - triggered by UI. */
-  void subscribe_calendar(void);
+  /** Import a new calendar - triggered by UI. */
+  void import_calendar(bool readonly = true);
 
   void delete_selected_calendar(void);
 

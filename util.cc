@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <uuid/uuid.h>
 
 
 namespace calendari {
@@ -47,6 +48,30 @@ const char* system_timezone(void)
     tzid = "UTC";
   }
   return tzid.c_str();
+}
+
+
+char*
+uuidp(char* dest, size_t n)
+{
+  const size_t uuid_strlen = 36;
+  if(n < uuid_strlen)
+      return NULL;
+  uuid_t uu;
+  uuid_generate(uu);
+  uuid_unparse(uu,dest);
+  if(n > uuid_strlen)
+      dest[uuid_strlen] = '\0';
+  return dest + uuid_strlen;
+}
+
+
+std::string
+uuids(void)
+{
+  char buf[64];
+  uuidp(buf,sizeof(buf));
+  return buf;
 }
 
 

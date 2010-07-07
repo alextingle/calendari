@@ -9,6 +9,7 @@
 #include "monthview.h"
 #include "prefview.h"
 #include "setting.h"
+#include "util.h"
 
 #include <cassert>
 #include <cstdio>
@@ -20,7 +21,6 @@
 #include <iostream>
 #include <memory>
 #include <sysexits.h>
-#include <uuid/uuid.h>
 
 namespace calendari {
 
@@ -160,10 +160,7 @@ Calendari::create_calendar(void)
     queue_main_redraw();
   }
   char calid[64];
-  uuid_t uu;
-  uuid_generate(uu);
-  uuid_unparse(uu,calid);
-
+  uuidp(calid,sizeof(calid));
   Calendar* new_cal =
     db->create_calendar(
       calid,
@@ -179,13 +176,14 @@ Calendari::create_calendar(void)
 
 
 void
-Calendari::subscribe_calendar(void)
+Calendari::import_calendar(bool readonly)
 {
   std::string filename = "";
   // Pop up a file chooser dialogue -> sets filename.
   {
     GtkWidget* dialog =
-      gtk_file_chooser_dialog_new ("Subscribe",
+      gtk_file_chooser_dialog_new(
+          (readonly? "Subscribe": "Import"),
           GTK_WINDOW(window),
           GTK_FILE_CHOOSER_ACTION_OPEN,
           GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,
@@ -212,12 +210,32 @@ Calendari::subscribe_calendar(void)
   }
   if(filename.empty())
       return;
-  printf("Subscribe to %s\n",filename.c_str());
-  int calnum = ics::read(this,filename.c_str(),*db);
+  int calnum;
+  if(readonly)
+  {
+    printf("Subscribe to %s\n",filename.c_str());
+    calnum = ics::subscribe(this,filename.c_str(),*db);
+  }
+  else
+  {
+    printf("Import %s\n",filename.c_str());
+    calnum = ics::import(this,filename.c_str(),*db);
+  }
   if(calnum<0)
       return;
   Calendar* new_cal = db->load_calendar(calnum);
   assert(new_cal);
+
+  if(readonly)
+  {
+    new_cal->set_readonly(true);
+  }
+  else if(new_cal->readonly())
+  {
+    new_cal->set_path("");
+    new_cal->set_readonly(false);
+  }
+
   if(_selected_occurrence)
       select(NULL);
   calendar_list->add_calendar(*new_cal);
@@ -287,17 +305,9 @@ Calendari::create_event(time_t dtstart, time_t dtend, Event* old)
   if(!calendar)
       return NULL;
   assert(!calendar->readonly());
-  // Format buf as <UUID>-cali@<hostname>
-  const size_t uuid_strlen = 36;
-  char buf[256];
-  uuid_t uu;
-  uuid_generate(uu);
-  uuid_unparse(uu,buf);
-  char* s = ::stpcpy(buf+uuid_strlen,"-cali@");
-  ::gethostname(s, sizeof(buf) - (s-buf));
   // Make the new occurrence.
   Occurrence* occ = db->create_event(
-      buf, //  uid,
+      ics::generate_uid().c_str(), //  uid,
       dtstart,
       dtend,
       (old? old->summary().c_str(): "New Event"), // summary,
@@ -487,7 +497,7 @@ main(int argc, char* argv[])
 
   // Command-line options.
   std::auto_ptr<calendari::Calendari> app( new calendari::Calendari() );
-  const char* import = NULL;
+  const char* import_file = NULL;
 
   option long_options[] = {
       {"debug",  0, 0, 'd'},
@@ -508,7 +518,7 @@ main(int argc, char* argv[])
           app->load(optarg);
           break;
       case 'i':
-          import = optarg;
+          import_file = optarg;
           break;
       case 'h':
       default:
@@ -528,10 +538,10 @@ main(int argc, char* argv[])
   }
 
   // Import mode.
-  if(import)
+  if(import_file)
   {
     assert(app->db);
-    calendari::ics::read(app.get(),import,*app->db);
+    calendari::ics::import(app.get(),import_file,*app->db);
     return 0;
   }
 

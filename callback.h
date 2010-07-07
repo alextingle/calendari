@@ -14,13 +14,25 @@ extern "C"
   // -- menus --
 
   G_MODULE_EXPORT void
-  cali_menu_new_cb(
+  cali_menu_new_event_cb(
+      GtkMenuItem*           menuitem,
+      calendari::Calendari*  app
+    );
+
+  G_MODULE_EXPORT void
+  cali_menu_new_cal_cb(
       GtkMenuItem*           menuitem,
       calendari::Calendari*  app
     );
 
   G_MODULE_EXPORT void
   cali_menu_subscribe_cb(
+      GtkMenuItem*           menuitem,
+      calendari::Calendari*  app
+    );
+
+  G_MODULE_EXPORT void
+  cali_menu_import_cb(
       GtkMenuItem*           menuitem,
       calendari::Calendari*  app
     );

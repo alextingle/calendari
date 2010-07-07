@@ -60,14 +60,23 @@
                   <object class="GtkMenu" id="menu1">
                     <property name="visible">True</property>
                     <child>
-                      <object class="GtkImageMenuItem" id="cali_new_menuitem">
-                        <property name="label">_New Calendar</property>
+                      <object class="GtkMenuItem" id="cali_new_event_menuitem">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">New _Event</property>
+                        <property name="use_underline">True</property>
+                        <accelerator key="n" signal="activate" modifiers="GDK_CONTROL_MASK"/>
+                        <signal name="activate" handler="cali_menu_new_event_cb"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkImageMenuItem" id="cali_new_cal_menuitem">
+                        <property name="label">New _Calendar...</property>
                         <property name="visible">True</property>
                         <property name="tooltip_text" translatable="yes">Add a new calendar</property>
                         <property name="use_underline">True</property>
                         <property name="image">new_image</property>
                         <property name="use_stock">False</property>
-                        <signal name="activate" handler="cali_menu_new_cb"/>
+                        <signal name="activate" handler="cali_menu_new_cal_cb"/>
                       </object>
                     </child>
                     <child>
@@ -79,6 +88,15 @@
                         <property name="image">open_image</property>
                         <property name="use_stock">False</property>
                         <signal name="activate" handler="cali_menu_subscribe_cb"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="cali_import_menuitem">
+                        <property name="visible">True</property>
+                        <property name="tooltip_text" translatable="yes">Import a new calendar from an iCalendar file</property>
+                        <property name="label" translatable="yes">_Import...</property>
+                        <property name="use_underline">True</property>
+                        <signal name="activate" handler="cali_menu_import_cb"/>
                       </object>
                     </child>
                     <child>

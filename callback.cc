@@ -15,7 +15,17 @@
 // -- menus --
 
 G_MODULE_EXPORT void
-cali_menu_new_cb(
+cali_menu_new_event_cb(
+    GtkMenuItem*,
+    calendari::Calendari*  app
+  )
+{
+  app->main_view->create_event();
+}
+
+
+G_MODULE_EXPORT void
+cali_menu_new_cal_cb(
     GtkMenuItem*,
     calendari::Calendari*  app
   )
@@ -30,7 +40,17 @@ cali_menu_subscribe_cb(
     calendari::Calendari*  app
   )
 {
-  app->subscribe_calendar();
+  app->import_calendar(true);
+}
+
+
+G_MODULE_EXPORT void
+cali_menu_import_cb(
+    GtkMenuItem*,
+    calendari::Calendari*  app
+  )
+{
+  app->import_calendar(false);
 }
 
 

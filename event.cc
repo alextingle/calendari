@@ -111,6 +111,22 @@ Calendar::set_path(const std::string& s)
 
 
 void
+Calendar::set_readonly(bool ro)
+{
+  if(ro==_readonly)
+      return;
+  _readonly = ro;
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update CALENDAR set READONLY=%d where VERSION=%d and CALNUM=%d",
+      (ro?1:0), version, calnum
+    );
+  touch();
+}
+
+
+void
 Calendar::set_position(int p)
 {
   if(p==_position)

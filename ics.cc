@@ -223,7 +223,7 @@ void process_rrule(
     struct icaldatetimeperiodtype rdate_period = icalproperty_get_rdate(rdate);
 
     /** RDATES can specify raw datetimes, periods, or dates.
-	we only support raw datetimes for now..
+    we only support raw datetimes for now..
 
         @todo Add support for other types **/
 
@@ -238,19 +238,61 @@ void process_rrule(
 }
 
 
-// -- public --
 
-int read(Calendari* app, const char* ical_filename, Db& db, int version)
+/** Helper class used by functions that read calendars. */
+class CalendarReader
 {
-  assert(ical_filename);
-  assert(ical_filename[0]);
+  icalcomponent*     _ical;
+  const std::string  _ical_filename;
+  bool               _discard_ids;
+
+public:
+  std::string     calid;
+  std::string     calname;
+  std::string     path;
+  bool            readonly;
+
+  /** Read _ical from 'ical_filename' and initialise members. */
+  CalendarReader(const char* ical_filename);
+  ~CalendarReader(void);
+
+  /** Returns FALSE if 'calid' is already in use in database 'db'. */
+  bool calid_is_unique(Db& db) const;
+
+  /** Tell the object to throw away all of the unique IDs (calid & UIDs)
+  *   read from the .ics file, and create new ones. */
+  void discard_ids(void);
+
+  /** Load the calendar into database 'db'. */
+  int load(
+      Calendari*   app,
+      Db&          db,
+      int          version
+    );
+
+private:
+  CalendarReader(CalendarReader&);
+  CalendarReader& operator = (CalendarReader&);
+};
+
+
+CalendarReader::CalendarReader(const char* ical_filename)
+  : _ical(NULL),
+    _ical_filename(ical_filename),
+    _discard_ids(false),
+    calid(),
+    calname(),
+    path(ical_filename),
+    readonly( 0!= ::access(ical_filename,W_OK) )
+{
+  assert(!_ical_filename.empty());
   // Parse the iCalendar file.
   SParser iparser( ::icalparser_new() );
   FILE* stream = ::fopen(ical_filename,"r");
   if(!stream)
   {
     CALI_ERRO(0,errno,"failed to open calendar file %s",ical_filename);
-    return -1;
+    return; // ?? throw
   }
   ::icalparser_set_gen_data(iparser.get(),stream);
   SComponent ical( ::icalparser_parse(iparser.get(),read_stream) );
@@ -258,9 +300,76 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
   if(!ical)
   {
     CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
-    return -1;
+    return; // ?? throw
   }
 
+  // Initialise calid & calname.
+  icalproperty* iprop =
+      icalcomponent_get_first_property(ical.get(),ICAL_X_PROPERTY);
+  while(iprop && (calid.empty() || calname.empty()))
+  {
+    const char* x_name = icalproperty_get_x_name(iprop);
+    if(0==::strcmp("X-WR-CALNAME",x_name))
+        calname = icalproperty_get_x(iprop);
+    else if(0==::strcmp("X-WR-RELCALID",x_name))
+        calid = icalproperty_get_x(iprop);
+    iprop = icalcomponent_get_next_property(ical.get(),ICAL_X_PROPERTY);
+  }
+  if(calid.empty() || calname.empty())
+  {
+    // Fall back to using the file name.
+    char* p = ::strdup(_ical_filename.c_str()); //     E.g. "path/to/mycal.ics"
+    std::string bname = ::basename(p);
+    ::free(p);
+    if(calid.empty())
+        calid = bname; //                              E.g. "mycal.ics"
+    if(calname.empty())
+    {
+      std::string::size_type pos = bname.find_last_of(".");
+      if(pos==std::string::npos || pos==0)
+          calname = bname;
+      else
+          calname = bname.substr(0,pos); //            E.g. "mycal"
+    }
+  }
+  _ical = ical.release();
+}
+
+
+CalendarReader::~CalendarReader(void)
+{
+  if(_ical)
+      icalcomponent_free(_ical);
+}
+
+
+bool
+CalendarReader::calid_is_unique(Db& db) const
+{
+  int calid_count;
+  sql::query_val(CALI_HERE,db,calid_count,
+      "select count(0) from CALENDAR where CALID='%s'",
+      sql::quote(calid).c_str()
+    );
+  return( calid_count == 0 );
+}
+
+
+void
+CalendarReader::discard_ids(void)
+{
+  calid = uuids();
+  _discard_ids = true;
+}
+
+
+int
+CalendarReader::load(
+    Calendari*   app,
+    Db&          db,
+    int          version
+  )
+{
   // Prepare the insert statements.
   const char* sql =
       "insert into CALENDAR "
@@ -279,46 +388,9 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
 
   CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );
 
-  icalproperty* iprop;
-
-  // Calendar properties
-
-  // -- calid & calname --
-  std::string calid;
-  std::string calname;
-  iprop = icalcomponent_get_first_property(ical.get(),ICAL_X_PROPERTY);
-  while(iprop)
-  {
-    const char* x_name = icalproperty_get_x_name(iprop);
-    if(0==::strcmp("X-WR-CALNAME",x_name))
-        calname = icalproperty_get_x(iprop);
-    else if(0==::strcmp("X-WR-RELCALID",x_name))
-        calid = icalproperty_get_x(iprop);
-    iprop = icalcomponent_get_next_property(ical.get(),ICAL_X_PROPERTY);
-  }
-  if(calid.empty() || calname.empty())
-  {
-    // Fall back to using the file name.
-    char* path = ::strdup(ical_filename); //           E.g. "path/to/mycal.ics"
-    std::string bname = ::basename(path);
-    ::free(path);
-    if(calid.empty())
-        calid = bname; //                              E.g. "mycal.ics"
-    if(calname.empty())
-    {
-      std::string::size_type pos = bname.find_last_of(".");
-      if(pos==std::string::npos || pos==0)
-          calname = bname;
-      else
-          calname = bname.substr(0,pos); //            E.g. "mycal"
-    }
-  }
-
   // Get the calnum.
   int calnum = db.calnum(calid.c_str());
   assert(calnum);
-  // Is it readonly?
-  bool readonly =( 0 != ::access(ical_filename,W_OK) );
   // Choose a colour.
   const char* colour =colours[ calnum % (sizeof(colours)/sizeof(char*)) ];
   // Bind these values to the statements.
@@ -326,7 +398,7 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
   sql::bind_int( CALI_HERE,db,insert_cal,2,calnum);
   sql::bind_text(CALI_HERE,db,insert_cal,3,calid.c_str());
   sql::bind_text(CALI_HERE,db,insert_cal,4,calname.c_str());
-  sql::bind_text(CALI_HERE,db,insert_cal,5,ical_filename);
+  sql::bind_text(CALI_HERE,db,insert_cal,5,path.c_str());
   sql::bind_int( CALI_HERE,db,insert_cal,6,readonly);
   sql::bind_int( CALI_HERE,db,insert_cal,7,-1); // position
   sql::bind_text(CALI_HERE,db,insert_cal,8,colour);
@@ -336,44 +408,53 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
   std::set<std::string> uids_seen;
 
   // Iterate through all components (VEVENTs).
-  for(icalcompiter e=icalcomponent_begin_component(ical.get(),ICAL_VEVENT_COMPONENT);
+  for(icalcompiter e=icalcomponent_begin_component(_ical,ICAL_VEVENT_COMPONENT);
       icalcompiter_deref(&e)!=NULL;
       icalcompiter_next(&e))
   {
+    icalproperty* iprop;
     icalcomponent* ievt = ::icalcompiter_deref(&e);
     const char* vevent = ::icalcomponent_as_ical_string(ievt);
 
     // -- uid --
-    iprop = icalcomponent_get_first_property(ievt,ICAL_UID_PROPERTY);
-    if(!iprop)
+    std::string uid;
+    if(_discard_ids)
     {
-      CALI_WARN(0,"missing VEVENT::UID property");
-      continue;
+      uid = generate_uid();
     }
-    const char* uid = icalproperty_get_uid(iprop);
-    if(!uid)
+    else
     {
-      CALI_WARN(0,"VEVENT::UID property has no value");
-      continue;
-    }
-    if(!uids_seen.insert(uid).second)
-    {
-      if(!app || app->debug)
-          CALI_WARN(0,"VEVENT::UID property not unique: %s",uid);
-      continue;
+      iprop = icalcomponent_get_first_property(ievt,ICAL_UID_PROPERTY);
+      if(!iprop)
+      {
+        CALI_WARN(0,"missing VEVENT::UID property");
+        continue;
+      }
+      uid = safestr( icalproperty_get_uid(iprop) );
+      if(uid.empty())
+      {
+        CALI_WARN(0,"VEVENT::UID property has no value");
+        continue;
+      }
+      if(!uids_seen.insert(uid).second)
+      {
+        if(!app || app->debug)
+            CALI_WARN(0,"VEVENT::UID property not unique: %s",uid.c_str());
+        continue;
+      }
     }
 
     // -- summary --
     iprop = icalcomponent_get_first_property(ievt,ICAL_SUMMARY_PROPERTY);
     if(!iprop)
     {
-      CALI_WARN(0,"UID:%s missing VEVENT::SUMMARY property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::SUMMARY property",uid.c_str());
       continue;
     }
     const char* summary = icalproperty_get_summary(iprop);
     if(!summary)
     {
-      CALI_WARN(0,"UID:%s VEVENT::SUMMARY property has no value",uid);
+      CALI_WARN(0,"UID:%s VEVENT::SUMMARY property has no value",uid.c_str());
       continue;
     }
 
@@ -387,7 +468,7 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
     icaltimetype dtstart = icalcomponent_get_dtstart(ievt);
     if(icaltime_is_null_time(dtstart))
     {
-      CALI_WARN(0,"UID:%s missing VEVENT::DTSTART property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::DTSTART property",uid.c_str());
       continue;
     }
 
@@ -398,7 +479,7 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
     icaltimetype dtend = icalcomponent_get_dtend(ievt);
     if(icaltime_is_null_time(dtend))
     {
-      CALI_WARN(0,"UID:%s missing VEVENT::DTEND property",uid);
+      CALI_WARN(0,"UID:%s missing VEVENT::DTEND property",uid.c_str());
       continue;
     }
     if(dtend.is_date)
@@ -413,7 +494,7 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
     // Bind these values to the statements.
     sql::bind_int( CALI_HERE,db,insert_evt,1,version);
     sql::bind_int( CALI_HERE,db,insert_evt,2,calnum);
-    sql::bind_text(CALI_HERE,db,insert_evt,3,uid);
+    sql::bind_text(CALI_HERE,db,insert_evt,3,uid.c_str());
     sql::bind_text(CALI_HERE,db,insert_evt,4,summary);
     sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
     sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
@@ -424,12 +505,91 @@ int read(Calendari* app, const char* ical_filename, Db& db, int version)
     // Bind values common to all occurrences.
     sql::bind_int( CALI_HERE,db,insert_occ,1,version);
     sql::bind_int( CALI_HERE,db,insert_occ,2,calnum);
-    sql::bind_text(CALI_HERE,db,insert_occ,3,uid);
+    sql::bind_text(CALI_HERE,db,insert_occ,3,uid.c_str());
     // Generate occurrences.
     process_rrule(ievt,dtstart,dtend,db,insert_occ);
   }
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
   return calnum;
+}
+
+
+// -- public --
+
+std::string generate_uid(void)
+{
+  // Format buf as <UUID>-cali@<hostname>
+  char buf[256];
+  char* s = uuidp(buf,sizeof(buf));
+  s = ::stpcpy(s,"-cali@");
+  ::gethostname(s, sizeof(buf) - (s-buf));
+  return buf;
+}
+
+
+int subscribe(
+    Calendari*   app,
+    const char*  ical_filename,
+    Db&          db,
+    int          version
+  )
+{
+  CalendarReader reader(ical_filename);
+  reader.readonly = true;
+  if(!reader.calid_is_unique(db))
+  {
+    // We need to preserve the calid (subscribing), so we can't proceed.
+    CALI_WARN(0,"Calendar in file %s is already loaded.",ical_filename);
+    return -1;
+  }
+  return reader.load(app, db, version);
+}
+
+
+int import(
+    Calendari*   app,
+    const char*  ical_filename,
+    Db&          db,
+    int          version
+  )
+{
+  CalendarReader reader(ical_filename);
+  if(reader.calid_is_unique(db))
+  {
+    if(reader.readonly)
+        reader.path = "";
+  }
+  else
+  {
+     // We don't care about preserving the calid (importing),
+     // so just make up a new one.
+     reader.discard_ids();
+     printf("Generated new calendar ID: %s\n",reader.calid.c_str());
+     reader.path = "";
+  }
+  reader.readonly = false;
+  return reader.load(app, db, version);
+}
+
+
+int reread(
+    Calendari*   app,
+    const char*  ical_filename,
+    Db&          db,
+    const char*  reread_calid,
+    int          version
+  )
+{
+  CalendarReader reader(ical_filename);
+  reader.readonly = true;
+  // We are re-reading an existing calendar - calids must match.
+  if(reader.calid != reread_calid)
+  {
+    CALI_WARN(0,"File %s does not match subscription.",ical_filename);
+    CALI_SQLCHK(db, ::sqlite3_exec(db, "rollback", 0, 0, 0) );
+    return -1; // FAIL
+  }
+  return reader.load(app, db, version);
 }
 
 
