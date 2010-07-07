@@ -16,7 +16,7 @@ public:
   const int version;
   const std::string calid;
   const int calnum;
-  
+
   Calendar(int v, const char* id, int cn, const char* nm, const char* pa,
       int rp, int ps, const char* cl, int sh);
   /** Write this to a new row in the database. */
