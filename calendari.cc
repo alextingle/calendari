@@ -134,10 +134,11 @@ Calendari::select(Occurrence* occ)
 {
   if(occ == cut()) // Can't select a cut occurrence.
       occ = NULL;
-  _selected_occurrence = occ;
+  _selected_occurrence = NULL;
   main_view->select( occ );
   detail_view->select( occ );
   calendar_list->select( occ );
+  _selected_occurrence = occ;
 }
 
 

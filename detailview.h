@@ -17,6 +17,8 @@ struct DetailView
   GtkEntry*     start_entry;
   GtkEntry*     end_entry;
   GtkComboBox*  calendar_combobox;
+  GtkComboBox*  repeat_combobox;
+  GtkListStore* repeat_liststore;
   GtkTextView*  textview;
 
   DetailView(Calendari& c): cal(c) {}

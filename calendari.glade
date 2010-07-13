@@ -38,6 +38,48 @@
     <signal name="row_inserted" handler="calendar_inserted_cb"/>
     <signal name="row_deleted" handler="calendar_deleted_cb"/>
   </object>
+  <object class="GtkListStore" id="cali_repeat_liststore">
+    <columns>
+      <!-- column-name repeatid -->
+      <column type="gint"/>
+      <!-- column-name repeatname -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">0</col>
+        <col id="1" translatable="yes">Does not repeat</col>
+      </row>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">Daily</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">Weekly</col>
+      </row>
+      <row>
+        <col id="0">3</col>
+        <col id="1" translatable="yes">Every weekday</col>
+      </row>
+      <row>
+        <col id="0">4</col>
+        <col id="1" translatable="yes">Bi-weekly</col>
+      </row>
+      <row>
+        <col id="0">5</col>
+        <col id="1" translatable="yes">Monthly</col>
+      </row>
+      <row>
+        <col id="0">6</col>
+        <col id="1" translatable="yes">Yearly</col>
+      </row>
+      <row>
+        <col id="0">-1</col>
+        <col id="1" translatable="yes">Custom...</col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="cali_window">
     <property name="title" translatable="yes">Calendari</property>
     <property name="default_width">600</property>
@@ -722,6 +764,45 @@
                               </packing>
                             </child>
                             <child>
+                              <object class="GtkHBox" id="hbox10">
+                                <property name="visible">True</property>
+                                <property name="spacing">10</property>
+                                <child>
+                                  <object class="GtkLabel" id="label15">
+                                    <property name="visible">True</property>
+                                    <property name="xalign">0</property>
+                                    <property name="label" translatable="yes">Repeat:</property>
+                                    <property name="width_chars">9</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkComboBox" id="detail_repeat_combobox">
+                                    <property name="visible">True</property>
+                                    <property name="model">cali_repeat_liststore</property>
+                                    <signal name="changed" handler="detail_combobox_changed_cb"/>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">4</property>
+                              </packing>
+                            </child>
+                            <child>
                               <object class="GtkScrolledWindow" id="scrolledwindow1">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
@@ -739,7 +820,7 @@
                                 </child>
                               </object>
                               <packing>
-                                <property name="position">4</property>
+                                <property name="position">5</property>
                               </packing>
                             </child>
                           </object>

@@ -4,6 +4,7 @@
 #include "calendarlist.h"
 #include "err.h"
 #include "event.h"
+#include "util.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -20,6 +21,10 @@ DetailView::build(Calendari*, GtkBuilder* builder)
   end_entry   = GTK_ENTRY(gtk_builder_get_object(builder,"detail_end_entry"));
   calendar_combobox =
       GTK_COMBO_BOX(gtk_builder_get_object(builder,"detail_calendar_combobox"));
+  repeat_combobox =
+      GTK_COMBO_BOX(gtk_builder_get_object(builder,"detail_repeat_combobox"));
+  repeat_liststore =
+      GTK_LIST_STORE(gtk_builder_get_object(builder,"cali_repeat_liststore"));
   textview = GTK_TEXT_VIEW(gtk_builder_get_object(builder,"detail_textview"));
 }
 
@@ -31,6 +36,7 @@ DetailView::clear(void)
   gtk_entry_set_text(start_entry,"");
   gtk_entry_set_text(end_entry,"");
   gtk_combo_box_set_active(calendar_combobox,-1);
+  gtk_combo_box_set_active(repeat_combobox,-1);
 
   GtkTextBuffer* buffer = gtk_text_view_get_buffer(textview);
   gtk_text_buffer_set_text (buffer,"",0);
@@ -39,6 +45,7 @@ DetailView::clear(void)
   gtk_widget_set_sensitive(GTK_WIDGET(start_entry),false);
   gtk_widget_set_sensitive(GTK_WIDGET(end_entry),false);
   gtk_widget_set_sensitive(GTK_WIDGET(calendar_combobox),false);
+  gtk_widget_set_sensitive(GTK_WIDGET(repeat_combobox),false);
   gtk_widget_set_sensitive(GTK_WIDGET(textview),false);
 }
 
@@ -72,6 +79,12 @@ DetailView::select(Occurrence* occ)
   }
   gtk_combo_box_set_active_iter(calendar_combobox,&iter);
 
+  // repeat_combobox
+  if(tree_model_find(repeat_liststore,0,occ->event.recurs(),&iter))
+      gtk_combo_box_set_active_iter(repeat_combobox,&iter);
+  else
+      gtk_combo_box_set_active(repeat_combobox,0);
+
   GtkTextBuffer* buffer = gtk_text_view_get_buffer(textview);
   gtk_text_buffer_set_text (buffer,occ->event.description(),-1);
 
@@ -80,6 +93,7 @@ DetailView::select(Occurrence* occ)
   gtk_widget_set_sensitive(GTK_WIDGET(start_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(end_entry),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(calendar_combobox),sensitive);
+  gtk_widget_set_sensitive(GTK_WIDGET(repeat_combobox),sensitive);
   gtk_widget_set_sensitive(GTK_WIDGET(textview),sensitive);
 }
 
@@ -178,23 +192,30 @@ DetailView::combobox_cb(GtkComboBox* cb, calendari::Calendari* cal)
   Occurrence* selected = cal->selected();
   if(!selected)
       return;
-  int cur_pos = selected->event.calendar().position();
-  int new_pos = gtk_combo_box_get_active(cb);
-  if(new_pos==cur_pos)
-      return;
-  GtkTreeIter iter;
-  if( gtk_combo_box_get_active_iter(cb,&iter) )
+  if(cb==calendar_combobox)
   {
-    Calendar* calendar;
-    gtk_tree_model_get(
-        GTK_TREE_MODEL( cal->calendar_list->liststore_cal ),
-        &iter,
-        0,&calendar,
-        -1
-      );
-    selected->event.set_calendar( *calendar );
-    cal->calendar_list->select(selected);
-    cal->queue_main_redraw();
+    int cur_pos = selected->event.calendar().position();
+    int new_pos = gtk_combo_box_get_active(cb);
+    if(new_pos==cur_pos)
+        return;
+    GtkTreeIter iter;
+    if( gtk_combo_box_get_active_iter(cb,&iter) )
+    {
+      Calendar* calendar;
+      gtk_tree_model_get(
+          GTK_TREE_MODEL( cal->calendar_list->liststore_cal ),
+          &iter,
+          0,&calendar,
+          -1
+        );
+      selected->event.set_calendar( *calendar );
+      cal->calendar_list->select(selected);
+      cal->queue_main_redraw();
+    }
+  }
+  else if(cb==repeat_combobox)
+  {
+    printf("boo repeat\n"); //??
   }
 }
 

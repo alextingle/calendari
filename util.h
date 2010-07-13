@@ -1,6 +1,7 @@
 #ifndef CALENDARI__UTIL_H
 #define CALENDARI__UTIL_H 1
 
+#include <cassert>
 #include <gtk/gtk.h>
 #include <time.h>
 #include <string>
@@ -119,6 +120,26 @@ private:
 /** Construct a new pixbuf with a solid colour.
 *   Needs to be freed by calling g_object_unref() */
 GdkPixbuf* new_pixbuf_from_col(GdkColor& col, int width, int height);
+
+
+/** Find a value in a GtkTreeModel. */
+template<class M, typename T>
+bool tree_model_find(M* model, int column, const T& value, GtkTreeIter* iter)
+{
+  assert(model);
+  assert(iter);
+  GtkTreeModel* m = GTK_TREE_MODEL(model);
+  bool ok = gtk_tree_model_get_iter_first(m,iter);
+  while(ok)
+  {
+    T v;
+    gtk_tree_model_get(m,iter,column,&v,-1);
+    if(v == value)
+        return true;
+    ok = gtk_tree_model_iter_next(m,iter);
+  }
+  return false;
+}
 
 
 } // end namespace calendari
