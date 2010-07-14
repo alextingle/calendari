@@ -119,8 +119,9 @@ void make_occurrence(
 }
 
 
-/** Based on source from libical. */
-void process_rrule(
+/** Based on source from libical.
+*   Returns the recurrance type for this event. */
+int process_rrule(
     icalcomponent*  ievt,
     icaltimetype&   dtstart,
     icaltimetype&   dtend,
@@ -128,6 +129,8 @@ void process_rrule(
     sqlite3_stmt*   insert_occ
   )
 {
+  int result = 0; // ?? Should be an enum
+
   time_t start_time = ical2timet(dtstart);
   time_t end_time   = ical2timet(dtend);
   assert(end_time>=start_time);
@@ -155,6 +158,7 @@ void process_rrule(
           break;
       if(!icalproperty_recurrence_is_excluded(ievt, &dtstart, &rrule_time))
       {
+        result = -1; // ?? --> Custom
         make_occurrence(rrule_time, duration, db,insert_occ);
       }
     }
@@ -179,9 +183,11 @@ void process_rrule(
 
     if(!icalproperty_recurrence_is_excluded(ievt, &dtstart,&rdate_period.time))
     {
+      result = -1; // ?? --> Custom
       make_occurrence(rdate_period.time, duration, db,insert_occ);
     }
   }
+  return result;
 }
 
 
@@ -396,13 +402,17 @@ Reader::load(
     if(dtend.is_date)
       --dtend.day; // iCal allday events end the day after.
 
-    // -- recurs --
-    bool recurs = (
-         icalcomponent_get_first_property(ievt,ICAL_RRULE_PROPERTY)!=NULL ||
-         icalcomponent_get_first_property(ievt,ICAL_RDATE_PROPERTY)!=NULL
-       );
+    // Bind values common to all occurrences.
+    sql::bind_int( CALI_HERE,db,insert_occ,1,version);
+    sql::bind_int( CALI_HERE,db,insert_occ,2,calnum);
+    sql::bind_text(CALI_HERE,db,insert_occ,3,uid.c_str());
+    // Generate occurrences.
+    int recurs = process_rrule(ievt,dtstart,dtend,db,insert_occ);
 
-    // Bind these values to the statements.
+    // Make the EVENT row.
+    // Note: Delay making the event until after we've processed the RRULEs,
+    // makes live easier, atthe expense of allowing the DB to temporarily
+    // contain OCCURRENCEs without a corresponding EVENT.
     sql::bind_int( CALI_HERE,db,insert_evt,1,version);
     sql::bind_int( CALI_HERE,db,insert_evt,2,calnum);
     sql::bind_text(CALI_HERE,db,insert_evt,3,uid.c_str());
@@ -412,13 +422,6 @@ Reader::load(
     sql::bind_int( CALI_HERE,db,insert_evt,7,recurs);
     sql::bind_text(CALI_HERE,db,insert_evt,8,vevent);
     sql::step_reset(CALI_HERE,db,insert_evt);
-
-    // Bind values common to all occurrences.
-    sql::bind_int( CALI_HERE,db,insert_occ,1,version);
-    sql::bind_int( CALI_HERE,db,insert_occ,2,calnum);
-    sql::bind_text(CALI_HERE,db,insert_occ,3,uid.c_str());
-    // Generate occurrences.
-    process_rrule(ievt,dtstart,dtend,db,insert_occ);
   }
   CALI_SQLCHK(db, ::sqlite3_exec(db, "commit", 0, 0, 0) );
   return calnum;

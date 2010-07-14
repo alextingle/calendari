@@ -104,7 +104,7 @@ Db::create_db(void)
       "  SUMMARY  string,"
       "  SEQUENCE integer,"
       "  ALLDAY   boolean,"
-      "  RECURS   boolean,"
+      "  RECURS   integer,"
       "  VEVENT   blob,"
       "  primary key(VERSION,UID)"
       ")"
@@ -279,7 +279,7 @@ Db::find(time_t begin, time_t end, int version)
           safestr(::sqlite3_column_text(select_stmt,2)), // summary
                   ::sqlite3_column_int( select_stmt,3),  // sequence
                   ::sqlite3_column_int( select_stmt,4),  // all_day
-                  ::sqlite3_column_int( select_stmt,5),  // recurs
+        int2recur(::sqlite3_column_int( select_stmt,5)), // recurs
                   ::sqlite3_column_int( select_stmt,6),  // dtstart
                   ::sqlite3_column_int( select_stmt,7),  // dtend
           version
@@ -424,7 +424,7 @@ Db::create_event(
         summary,
         1, // sequence
         all_day,
-        false, // recurs
+        RECUR_NONE, // does not recur
         dtstart,
         dtend,
         version
@@ -496,7 +496,7 @@ Db::make_occurrence(
     const char*  summary,
     int          sequence,
     bool         all_day,
-    bool         recurs,
+    RecurType    recurs,
     time_t       dtstart,
     time_t       dtend,
     int          version

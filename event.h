@@ -10,6 +10,19 @@ typedef struct icalcomponent_impl icalcomponent;
 namespace calendari {
 
 
+enum RecurType {
+  RECUR_CUSTOM   =-1,
+  RECUR_NONE     =0,
+  RECUR_DAILY    =1,
+  RECUR_WEEKLY   =2,
+  RECUR_WEEKDAYS =3,
+  RECUR_BIWEEKLY =4,
+  RECUR_MONTHLY  =5,
+  RECUR_YEARLY   =6
+};
+RecurType int2recur(int r);
+
+
 class Calendar
 {
 public:
@@ -54,7 +67,7 @@ class Event
 public:
   const std::string  uid;
 
-  Event(Calendar& c, const char* u, const char* s, int q, bool a, bool r);
+  Event(Calendar& c, const char* u, const char* s, int q, bool a, RecurType r);
   ~Event(void);
   /** Write this to a new row in the database. */
   void create(void);
@@ -62,7 +75,7 @@ public:
   Calendar& calendar(void) const         { return *_calendar; }
   const std::string& summary(void) const { return _summary; }
   bool all_day(void) const               { return _all_day; }
-  bool recurs(void) const                { return _recurs; }
+  RecurType recurs(void) const           { return _recurs; }
   bool readonly(void) const;
   const char* description(void) const;
 
@@ -77,7 +90,7 @@ private:
   std::string        _summary;
   int                _sequence;
   bool               _all_day;
-  bool               _recurs; ///< Event has an RRULE or RDATE property.
+  RecurType          _recurs; ///< Event has an RRULE or RDATE property.
 
   /**  VEVENT ical component. If NULL, then not cached. Owned by 'this'. */
   mutable icalcomponent* _vevent;

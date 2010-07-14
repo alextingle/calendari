@@ -11,6 +11,15 @@
 namespace calendari {
 
 
+RecurType int2recur(int r)
+{
+  if(-1 <= r && r <= 6)
+      return static_cast<RecurType>(r);
+  CALI_WARN(0,"Unknown recur type: %d",r);
+  return RECUR_NONE;
+}
+
+
 // -- Calendar --
 
 Calendar::Calendar(
@@ -171,7 +180,7 @@ Event::Event(
     const char*  s,
     int          q,
     bool         a,
-    bool         r
+    RecurType    r
   )
   : uid(u),
     _calendar(&c),
@@ -224,7 +233,7 @@ Event::create(void)
       sql::quote(_summary).c_str(),
       _sequence,
       (_all_day? 1: 0),
-      (_recurs? 1: 0)
+      static_cast<int>(_recurs)
     );
 }
 
@@ -233,7 +242,7 @@ bool
 Event::readonly(void) const
 {
   // For the time being, just make all recurring events readonly.
-  return _calendar->readonly() || _recurs;
+  return _calendar->readonly() || _recurs != RECUR_NONE;
 }
 
 

@@ -83,7 +83,7 @@ DetailView::select(Occurrence* occ)
   if(tree_model_find(repeat_liststore,0,occ->event.recurs(),&iter))
       gtk_combo_box_set_active_iter(repeat_combobox,&iter);
   else
-      gtk_combo_box_set_active(repeat_combobox,0);
+      gtk_combo_box_set_active(repeat_combobox,0); // pos=0 -> "no repeat"
 
   GtkTextBuffer* buffer = gtk_text_view_get_buffer(textview);
   gtk_text_buffer_set_text (buffer,occ->event.description(),-1);
