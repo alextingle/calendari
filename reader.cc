@@ -3,6 +3,7 @@
 #include "calendari.h"
 #include "db.h"
 #include "err.h"
+#include "event.h"
 #include "ics.h"
 #include "util.h"
 #include "sql.h"
@@ -119,9 +120,35 @@ void make_occurrence(
 }
 
 
+/** Helper function used by process_rrule(). Calculated the
+*   database enumeration to use to describe a recurring event. Anything
+*   complicated goes to RECUR_CUSTOM. */
+RecurType add_recurrence(RecurType recur, icalrecurrencetype_frequency freq)
+{
+  RecurType r;
+  switch(freq)
+  {
+    case ICAL_SECONDLY_RECURRENCE:
+    case ICAL_MINUTELY_RECURRENCE:
+    case ICAL_HOURLY_RECURRENCE:
+    default:
+        return RECUR_CUSTOM;
+    case ICAL_DAILY_RECURRENCE:   r = RECUR_DAILY;   break;
+    case ICAL_WEEKLY_RECURRENCE:  r = RECUR_WEEKLY;  break;
+    case ICAL_MONTHLY_RECURRENCE: r = RECUR_MONTHLY; break;
+    case ICAL_YEARLY_RECURRENCE:  r = RECUR_YEARLY;  break;
+    case ICAL_NO_RECURRENCE:      r = RECUR_NONE;    break;
+  }
+  if(recur == RECUR_NONE || recur == r)
+      return r;
+  else
+      return RECUR_CUSTOM;
+}
+
+
 /** Based on source from libical.
 *   Returns the recurrance type for this event. */
-int process_rrule(
+RecurType process_rrule(
     icalcomponent*  ievt,
     icaltimetype&   dtstart,
     icaltimetype&   dtend,
@@ -129,7 +156,7 @@ int process_rrule(
     sqlite3_stmt*   insert_occ
   )
 {
-  int result = 0; // ?? Should be an enum
+  RecurType result = RECUR_NONE;
 
   time_t start_time = ical2timet(dtstart);
   time_t end_time   = ical2timet(dtend);
@@ -158,7 +185,7 @@ int process_rrule(
           break;
       if(!icalproperty_recurrence_is_excluded(ievt, &dtstart, &rrule_time))
       {
-        result = -1; // ?? --> Custom
+        result = add_recurrence(result,recur.freq);
         make_occurrence(rrule_time, duration, db,insert_occ);
       }
     }
@@ -183,7 +210,7 @@ int process_rrule(
 
     if(!icalproperty_recurrence_is_excluded(ievt, &dtstart,&rdate_period.time))
     {
-      result = -1; // ?? --> Custom
+      result = RECUR_CUSTOM;
       make_occurrence(rdate_period.time, duration, db,insert_occ);
     }
   }
@@ -407,7 +434,7 @@ Reader::load(
     sql::bind_int( CALI_HERE,db,insert_occ,2,calnum);
     sql::bind_text(CALI_HERE,db,insert_occ,3,uid.c_str());
     // Generate occurrences.
-    int recurs = process_rrule(ievt,dtstart,dtend,db,insert_occ);
+    RecurType recurs = process_rrule(ievt,dtstart,dtend,db,insert_occ);
 
     // Make the EVENT row.
     // Note: Delay making the event until after we've processed the RRULEs,
@@ -419,7 +446,7 @@ Reader::load(
     sql::bind_text(CALI_HERE,db,insert_evt,4,summary);
     sql::bind_int( CALI_HERE,db,insert_evt,5,sequence);
     sql::bind_int( CALI_HERE,db,insert_evt,6,all_day);
-    sql::bind_int( CALI_HERE,db,insert_evt,7,recurs);
+    sql::bind_int( CALI_HERE,db,insert_evt,7,recur2int(recurs));
     sql::bind_text(CALI_HERE,db,insert_evt,8,vevent);
     sql::step_reset(CALI_HERE,db,insert_evt);
   }

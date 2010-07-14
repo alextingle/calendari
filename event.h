@@ -10,6 +10,8 @@ typedef struct icalcomponent_impl icalcomponent;
 namespace calendari {
 
 
+/** Categorisation for simple recurrence rules. Used in the database.
+*   Enumerations correspond to combo-box items. */
 enum RecurType {
   RECUR_CUSTOM   =-1,
   RECUR_NONE     =0,
@@ -21,6 +23,7 @@ enum RecurType {
   RECUR_YEARLY   =6
 };
 RecurType int2recur(int r);
+int recur2int(RecurType r);
 
 
 class Calendar

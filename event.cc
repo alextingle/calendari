@@ -20,6 +20,12 @@ RecurType int2recur(int r)
 }
 
 
+int recur2int(RecurType r)
+{
+  return static_cast<int>(r);
+}
+
+
 // -- Calendar --
 
 Calendar::Calendar(
