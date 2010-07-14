@@ -267,9 +267,9 @@ def do_work(dummy):
     log('postponing full sync until '+time.ctime(_next_full_sync))
   else:
     # Time for a full sync
-    log('full sync for '+time.ctime(_next_full_sync))
-    _next_full_sync = now + (FULL_SYNC_MINS * 60)
     if have_network():
+      log('full sync for '+time.ctime(_next_full_sync))
+      _next_full_sync = now + (FULL_SYNC_MINS * 60)
       for obj in _obj:
         do_sync(obj)
   if _messages:
