@@ -1,6 +1,8 @@
 #ifndef CALENDARI__EVENT_H
 #define CALENDARI__EVENT_H 1
 
+#include "recur.h"
+
 #include <string>
 #include <time.h>
 
@@ -8,22 +10,6 @@ struct icalcomponent_impl;
 typedef struct icalcomponent_impl icalcomponent;
 
 namespace calendari {
-
-
-/** Categorisation for simple recurrence rules. Used in the database.
-*   Enumerations correspond to combo-box items. */
-enum RecurType {
-  RECUR_CUSTOM   =-1,
-  RECUR_NONE     =0,
-  RECUR_DAILY    =1,
-  RECUR_WEEKLY   =2,
-  RECUR_WEEKDAYS =3,
-  RECUR_BIWEEKLY =4,
-  RECUR_MONTHLY  =5,
-  RECUR_YEARLY   =6
-};
-RecurType int2recur(int r);
-int recur2int(RecurType r);
 
 
 class Calendar

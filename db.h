@@ -2,6 +2,7 @@
 #define CALENDARI__DB_H 1
 
 #include "event.h"
+#include "recur.h"
 
 #include <map>
 #include <sqlite3.h>

@@ -104,7 +104,7 @@ Db::create_db(void)
       "  SUMMARY  string,"
       "  SEQUENCE integer,"
       "  ALLDAY   boolean,"
-      "  RECURS   integer,"
+      "  RECURS   integer," // Summarises all recurrence rules.
       "  VEVENT   blob,"
       "  primary key(VERSION,UID)"
       ")"
@@ -116,6 +116,7 @@ Db::create_db(void)
       "  UID      string,"
       "  DTSTART  integer," // time_t (need to allow for 'all-day')
       "  DTEND    integer," // time_t
+      "  RECURS   integer," // The recurrence rule that made this occurrence.
       "  primary key(VERSION,UID,DTSTART)"
       ")"
     );
