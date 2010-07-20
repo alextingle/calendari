@@ -71,6 +71,7 @@ public:
   void set_calendar(Calendar& c);
   void set_summary(const std::string& s);
   void set_all_day(bool v);
+  void add_recurs(RecurType r); ///< Notify even of Occurrence rrule.
   void set_description(const char* s);
   void increment_sequence(void);
 
@@ -100,7 +101,7 @@ public:
 
   Event&      event;
   
-  Occurrence(Event& e, time_t t0, time_t t1);
+  Occurrence(Event& e, time_t t0, time_t t1, RecurType r);
   ~Occurrence(void);
   /** Write this to a new row in the database. */
   void create(void);
@@ -110,6 +111,9 @@ public:
 
   const time_t& dtend(void) const
     { return _dtend; }
+
+  RecurType recurs(void) const
+    { return _recurs; }
 
   const key_type& key(void) const
     { return _key; }
@@ -130,6 +134,7 @@ public:
 private:
   time_t      _dtstart;
   time_t      _dtend;
+  RecurType   _recurs; ///< RRULE that made this occurrence.
   key_type    _key; ///< Location of this object in Db::_occurrence map.
 };
 

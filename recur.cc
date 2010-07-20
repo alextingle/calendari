@@ -23,24 +23,10 @@ recur2int(RecurType r)
 
 
 RecurType
-add_recurrence(RecurType recur, icalrecurrencetype_frequency freq)
+add_recurrence(RecurType r0, RecurType r1)
 {
-  RecurType r;
-  switch(freq)
-  {
-    case ICAL_SECONDLY_RECURRENCE:
-    case ICAL_MINUTELY_RECURRENCE:
-    case ICAL_HOURLY_RECURRENCE:
-    default:
-        return RECUR_CUSTOM;
-    case ICAL_DAILY_RECURRENCE:   r = RECUR_DAILY;   break;
-    case ICAL_WEEKLY_RECURRENCE:  r = RECUR_WEEKLY;  break;
-    case ICAL_MONTHLY_RECURRENCE: r = RECUR_MONTHLY; break;
-    case ICAL_YEARLY_RECURRENCE:  r = RECUR_YEARLY;  break;
-    case ICAL_NO_RECURRENCE:      r = RECUR_NONE;    break;
-  }
-  if(recur == RECUR_NONE || recur == r)
-      return r;
+  if(r0 == RECUR_NONE || r0 == r1)
+      return r1;
   else
       return RECUR_CUSTOM;
 }

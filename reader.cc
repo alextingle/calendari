@@ -105,17 +105,39 @@ ical2timet(icaltimetype& it)
 }
 
 
+
+RecurType
+recur_type(icalrecurrencetype_frequency freq)
+{
+  switch(freq)
+  {
+    case ICAL_SECONDLY_RECURRENCE:
+    case ICAL_MINUTELY_RECURRENCE:
+    case ICAL_HOURLY_RECURRENCE:
+    default:
+        break;
+    case ICAL_DAILY_RECURRENCE:   return RECUR_DAILY;
+    case ICAL_WEEKLY_RECURRENCE:  return RECUR_WEEKLY;
+    case ICAL_MONTHLY_RECURRENCE: return RECUR_MONTHLY;
+    case ICAL_YEARLY_RECURRENCE:  return RECUR_YEARLY;
+    case ICAL_NO_RECURRENCE:      return RECUR_NONE;
+  }
+  return RECUR_CUSTOM;
+}
+
+
 void make_occurrence(
-    icaltimetype&  dtstart,
+    time_t         start_time,
     time_t         duration,
+    RecurType      occ_recurs,
     sqlite3*       db,
     sqlite3_stmt*  insert_occ
   )
 {
-  time_t start_time = ical2timet(dtstart);
   time_t end_time = start_time + duration;
   sql::bind_int(  CALI_HERE,db,insert_occ,4,start_time);
   sql::bind_int(  CALI_HERE,db,insert_occ,5,end_time);
+  sql::bind_int(  CALI_HERE,db,insert_occ,6,recur2int(occ_recurs));
   sql::step_reset(CALI_HERE,db,insert_occ);
 }
 
@@ -130,41 +152,47 @@ RecurType process_rrule(
     sqlite3_stmt*   insert_occ
   )
 {
-  RecurType result = RECUR_NONE;
+  RecurType evt_recurs = RECUR_NONE;
 
   time_t start_time = ical2timet(dtstart);
   time_t end_time   = ical2timet(dtend);
   assert(end_time>=start_time);
   const time_t duration = end_time - start_time;
 
-  make_occurrence(dtstart, duration, db,insert_occ);
-
   // Cycle through RRULE entries.
+  bool seen_occ0 = false;
   icalproperty* rrule;
   for (rrule = icalcomponent_get_first_property(ievt,ICAL_RRULE_PROPERTY);
        rrule != NULL;
        rrule = icalcomponent_get_next_property(ievt,ICAL_RRULE_PROPERTY))
   {
     struct icalrecurrencetype recur = icalproperty_get_rrule(rrule);
-    icalrecur_iterator *rrule_itr  = icalrecur_iterator_new(recur, dtstart);
-    struct icaltimetype rrule_time;
-    if(rrule_itr)
-        rrule_time = icalrecur_iterator_next(rrule_itr);
-    // note: icalrecur_iterator_next always returns dtstart the first time...
+    icalrecur_iterator* rrule_itr = icalrecur_iterator_new(recur, dtstart);
 
     while(rrule_itr)
     {
-      rrule_time = icalrecur_iterator_next(rrule_itr);
+      struct icaltimetype rrule_time = icalrecur_iterator_next(rrule_itr);
       if(icaltime_is_null_time(rrule_time))
           break;
-      if(!icalproperty_recurrence_is_excluded(ievt, &dtstart, &rrule_time))
+      if(icalproperty_recurrence_is_excluded(ievt, &dtstart, &rrule_time))
+          continue;
+      time_t t = ical2timet(rrule_time);
+      if(t == start_time)
       {
-        result = add_recurrence(result,recur.freq);
-        make_occurrence(rrule_time, duration, db,insert_occ);
+        if(seen_occ0)
+            continue;
+        seen_occ0 = true;
       }
+      RecurType occ_recur = recur_type(recur.freq);
+      evt_recurs = add_recurrence(evt_recurs,occ_recur);
+      make_occurrence(t, duration, occ_recur, db,insert_occ);
     }
     icalrecur_iterator_free(rrule_itr);
   }
+
+  // Make the original occurrence.
+  if(!seen_occ0)
+      make_occurrence(start_time, duration, RECUR_NONE, db,insert_occ);
 
   // Process RDATE entries
   icalproperty* rdate;
@@ -179,16 +207,17 @@ RecurType process_rrule(
 
         @todo Add support for other types **/
 
-    if (icaltime_is_null_time(rdate_period.time))
+    if(icaltime_is_null_time(rdate_period.time))
       continue;
 
     if(!icalproperty_recurrence_is_excluded(ievt, &dtstart,&rdate_period.time))
     {
-      result = RECUR_CUSTOM;
-      make_occurrence(rdate_period.time, duration, db,insert_occ);
+      evt_recurs = RECUR_CUSTOM;
+      time_t t = ical2timet(rdate_period.time);
+      make_occurrence(t, duration, RECUR_CUSTOM, db,insert_occ);
     }
   }
-  return result;
+  return evt_recurs;
 }
 
 
@@ -301,7 +330,7 @@ Reader::load(
   sql::Statement insert_evt(CALI_HERE,db,sql);
 
   sql="insert into OCCURRENCE "
-        "(VERSION,CALNUM,UID,DTSTART,DTEND) values (?,?,?,?,?)";
+        "(VERSION,CALNUM,UID,DTSTART,DTEND,RECURS) values (?,?,?,?,?,?)";
   sql::Statement insert_occ(CALI_HERE,db,sql);
 
   CALI_SQLCHK(db, ::sqlite3_exec(db, "begin", 0, 0, 0) );

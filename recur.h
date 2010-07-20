@@ -1,8 +1,6 @@
 #ifndef CALENDARI__RECUR_H
 #define CALENDARI__RECUR_H 1
 
-#include <libical/icalrecur.h>
-
 namespace calendari {
 
 
@@ -22,10 +20,9 @@ RecurType int2recur(int r);
 int recur2int(RecurType r);
 
 
-/** Helper function used by process_rrule(). Calculated the
-*   database enumeration to use to describe a recurring event. Anything
-*   complicated goes to RECUR_CUSTOM. */
-RecurType add_recurrence(RecurType recur, icalrecurrencetype_frequency freq);
+/** Calculated the database enumeration to use to describe a recurring event.
+*   Anything complicated goes to RECUR_CUSTOM. */
+RecurType add_recurrence(RecurType r0, RecurType r1);
 
 
 } // end namespace calendari

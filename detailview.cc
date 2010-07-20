@@ -80,7 +80,7 @@ DetailView::select(Occurrence* occ)
   gtk_combo_box_set_active_iter(calendar_combobox,&iter);
 
   // repeat_combobox
-  if(tree_model_find(repeat_liststore,0,occ->event.recurs(),&iter))
+  if(tree_model_find(repeat_liststore,0,occ->recurs(),&iter))
       gtk_combo_box_set_active_iter(repeat_combobox,&iter);
   else
       gtk_combo_box_set_active(repeat_combobox,0); // pos=0 -> "no repeat"

@@ -259,7 +259,8 @@ Db::find(time_t begin, time_t end, int version)
   std::multimap<time_t,Occurrence*> result;
 
   const char* sql =
-      "select O.CALNUM,O.UID,SUMMARY,SEQUENCE,ALLDAY,RECURS,DTSTART,DTEND "
+      "select O.CALNUM,O.UID,SUMMARY,SEQUENCE,ALLDAY,"
+          "E.RECURS,DTSTART,DTEND,O.RECURS "
       "from OCCURRENCE O "
       "left join EVENT E on E.UID=O.UID and E.VERSION=O.VERSION "
       "where DTEND>=? and DTSTART<? and O.VERSION=? "
@@ -280,9 +281,10 @@ Db::find(time_t begin, time_t end, int version)
           safestr(::sqlite3_column_text(select_stmt,2)), // summary
                   ::sqlite3_column_int( select_stmt,3),  // sequence
                   ::sqlite3_column_int( select_stmt,4),  // all_day
-        int2recur(::sqlite3_column_int( select_stmt,5)), // recurs
+        int2recur(::sqlite3_column_int( select_stmt,5)), // event recurs
                   ::sqlite3_column_int( select_stmt,6),  // dtstart
                   ::sqlite3_column_int( select_stmt,7),  // dtend
+        int2recur(::sqlite3_column_int( select_stmt,8)), // occ recurs
           version
         );
       result.insert(std::make_pair(occ->dtstart(),occ));
@@ -428,6 +430,7 @@ Db::create_event(
         RECUR_NONE, // does not recur
         dtstart,
         dtend,
+        RECUR_NONE, // does not recur
         version
       );
   occ->event.create();
@@ -497,9 +500,10 @@ Db::make_occurrence(
     const char*  summary,
     int          sequence,
     bool         all_day,
-    RecurType    recurs,
+    RecurType    evt_recurs,
     time_t       dtstart,
     time_t       dtend,
+    RecurType    occ_recurs,
     int          version
   )
 {
@@ -515,7 +519,7 @@ Db::make_occurrence(
           summary,
           sequence,
           all_day,
-          recurs
+          evt_recurs
         );
   }
   else
@@ -528,8 +532,7 @@ Db::make_occurrence(
       ver._occurrence.find(key);
   if(o!=ver._occurrence.end())
       return o->second;
-  else
-      return ver._occurrence[key] = new Occurrence(*event,dtstart,dtend);
+  return ver._occurrence[key] = new Occurrence(*event,dtstart,dtend,occ_recurs);
 }
 
 

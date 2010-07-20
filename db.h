@@ -114,9 +114,10 @@ private:
       const char*  summary,
       int          sequence,
       bool         all_day,
-      RecurType    recurs,
+      RecurType    evt_recurs,
       time_t       dtstart,
       time_t       dtend,
+      RecurType    occ_recurs,
       int          version
     );
 

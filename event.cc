@@ -224,7 +224,7 @@ Event::create(void)
       sql::quote(_summary).c_str(),
       _sequence,
       (_all_day? 1: 0),
-      static_cast<int>(_recurs)
+      recur2int(_recurs)
     );
 }
 
@@ -309,6 +309,25 @@ Event::set_all_day(bool v)
 
 
 void
+Event::add_recurs(RecurType r)
+{
+  RecurType new_recurs = add_recurrence(_recurs,r);
+  if(_recurs==new_recurs)
+      return;
+  _recurs = new_recurs;
+  // --
+  static Queue& q( Queue::inst() );
+  q.pushf(
+      "update EVENT set RECURS=%d where VERSION=%d and UID='%s'",
+      recur2int(_recurs),
+      _calendar->version,
+      sql::quote(uid).c_str()
+    );
+  increment_sequence();
+}
+
+
+void
 Event::set_description(const char* s)
 {
   assert(s);
@@ -378,8 +397,8 @@ Event::load_vevent(void) const
 
 // -- Occurrence --
 
-Occurrence::Occurrence(Event& e, time_t t0, time_t t1):
-  event(e), _dtstart(t0), _dtend(t1), _key(e.uid,t0)
+Occurrence::Occurrence(Event& e, time_t t0, time_t t1, RecurType r):
+  event(e), _dtstart(t0), _dtend(t1), _recurs(r), _key(e.uid,t0)
 {
   ++event._ref_count;
 }
@@ -402,20 +421,24 @@ Occurrence::create(void)
           "CALNUM,"
           "UID,"
           "DTSTART,"
-          "DTEND"
+          "DTEND,"
+          "RECURS"
       ") values ("
           "%d,"   // VERSION
           "%d,"   // CALNUM
           "'%s'," // UID
           "%d,"   // DTSTART
-          "%d"    // DTEND
+          "%d,"   // DTEND
+          "%d"    // RECURS
       ");",
       event.calendar().version,
       event.calendar().calnum,
       sql::quote(event.uid).c_str(),
       _dtstart,
-      _dtend
+      _dtend,
+      recur2int(_recurs)
     );
+  event.add_recurs(_recurs);
   event.calendar().touch();
 }
 
