@@ -211,7 +211,7 @@ def read_config():
     line = conf.readline()
     if not line:
       break
-    parts = line.split('=')
+    parts = line.split('=',1)
     if not parts:
       continue
     key = parts[0].strip()
