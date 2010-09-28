@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import os
 import os.path
@@ -300,6 +302,13 @@ def watch(timeout):
     )
 
 
+def init():
+  # Set the default timeout so that we don't hang indefinitely waiting for
+  # remote web servers.
+  import socket
+  socket.setdefaulttimeout(300)
+
+
 if __name__=='__main__':
   if not have_network():
     sys.exit(1);
@@ -307,6 +316,7 @@ if __name__=='__main__':
     os.mkdir(working_dir)
   if not _log:
     _log = open(os.path.join(working_dir,'log'),'a+')
+  init()
   read_config()
   pynotify.init("summary-body")
   watch(CYCLE_TIME_SEC * 1000)
