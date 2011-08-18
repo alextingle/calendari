@@ -71,7 +71,7 @@ public:
   void set_calendar(Calendar& c);
   void set_summary(const std::string& s);
   void set_all_day(bool v);
-  void add_recurs(RecurType r); ///< Notify even of Occurrence rrule.
+  void add_recurs(RecurType r); ///< Notify event of Occurrence rrule.
   void set_description(const char* s);
   void increment_sequence(void);
 
