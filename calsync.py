@@ -163,7 +163,7 @@ class RemoteSyncObj(SyncObj):
       if 'Content-Type' not in urlinfo:
         return False
       ct = set( map( string.strip, urlinfo['Content-Type'].split(';') ) )
-      return bool( ct.intersection(('text/calendar','text/plain')) )
+      return bool( ct.intersection(('text/calendar','text/plain','application/octet-stream')) )
   def sync(self):
       if not self.check_time():
         return S_TOOSOON
@@ -310,8 +310,6 @@ def init():
 
 
 if __name__=='__main__':
-  if not have_network():
-    sys.exit(1);
   if not os.path.exists(working_dir):
     os.mkdir(working_dir)
   if not _log:
