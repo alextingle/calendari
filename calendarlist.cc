@@ -217,7 +217,8 @@ CalendarList::refresh(calendari::Calendari* app, Calendar* cal)
   {
     if(cal->readonly())
     {
-      printf("read %s at %s\n",cal->name().c_str(),cal->path().c_str());
+      // ?? Uncomment this line for chatty diagnostics...
+      //printf("read %s at %s\n",cal->name().c_str(),cal->path().c_str());
       if(app->selected() && app->selected()->event.calendar()==*cal)
           app->select(NULL);
       ics::reread(app, cal->path().c_str(), *app->db, cal->calid.c_str(), 2);
