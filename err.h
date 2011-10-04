@@ -2,6 +2,7 @@
 #define CALENDARI__UTIL__ERROR_H
 
 #include <stdarg.h>
+#include <stdexcept>
 #include <utility>
 
 namespace calendari {
@@ -25,6 +26,13 @@ void warning(const Here& here,int e,const char* format,...);
  do{calendari::util::warning( \
    calendari::util::Here(__FILE__,__LINE__),__VA_ARGS__); \
  }while(0)
+
+
+struct Exception: public std::exception
+{
+  const char* what(void) const throw()
+    { return "calendari::util::Exception"; }
+};
 
 
 } } // end namespace calendari::util

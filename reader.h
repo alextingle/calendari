@@ -1,6 +1,8 @@
 #ifndef CALENDARI__ICS__READER_H
 #define CALENDARI__ICS__READER_H 1
 
+#include "err.h"
+
 #include <libical/ical.h>
 #include <string>
 
@@ -21,6 +23,19 @@ class Reader
   bool               _discard_ids;
 
 public:
+  struct Exception: public util::Exception {
+    const char* what(void) const throw()
+      { return "calendari::util::Reader::Exception"; }
+  };
+  struct OpenFailed: public Exception {
+    const char* what(void) const throw()
+      { return "calendari::util::Reader::Exception::OpenFailed"; }
+  };
+  struct ReadFailed: public Exception {
+    const char* what(void) const throw()
+      { return "calendari::util::Reader::Exception::ReadFailed"; }
+  };
+
   std::string     calid;
   std::string     calname;
   std::string     path;

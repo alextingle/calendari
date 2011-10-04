@@ -94,15 +94,22 @@ int subscribe(
     int          version
   )
 {
-  Reader reader(ical_filename);
-  reader.readonly = true;
-  if(!reader.calid_is_unique(db))
+  try
   {
-    // We need to preserve the calid (subscribing), so we can't proceed.
-    CALI_WARN(0,"Calendar in file %s is already loaded.",ical_filename);
-    return -1;
+      Reader reader(ical_filename);
+      reader.readonly = true;
+      if(!reader.calid_is_unique(db))
+      {
+        // We need to preserve the calid (subscribing), so we can't proceed.
+        CALI_WARN(0,"Calendar in file %s is already loaded.",ical_filename);
+        return -1;
+      }
+      return reader.load(app, db, version);
   }
-  return reader.load(app, db, version);
+  catch(Reader::Exception&)
+  {
+      return -2; // FAIL HARD
+  }
 }
 
 
@@ -113,22 +120,29 @@ int import(
     int          version
   )
 {
-  Reader reader(ical_filename);
-  if(reader.calid_is_unique(db))
+  try
   {
-    if(reader.readonly)
-        reader.path = "";
+      Reader reader(ical_filename);
+      if(reader.calid_is_unique(db))
+      {
+        if(reader.readonly)
+            reader.path = "";
+      }
+      else
+      {
+         // We don't care about preserving the calid (importing),
+         // so just make up a new one.
+         reader.discard_ids();
+         printf("Generated new calendar ID: %s\n",reader.calid.c_str());
+         reader.path = "";
+      }
+      reader.readonly = false;
+      return reader.load(app, db, version);
   }
-  else
+  catch(Reader::Exception&)
   {
-     // We don't care about preserving the calid (importing),
-     // so just make up a new one.
-     reader.discard_ids();
-     printf("Generated new calendar ID: %s\n",reader.calid.c_str());
-     reader.path = "";
+      return -2; // FAIL HARD
   }
-  reader.readonly = false;
-  return reader.load(app, db, version);
 }
 
 
@@ -140,16 +154,23 @@ int reread(
     int          version
   )
 {
-  Reader reader(ical_filename);
-  reader.readonly = true;
-  // We are re-reading an existing calendar - calids must match.
-  if(reader.calid != reread_calid)
+  try
   {
-    CALI_WARN(0,"File %s does not match subscription.",ical_filename);
-    CALI_SQLCHK(db, ::sqlite3_exec(db, "rollback", 0, 0, 0) );
-    return -1; // FAIL
+      Reader reader(ical_filename);
+      reader.readonly = true;
+      // We are re-reading an existing calendar - calids must match.
+      if(reader.calid != reread_calid)
+      {
+        CALI_WARN(0,"File %s does not match subscription.",ical_filename);
+        CALI_SQLCHK(db, ::sqlite3_exec(db, "rollback", 0, 0, 0) );
+        return -1; // FAIL
+      }
+      return reader.load(app, db, version);
   }
-  return reader.load(app, db, version);
+  catch(Reader::Exception&)
+  {
+      return -2; // FAIL HARD
+  }
 }
 
 

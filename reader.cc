@@ -2,7 +2,6 @@
 
 #include "calendari.h"
 #include "db.h"
-#include "err.h"
 #include "ics.h"
 #include "recur.h"
 #include "util.h"
@@ -239,7 +238,7 @@ Reader::Reader(const char* ical_filename)
   if(!stream)
   {
     CALI_ERRO(0,errno,"failed to open calendar file %s",ical_filename);
-    return; // ?? throw
+    throw OpenFailed();
   }
   ::icalparser_set_gen_data(iparser.get(),stream);
   SComponent ical( ::icalparser_parse(iparser.get(),read_stream) );
@@ -247,7 +246,7 @@ Reader::Reader(const char* ical_filename)
   if(!ical)
   {
     CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
-    return; // ?? throw
+    throw ReadFailed();
   }
 
   // Initialise calid & calname.
