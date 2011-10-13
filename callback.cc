@@ -572,6 +572,19 @@ detail_entry_focus_event_cb(
 
 
 G_MODULE_EXPORT void
+detail_entry_activate_cb(GtkEntry* e, calendari::Calendari* cal)
+{
+  // The user has pressed <return> in a detail entry.
+  // Save the entry, and return focus to the detail pane.
+  cal->detail_view->entry_cb(GTK_ENTRY(e),cal);
+  gtk_window_set_focus(
+      GTK_WINDOW(cal->window),
+      GTK_WIDGET(cal->main_drawingarea)
+    );
+}
+
+
+G_MODULE_EXPORT void
 detail_entry_done_event_cb(GtkCellEditable* e, calendari::Calendari* cal)
 {
   // ?? NOT CURRENTLY USED

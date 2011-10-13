@@ -256,6 +256,9 @@ extern "C"
       calendari::Calendari*  cal
     );
 
+  G_MODULE_EXPORT void
+  detail_entry_activate_cb(GtkEntry* e, calendari::Calendari* cal);
+
   /** ?? NOT CURRENTLY USED */
   G_MODULE_EXPORT void
   detail_entry_done_event_cb(GtkCellEditable* e, calendari::Calendari* cal);
