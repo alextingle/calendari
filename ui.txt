@@ -1,0 +1,211 @@
+Title
+All Day
+Start   Date  Time
+End     Date  Time
+Repeat  [combobox]
+Calendar
+
+Notes
+
+
+NOTES
+
+TIME
+Reminder?
+All Day
+Repeat
+
+INFO
+Location
+url
+Attendees
+
+CALENDAR
+Name
+
+
+Menus
+=====
+
+File:
+  New Event
+  New Calendar
+  Import...
+  Export...
+  Print
+  Quit
+Edit:
+  Undo
+  Redo
+  Cut
+  Copy
+  Paste
+  Delete
+  Edit Event (just focuses on Event Details)
+  Find
+  Preferences...
+View:
+  Hide/Show Calendars
+  Zoom In
+  Zoom Out
+Go
+  Next
+  Prev
+  Today
+  Date...
+Calendar
+  Subscribe...
+  Refresh
+  Refresh All
+  Properties...
+
+
+
+CALENDAR OPTIONS
+----------------
+
+Common:
+  Name
+  Colour
+Readonly:
+  Source file (Perhaps allow this to move, as long as calid remains the same.)
+Writeable:
+  [x] Publish?
+ >Filename<
+
+ -- Calendar Subscription ------
+  Name
+  Colour
+  Read from: [filename]
+
+ -- Calendar -------------------
+  Name
+  Colour
+  ( ) Private calendar
+  (x) Publish changes to: [filename]
+
+
+
+ASSERTION FAILURE
+-----------------
+
+Gtk:ERROR:/build/buildd/gtk+2.0-2.20.1/gtk/gtkfilesystemmodel.c:746:gtk_file_system_model_sort: assertion failed: (r == n_visible_rows)
+[1]  + 19970 abort (core dumped)  (; ulimit -c unlimited; cd ~/bin; G_DEBUG=fatal_warnings ./calendari; )
+
+
+
+TODO
+----
+
+-- HIGH --
+
+x UI for Calendar subscribe.
+x UI for Calendar publish.
+o Prevent two instances from opening against the same database.
+
+-- MIDDLE --
+
+o UI for creating / modifying repeating events.
+o Integrate with calsync
+o Deal properly with multi-day (not all-day) events. They should not appear
+  in subsequent months.
+o Fix drag and drop  (all day events).
+x Switch to "default" calendar when attempt to create new event in readonly cal
+o Make a way to get out of the notes field, with just the keyboard.
+o Make a way to get into Calendar List with just the keyboard.
+o Signal when a month view cell is full. (Ellipsise the last slot?)
+o Switch between calendar dialogues by clicking on cal entries in list.
+o Auto refresh on start-up.
+o Mouse-wheel scrolling.
+
+-- LOW --
+
+o Wrap time concepts into a separate library. E.g. allday goes noon-noon.
+o Frame around main view?
+o Automatically refresh when remote changes (inotify).
+o Configurable timezone per event.
+o Make Cut/Copy/Paste menu items inactive when nothing is selected/in clipboard.
+o Make it impossible to remove the last calendar.
+o Start empty database with Home + Work calendars.
+o Go Today shouldn't change months unless it has to.
+o Make it possible to change the source path of a calendar subscription.
+o Support CALDESC. Notes field in calendar options + tooltip.
+x Remember the position of the cal/event view separator.
+o Re-entrant SQL transactions.
+o Go to Today button.
+
+-- FUTURE --
+
+o Search
+o Tooltips.
+o week view
+o day view
+o List view
+o Make drag item look like the event image.
+o Remember positions of separator bars.
+o Funky popup-day UI for setting times.
+o Integrate with e-mail, invitations, VCALENDAR
+o Database versioning / upgrade.
+o Worry about all-day events in timezones beyond UTC+/-12
+o Use gettext for i18n.
+o List view - just list events in time order.
+o UI for font size.
+o Gnome Applet/ XFCE Panel plugin - date, clock?, quick launcher. Use colour?
+o Event alarms / reminders.
+o System tray notification icon - appear when event is due.
+o Notification Manager integration - popup when event is due.
+o Undo stack
+o Print
+
+BUGS
+o Can't open hidden directories.
+o Can't rename remote calendars, immediately after subscription.
+o Need glade package
+o Calsync autostart
+o Crash on subscribe to bad filename.
+o Calsync needs to create it's directories automatically if they don't exist.
+
+
+-- DONE--
+
+x Read recurring events.
+x UI for reordering calenders.
+x Eliminate excessive re-draws.
+x Draw all-day events better
+x Move selection with arrow keys.
+x Select day
+x --import option
+x Clear away unused menus.
+x Automatically notice read-only .ics files.
+x Fix DST
+x Ensure that SQL strings are properly quoted.
+x Read SEQUENCE properly.
+x Increment SEQUENCE when things change.
+x Use calnum rather than calid. Remove calid from EVENT table.
+x Switch calendars on selection.
+x Click on main view erroneously discards detail view changes.
+x create_event needs to write to the database.
+x Forbid creating an event in, or moving an event to a readonly calendar.
+x Make sure that cached objects are refreshed when re-read.
+x CalenderList 'show' checkbox not set correctly at start-up.
+x Page up/down
+x Move all SQL utils into sql.h
+x --debug option
+x CalendarList - colour column
+x Ctrl-T --> today
+x Scheduled background refresh-all.
+x Calendar setup dialogue.
+x Fix horrible calendar combobox background colour.
+x Go to today command / shortcut.
+x Fix keyboard navigation / tabbing.
+x New Calendar functionality.
+x Delete Calendar
+x Configurable timezone
+x Fix crash on duplicate UIDs (resolution is only 1sec)
+x Only refresh when something has changed.
+x Don't update DTSTAMP if SEQUENCE has not changed.
+x Ensure that EVENT rows are deleted when an occurrence is erased.
+x Fix Copy/Paste menu items.
+x Delete Calendar menu option.
+x RAII for SQL statement objects. 
+
