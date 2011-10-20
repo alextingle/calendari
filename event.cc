@@ -473,11 +473,7 @@ Occurrence::set_start(time_t start_)
 bool
 Occurrence::set_end(time_t end_)
 {
-  if(_dtend==end_)
-      return false;
-  if(event.all_day() && end_<=_dtstart)
-      return false;
-  if(!event.all_day() && end_<_dtstart)
+  if(_dtend==end_ || end_<_dtstart)
       return false;
   time_t old_dtend = _dtend;
   // ?? Enforce restrictions from all_day events.
