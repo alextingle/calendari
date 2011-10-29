@@ -216,7 +216,7 @@ cali_dialog_response_cancel_cb(GtkDialog* dialog)
 G_MODULE_EXPORT void
 cali_paned_notify_cb(
     GObject*               obj,
-    GParamSpec*            pspec,
+    GParamSpec*         /* pspec */,
     calendari::Calendari*  app
   )
 {
@@ -249,6 +249,34 @@ cali_drawingarea_button_press_event_cb(
   {
     gtk_widget_grab_focus(widget);
     cal->main_view->click(event->type, event->x, event->y);
+  }
+  return true;
+}
+
+
+G_MODULE_EXPORT gboolean
+cali_drawingarea_scroll_event_cb(
+    GtkWidget*,
+    GdkEventScroll*        event,
+    calendari::Calendari*  cal
+  )
+{
+  switch(event->direction)
+  {
+    case GDK_SCROLL_UP:
+          cal->main_view = cal->main_view->go_up();
+          break;
+    case GDK_SCROLL_DOWN:
+          cal->main_view = cal->main_view->go_down();
+          break;
+    case GDK_SCROLL_LEFT:
+          cal->main_view = cal->main_view->go_left();
+          break;
+    case GDK_SCROLL_RIGHT:
+          cal->main_view = cal->main_view->go_right();
+          break;
+    default:
+          break;
   }
   return true;
 }
@@ -398,11 +426,11 @@ cali_drawingarea_drag_drop_cb(
 
 G_MODULE_EXPORT void
 cali_drawingarea_drag_data_get_cb(
-    GtkWidget*        widget,
-    GdkDragContext*   drag_context,
+    GtkWidget*,
+    GdkDragContext* /*drag_context*/,
     GtkSelectionData* data,
     guint             info,
-    guint             time,
+    guint           /*time*/,
     calendari::Calendari*  cal
   )
 {
@@ -412,7 +440,7 @@ cali_drawingarea_drag_data_get_cb(
 
 G_MODULE_EXPORT void
 cali_drawingarea_drag_data_received_cb(
-    GtkWidget*        widget,
+    GtkWidget*,
     GdkDragContext*   drag_context,
     gint              x,
     gint              y,
