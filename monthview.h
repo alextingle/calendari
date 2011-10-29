@@ -6,7 +6,6 @@
 
 #include <gtk/gtk.h>
 #include <string>
-#include <vector>
 
 namespace calendari {
 

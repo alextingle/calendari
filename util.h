@@ -13,6 +13,9 @@ namespace calendari {
 
 const char* system_timezone(void);
 
+
+/** Normalise a struct tm (which is in local time), and return its equivalent
+ *  as a time_t. */
 inline time_t normalise_local_tm(struct tm& v)
 {
   v.tm_isdst = -1;

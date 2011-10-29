@@ -558,6 +558,7 @@ MonthView::go_today(void)
 View*
 MonthView::go_up(void)
 {
+  // Start by trying to go up to the previous slot.
   int prev_slot = current_slot? current_slot-1: 0;
   if(prev_slot &&
      prev_slot < static_cast<int>( day[current_cell].slot.size() ) &&
@@ -598,6 +599,7 @@ MonthView::go_right(void)
 View*
 MonthView::go_down(void)
 {
+  // Start by trying to go down to the next slot.
   int next_slot = current_slot? current_slot+1: 0;
   if(next_slot &&
      next_slot < static_cast<int>( day[current_cell].slot.size() ) &&
