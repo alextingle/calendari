@@ -276,7 +276,7 @@ cali_drawingarea_scroll_event_cb(
           cal->main_view = cal->main_view->go_right();
           break;
     default:
-          break;
+          return false; // Propagate on.
   }
   return true;
 }
