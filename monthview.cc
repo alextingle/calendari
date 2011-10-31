@@ -548,8 +548,19 @@ MonthView::go_today(void)
   assert(current_cell != NULL_CELL);
   if(now>=day[current_cell].start && now<day[current_cell+1].start)
       return this;
-  current_cell = NULL_CELL;
-  set(now);
+  if(now>=day[0].start && now<day[month_cells].start)
+  {
+    // Today is already in view, just go there.
+    cal.select(NULL);
+    current_cell = 0;
+    while(current_cell<month_cells && now>=day[current_cell+1].start)
+        ++current_cell;
+  }
+  else
+  {
+    current_cell = NULL_CELL;
+    set(now);
+  }
   cal.queue_main_redraw();
   return this;
 }
@@ -600,9 +611,9 @@ View*
 MonthView::go_down(void)
 {
   // Start by trying to go down to the next slot.
-  int next_slot = current_slot? current_slot+1: 0;
+  const size_t next_slot = current_slot? current_slot+1: 0;
   if(next_slot &&
-     next_slot < static_cast<int>( day[current_cell].slot.size() ) &&
+     next_slot < day[current_cell].slot.size() &&
      day[current_cell].slot[next_slot])
   {
     cal.select( day[current_cell].slot[next_slot] );
@@ -641,6 +652,7 @@ MonthView::go_left(void)
 View*
 MonthView::prev(void)
 {
+  self_local.tm_mday=1;
   --self_local.tm_mon;
   set( normalise_local_tm(self_local) );
   cal.queue_main_redraw();
@@ -651,6 +663,7 @@ MonthView::prev(void)
 View*
 MonthView::next(void)
 {
+  self_local.tm_mday=1;
   ++self_local.tm_mon;
   set( normalise_local_tm(self_local) );
   cal.queue_main_redraw();
