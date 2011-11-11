@@ -245,7 +245,10 @@ Reader::Reader(const char* ical_filename)
   ::fclose(stream);
   if(!ical)
   {
-    CALI_ERRO(0,0,"failed to read calendar file %s",ical_filename);
+    CALI_ERRO(0,0,"failed to read calendar file %s: %s",
+        ical_filename,
+        icalerror_strerror(icalerrno)
+      );
     throw ReadFailed();
   }
 
