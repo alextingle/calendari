@@ -27,7 +27,7 @@ void error(const Here& here,int r,int e,const char* format,...)
         NULL, // window
         GTK_DIALOG_DESTROY_WITH_PARENT,
         GTK_MESSAGE_ERROR,
-        GTK_BUTTONS_CLOSE,
+        GTK_BUTTONS_OK,
         "%s",buf
       );
   gtk_dialog_run(GTK_DIALOG(dialog));
@@ -57,7 +57,7 @@ void warning(const Here& here,int e,const char* format,...)
         NULL, // window
         GTK_DIALOG_DESTROY_WITH_PARENT,
         GTK_MESSAGE_WARNING,
-        GTK_BUTTONS_CLOSE,
+        GTK_BUTTONS_OK,
         "%s",buf
       );
   gtk_dialog_run(GTK_DIALOG(dialog));
