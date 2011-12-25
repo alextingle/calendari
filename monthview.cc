@@ -227,6 +227,8 @@ MonthView::motion(GtkWidget* widget, double x, double y)
     }
   }
 
+  // Update the statusbar so that it always has the full name of whichever
+  // occurrence is beneath the cursor.
   int cell;
   size_t slot;
   Occurrence* occ;
@@ -365,8 +367,15 @@ MonthView::drag_data_received(
         {
           tm start_local;
           time_t dtstart = selected->dtstart();
+          // For multi-day events: offset the destination if the drag didn't
+          // start on the event's first day.
+          int offset_days = 0;
+          if( day[current_cell].start > dtstart )
+          {
+            offset_days = (day[current_cell].start > dtstart) % (24*3600);
+          }
           ::localtime_r(&dtstart,&start_local);
-          start_local.tm_mday = day[cell].mday;
+          start_local.tm_mday = day[cell].mday - offset_days;
           start_local.tm_mon  = day[cell].mon;
           start_local.tm_year = day[cell].year;
           start_local.tm_isdst= -1;
