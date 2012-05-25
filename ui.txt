@@ -105,18 +105,20 @@ o Prevent two instances from opening against the same database.
 
 -- MIDDLE --
 
+o Allow copying from Read-only events.
 o UI for creating / modifying repeating events.
 o Integrate with calsync
 o Deal properly with multi-day (not all-day) events. They should not appear
   in subsequent months.
-o Fix drag and drop  (all day events).
+x Fix drag and drop  (all day events).
+  Dragging day N to a new day should result in day N being on that day.
 x Switch to "default" calendar when attempt to create new event in readonly cal
 o Make a way to get out of the notes field, with just the keyboard.
 o Make a way to get into Calendar List with just the keyboard.
 o Signal when a month view cell is full. (Ellipsise the last slot?)
 o Switch between calendar dialogues by clicking on cal entries in list.
 o Auto refresh on start-up.
-o Mouse-wheel scrolling.
+x Mouse-wheel scrolling.
 
 -- LOW --
 
@@ -209,3 +211,22 @@ x Fix Copy/Paste menu items.
 x Delete Calendar menu option.
 x RAII for SQL statement objects. 
 
+
+
+       Monday
+       [-- all day --]
+00:00=
+03:00= -early
+06:00= |
+09:00- - >start
+10:00-   
+11:00- -long
+12:00- |lunch
+13:00- |
+14:00- -
+15:00-
+16:00-
+17:00-
+18:00=
+21:00=
+24:00=

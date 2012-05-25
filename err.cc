@@ -21,7 +21,7 @@ void error(const Here& here,int r,int e,const char* format,...)
       snprintf(buf+len,sizeof(buf)-len,": %s",::strerror(e));
   buf[ sizeof(buf)-1 ] = '\0';
   fprintf(stderr,"%s at %s:%d\n",buf,here.first,here.second);
-  // Pop up error dialogue
+  // Pop up error dialogue ?? only when action is user-requested.
   GtkWidget* dialog =
     gtk_message_dialog_new(
         NULL, // window

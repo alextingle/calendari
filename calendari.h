@@ -104,7 +104,10 @@ struct Calendari
 private:
   Occurrence* _selected_occurrence;
   Occurrence* _clipboard_occurrence; ///< Contents of the clipboard.
-  bool        _clipboard_cut; ///< TRUE if _clipboard_occurrence has been cut.
+
+  /** TRUE if _clipboard_occurrence refers to a 'cut' rather than 'copied'
+   *  occurrence. ('cut' is displayed as greyed out.) */
+  bool        _clipboard_cut;
 };
 
 

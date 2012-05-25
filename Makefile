@@ -16,6 +16,7 @@ CCFILES := \
   setting.cc \
   sql.cc \
   util.cc \
+  weekview.cc \
 
 CCFILES.EXE := calendari.cc
 

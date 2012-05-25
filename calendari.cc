@@ -10,6 +10,7 @@
 #include "prefview.h"
 #include "setting.h"
 #include "util.h"
+#include "weekview.h"
 
 #include <cassert>
 #include <cstdio>

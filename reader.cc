@@ -245,6 +245,9 @@ Reader::Reader(const char* ical_filename)
   ::fclose(stream);
   if(!ical)
   {
+    // ?? This might be an automated update, rather than user-requested.
+    // ?? --> shouldn't pop up a dialogue, but put an error icon in the
+    // ?? calendar list (along with the error message).
     CALI_ERRO(0,0,"failed to read calendar file %s: %s",
         ical_filename,
         icalerror_strerror(icalerrno)

@@ -295,6 +295,9 @@ def watch(timeout):
   mask = pn.IN_DELETE | pn.IN_CREATE | pn.IN_MODIFY # watched events
   notifier = pn.Notifier(wm, CalEventProcessor(),timeout=timeout)
   wdd = wm.add_watch(calsync_dir, mask, rec=False)
+  # ?? pynotify's PIDfile handling is rubbish.
+  # Need to check whether an active PID is running *this* program, before
+  # quitting.
   notifier.loop(
       do_work,
       True, # daemonise
