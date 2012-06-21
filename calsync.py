@@ -16,6 +16,7 @@ import string
 
 CYCLE_TIME_SEC = 10
 FULL_SYNC_MINS = 30
+NETWORK_GRACE_MINS = 10
 
 calsync_dir = os.path.join(os.environ['HOME'],'.calsync')
 working_dir = os.path.join(calsync_dir,'.work')
@@ -40,6 +41,9 @@ _status = ['OK','NOCHANGE','NOTFOUND','TOOSOON']
 
 global _next_full_sync
 _next_full_sync = 0
+
+global _last_seen
+_last_seen = time.time()
 
 
 def log(*args):
@@ -143,7 +147,7 @@ class LocalSyncObj(SyncObj):
         return S_NOCHANGE
       # Read file
       temp = os.path.join(self._dir,'temp')
-      shutil.copyfile(self._this,temp)
+      shutil.copy2(self._this,temp) # Copy with metadata
       caldata = file(temp).read()
       # Check that file is different from the last version.
       h = self.hash
@@ -178,17 +182,21 @@ class RemoteSyncObj(SyncObj):
       h = self.hash
       if os.path.exists(self._this) and h(caldata)==h(file(self._this).read()):    
         return S_NOCHANGE
-      # Move aside.
-      if os.path.exists(self._this):
-        os.rename(self._this,self._last)
       # Save
       temp = os.path.join(self._dir,'temp')
       if os.path.exists(temp):
         os.unlink(temp)
       calfile = open(temp,'w')
       calfile.write(caldata)
+      calfile.flush()
+      os.fsync(calfile.fileno())
       calfile.close()
       os.chmod(temp,stat.S_IREAD)
+      # Move aside the last version of this file, and replace it with the new.
+      if os.path.exists(self._this):
+        if os.path.exists(self._last):
+          os.chmod(self._last, stat.S_IREAD|stat.S_IWRITE)
+        shutil.copy2(self._this,self._last) # Copy with metadata
       os.rename(temp,self._this)
       return S_OK
 
@@ -246,37 +254,42 @@ def do_work(dummy):
   global _messages
   _messages = []
   global _next_full_sync
+  global _last_seen
   now = time.time()
-  if now < _next_full_sync:
+  if not have_network()  or  now > _last_seen + (FULL_SYNC_MINS * 60):
+    # We don't want to hog the network as soon as it becomes available.
+    # Postpone the next full sync.
+    _next_full_sync = max(_next_full_sync, now + (NETWORK_GRACE_MINS * 60))
+    #log('postponing full sync until '+time.ctime(_next_full_sync))
+  elif now < _next_full_sync:
     # See if there is work to do...
-    if have_network():
-      keys = _queue.keys()
-      keys.sort()
-      done = set()
-      for qtime in keys:
-        if now < qtime:
-          break
-        path = _queue[qtime]
-        del _queue[qtime]
-        if path in done:
-          continue
-        done.add(path)
-        obj = _idx[path]
-        do_sync(obj)
+    keys = _queue.keys()
+    keys.sort()
+    done = set()
+    for qtime in keys:
+      if now < qtime:
+        break
+      path = _queue[qtime]
+      del _queue[qtime]
+      if path in done:
+        continue
+      done.add(path)
+      obj = _idx[path]
+      do_sync(obj)
   elif _queue:
     # Postpone the full sync until activity ceases.
     _next_full_sync = now + 60
-    log('postponing full sync until '+time.ctime(_next_full_sync))
+    log('busy, postponing full sync until '+time.ctime(_next_full_sync))
   else:
     # Time for a full sync
-    if have_network():
-      log('full sync for '+time.ctime(_next_full_sync))
-      _next_full_sync = now + (FULL_SYNC_MINS * 60)
-      for obj in _obj:
-        do_sync(obj)
+    log('full sync for '+time.ctime(_next_full_sync))
+    _next_full_sync = now + (FULL_SYNC_MINS * 60)
+    for obj in _obj:
+      do_sync(obj)
   if _messages:
     n = pynotify.Notification('Calendar Sync','\n'.join(_messages))
     n.show()
+  _last_seen = time.time()
 
 
 def watch(timeout):
