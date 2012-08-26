@@ -40,9 +40,9 @@ CxxDepCompile = \
 # Link an executable from (C++) objects.
 # Use as: $(call CxxLinkExe, EXE, OBJECTS, LIBS)
 CxxLinkExe = $(CXX) -o $(1)  $(strip $(LINK_STATIC:1=-Wl,-static) \
- $(_cxxflags) $(_ldflags) \
+ $(_cxxflags) \
  $(2) $(filter %.$(ARCHEXT),$(2) $(2)) \
- $(_ldlibflags) $(3) \
+ $(_ldflags) $(_ldlibflags) $(3) \
  $(LINK_STATIC:1=-Wl,-call_shared))
 
 
