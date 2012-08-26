@@ -204,13 +204,17 @@ class RemoteSyncObj(SyncObj):
 def have_network():
   '''Returns TRUE if the network is available.'''
   import dbus
-  NM_STATE_CONNECTED = 3
+  old_NM_STATE_CONNECTED = 3
+  new_NM_STATE_CONNECTED_GLOBAL = 70
   bus = dbus.SystemBus()
   network_manager = bus.get_object(
     'org.freedesktop.NetworkManager','/org/freedesktop/NetworkManager')
   try:
-    return network_manager.state() == NM_STATE_CONNECTED
-  except:
+    # Accept either old or new state enum values.
+    state = int(network_manager.state())
+    return state in (old_NM_STATE_CONNECTED, new_NM_STATE_CONNECTED_GLOBAL)
+  except Exception, ex:
+    log('NetworkManager DBUS error. Assuming we have network: ' + repr(ex))
     return True
 
 
@@ -311,10 +315,22 @@ def watch(timeout):
   # ?? pynotify's PIDfile handling is rubbish.
   # Need to check whether an active PID is running *this* program, before
   # quitting.
+  pid_file_name = os.path.join(working_dir,'PID')
+  try:
+    # If we have a PID file, and it refers to a running process, and the process
+    # is *not* calsync, then start off by deleting the PID file.
+    if os.path.exists(pid_file_name):
+      pid = file(pid_file_name).read().strip()
+      cmdline = file(os.path.join('/proc', pid, 'cmdline')).read().strip()
+      if 'calsync' not in cmdline:
+        os.unlink(pid_file_name)
+  except:
+    os.unlink(pid_file_name)
+
   notifier.loop(
       do_work,
       True, # daemonise
-      pid_file=os.path.join(working_dir,'PID')
+      pid_file=pid_file_name
     )
 
 
