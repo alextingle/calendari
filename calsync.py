@@ -11,7 +11,7 @@ import urlparse
 import re
 import time
 import stat
-import pynotify
+from gi.repository import Notify
 import string
 
 CYCLE_TIME_SEC = 10
@@ -291,7 +291,11 @@ def do_work(dummy):
     for obj in _obj:
       do_sync(obj)
   if _messages:
-    n = pynotify.Notification('Calendar Sync','\n'.join(_messages))
+    n = Notify.Notification.new(
+        'Calendar Sync',
+        '\n'.join(_messages),
+        'dialog-information'
+      )
     n.show()
   _last_seen = time.time()
 
@@ -312,7 +316,7 @@ def watch(timeout):
   mask = pn.IN_DELETE | pn.IN_CREATE | pn.IN_MODIFY # watched events
   notifier = pn.Notifier(wm, CalEventProcessor(),timeout=timeout)
   wdd = wm.add_watch(calsync_dir, mask, rec=False)
-  # ?? pynotify's PIDfile handling is rubbish.
+  # ?? pyinotify's PIDfile handling is rubbish.
   # Need to check whether an active PID is running *this* program, before
   # quitting.
   pid_file_name = os.path.join(working_dir,'PID')
@@ -330,7 +334,9 @@ def watch(timeout):
   notifier.loop(
       do_work,
       True, # daemonise
-      pid_file=pid_file_name
+      pid_file=pid_file_name,
+      # Uncomment to see output while daemonised:
+      #stdout='/dev/stdout', stderr='/dev/stderr'
     )
 
 
@@ -348,5 +354,5 @@ if __name__=='__main__':
     _log = open(os.path.join(working_dir,'log'),'a+')
   init()
   read_config()
-  pynotify.init("summary-body")
+  Notify.init("summary-body")
   watch(CYCLE_TIME_SEC * 1000)
