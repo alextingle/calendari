@@ -11,6 +11,8 @@ import urlparse
 import re
 import time
 import stat
+import gi
+gi.require_version("Notify", "0.7")
 from gi.repository import Notify
 import string
 
