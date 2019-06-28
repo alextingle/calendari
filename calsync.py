@@ -213,7 +213,8 @@ def have_network():
     'org.freedesktop.NetworkManager','/org/freedesktop/NetworkManager')
   try:
     # Accept either old or new state enum values.
-    state = int(network_manager.state())
+    state = int(network_manager.state(
+      dbus_interface='org.freedesktop.NetworkManager'))
     return state in (old_NM_STATE_CONNECTED, new_NM_STATE_CONNECTED_GLOBAL)
   except Exception, ex:
     log('NetworkManager DBUS error. Assuming we have network: ' + repr(ex))
