@@ -266,9 +266,9 @@ Db::find(time_t begin, time_t end, int version)
       "where DTEND>=? and DTSTART<? and O.VERSION=? "
       "order by DTSTART";
   sql::Statement select_stmt(CALI_HERE,_sdb,sql);
-  sql::bind_int(CALI_HERE,_sdb,select_stmt,1,begin);
-  sql::bind_int(CALI_HERE,_sdb,select_stmt,2,end);
-  sql::bind_int(CALI_HERE,_sdb,select_stmt,3,version);
+  sql::bind_int64(CALI_HERE,_sdb,select_stmt,1,begin);
+  sql::bind_int64(CALI_HERE,_sdb,select_stmt,2,end);
+  sql::bind_int(  CALI_HERE,_sdb,select_stmt,3,version);
 
   while(true)
   {

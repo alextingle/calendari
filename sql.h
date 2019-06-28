@@ -91,6 +91,20 @@ bind_int(
 
 
 inline void
+bind_int64(
+    const util::Here&  here,
+    sqlite3*           sdb,
+    sqlite3_stmt*      stmt,
+    int                idx,
+    sqlite3_int64      val)
+{
+  int ret;
+  ret= ::sqlite3_bind_int64(stmt,idx,val);
+  sql::check_error(here,sdb,ret);
+}
+
+
+inline void
 bind_text(
     const util::Here&  here,
     sqlite3*           sdb,

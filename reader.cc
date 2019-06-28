@@ -134,8 +134,8 @@ void make_occurrence(
   )
 {
   time_t end_time = start_time + duration;
-  sql::bind_int(  CALI_HERE,db,insert_occ,4,start_time);
-  sql::bind_int(  CALI_HERE,db,insert_occ,5,end_time);
+  sql::bind_int64(CALI_HERE,db,insert_occ,4,start_time);
+  sql::bind_int64(CALI_HERE,db,insert_occ,5,end_time);
   sql::bind_int(  CALI_HERE,db,insert_occ,6,recur2int(occ_recurs));
   sql::step_reset(CALI_HERE,db,insert_occ);
 }
